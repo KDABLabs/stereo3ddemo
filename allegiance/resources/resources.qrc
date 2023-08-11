@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>tlr.ico</file>
+    </qresource>
+</RCC>
