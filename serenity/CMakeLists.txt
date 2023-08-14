@@ -1,12 +1,10 @@
-project("allegiance${QT_VER}")
+project(allegiance_s)
 
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
 	PRIVATE
 		"../shared/resources.qrc"
 		"src/entry_main.cpp"
-		"include/app.h"
-		"include/window.h"
 )
 target_link_libraries(${PROJECT_NAME}
 	PRIVATE
