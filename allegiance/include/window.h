@@ -3,7 +3,6 @@
 #include <QMenuBar>
 #include <QDockWidget>
 
-
 class Window : public QMainWindow
 {
 	Q_OBJECT
@@ -11,10 +10,9 @@ public:
 	Window(QSize size)noexcept
 	{
 		resize(size);
-		auto central_widget = new QWidget(this);
 
-
-		setCentralWidget(central_widget);
+		QWidget* widget = QWidget::createWindowContainer(&view);
+		setCentralWidget(widget);
 		CreateDockWidget();
 
 		QMenu* fileMenu = menuBar()->addMenu("File");
@@ -32,8 +30,14 @@ public:
 		addDockWidget(Qt::RightDockWidgetArea, dock);
 		dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 	}
+	void SetScene(Qt3DCore::QEntity* root)
+	{
+		view.setRootEntity(root);
+	}
 signals:
 	void OnClose();
 	void OnLoadModel();
 	void OnLoadImage();
+private:
+	Qt3DExtras::Qt3DWindow view;
 };

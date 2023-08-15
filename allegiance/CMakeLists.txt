@@ -1,4 +1,4 @@
-project("allegiance${QT_VER}")
+project(allegiance${QT_VER})
 
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
@@ -13,12 +13,13 @@ target_link_libraries(${PROJECT_NAME}
 		Qt${QT_VER}::Core
 		Qt${QT_VER}::Gui
 		Qt${QT_VER}::Widgets
+		Qt${QT_VER}::3DExtras
 )
 target_include_directories(${PROJECT_NAME}
 	PRIVATE
 		"include"
 )
-set_target_properties(${PROJECT_NAME} 
+set_target_properties(${PROJECT_NAME}
 	PROPERTIES
 		CXX_STANDARD 20
 		AUTOMOC ON
