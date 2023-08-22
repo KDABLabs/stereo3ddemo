@@ -1,22 +1,54 @@
 #pragma once
+#include "serenity_impl.h"
 #include <QApplication>
-#include <QStyleFactory>
 #include <QIcon>
 #include <QPalette>
+#include <QStyleFactory>
+#include <QVulkanInstance>
 #include <window.h>
 
-using namespace Qt3DCore;
-using namespace Qt3DRender;
-using namespace Qt3DInput;
-using namespace Qt3DLogic;
-using namespace Qt3DExtras;
 
-class App
+class Qt3DImpl
 {
 public:
-	App(int& argc, char** argv)
-		:app(argc, argv), wnd({ 1920,1080 })
+	void CreateScene() {}
+	void CreateAspects(all::CameraControl*) {}
+};
+
+
+class WindowDestructionWatcher : public QObject
+{
+	Q_OBJECT
+public:
+	explicit WindowDestructionWatcher(QObject* window)
+		: m_window(window)
 	{
+		m_window->installEventFilter(this);
+	}
+
+	bool eventFilter(QObject* obj, QEvent* event) override {
+		if (event->type() == QEvent::Type::Close) {
+			OnClose();
+		}
+		return QObject::eventFilter(obj, event);
+	}
+signals:
+	void OnClose();
+private:
+	QObject* m_window;
+};
+
+
+class App {
+	using Application =
+		std::conditional_t<ALLEGIANCE_SERENITY, all::SerenityGuiApplication,
+		QApplication>;
+	using Implementation =
+		std::conditional_t<ALLEGIANCE_SERENITY, SerenityImpl,
+		Qt3DImpl>;
+
+public:
+	App(int& argc, char** argv) : app(argc, argv), impl(std::in_place), wnd(impl->GetWindow(), { 1920, 1080 }) {
 		// Basic setup of the application
 		QCoreApplication::setApplicationName(QStringLiteral("Schneider Demo"));
 		QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
@@ -39,54 +71,29 @@ public:
 		darkPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
 		darkPalette.setColor(QPalette::HighlightedText, Qt::black);
 		app.setPalette(darkPalette);
-		MakeScene();
 
-		wnd.SetScene(root.get());
+		QObject::connect(&watcher, &WindowDestructionWatcher::OnClose,
+			[this]() {
+				impl.reset();
+				app.quit();
+			}
+		);
+
+
+		impl->CreateAspects(wnd.GetCameraControl());
 		wnd.show();
 	}
+
 public:
-	int Start()noexcept { return app.exec(); }
+	int Start() noexcept { return app.exec(); }
 
 private:
-	void MakeScene()
-	{
-		root = std::make_unique<Qt3DCore::QEntity>();
 
-		QViewport* viewport = new QViewport(root.get());
-		viewport->setNormalizedRect(QRectF(0, 0, 1, 1));
-
-		QRenderTargetOutput *output_left = new QRenderTargetOutput(viewport);
-		output_left->setAttachmentPoint(QRenderTargetOutput::Left);
-
-		QRenderTarget* renderTarget = new QRenderTarget(viewport);
-		renderTarget->addOutput(output_left);
-
-		QRenderTargetSelector* selector = new QRenderTargetSelector(viewport);
-		selector->setTarget(renderTarget);
-
-		QClearBuffers* clearBuffers = new QClearBuffers(selector);
-		clearBuffers->setClearColor(Qt::red);
-
-		QNoDraw* noDraw1 = new QNoDraw(clearBuffers);
-
-		QRenderTargetOutput* output_right = new QRenderTargetOutput(viewport);
-		output_right->setAttachmentPoint(QRenderTargetOutput::Right);
-
-		QRenderTarget* renderTargetR = new QRenderTarget(viewport);
-		renderTargetR->addOutput(output_right);
-
-		QRenderTargetSelector* selector2 = new QRenderTargetSelector(viewport);
-		selector2->setTarget(renderTargetR);
-
-		QClearBuffers* clearBuffers2 = new QClearBuffers(selector2);
-		clearBuffers2->setClearColor(Qt::blue);
-
-		QNoDraw* noDraw2 = new QNoDraw(clearBuffers2);
-	}
+	void MakeScene() {}
 
 private:
-	QApplication app;
-	Window wnd;
-	std::unique_ptr<Qt3DCore::QEntity> root;
+	Application app;
+	std::optional<Implementation> impl;
+	all::Window wnd;
+	WindowDestructionWatcher watcher{ &wnd };
 };
-
