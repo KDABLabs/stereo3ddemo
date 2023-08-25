@@ -30,6 +30,19 @@
       }
     },
     {
+      "name": "x64-debug-qt",
+      "displayName": "x64 Debug Qt3D",
+      "inherits": "windows-base",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "FORCE_QT": true
+      }
+    },
+    {
       "name": "x64-release",
       "displayName": "x64 Release",
       "inherits": "x64-debug",

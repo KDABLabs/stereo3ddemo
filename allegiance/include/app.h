@@ -1,19 +1,19 @@
 #pragma once
-#include "serenity_impl.h"
 #include <QApplication>
 #include <QIcon>
 #include <QPalette>
 #include <QStyleFactory>
-#include <QVulkanInstance>
 #include <window.h>
 
-
-class Qt3DImpl
-{
-public:
-	void CreateScene() {}
-	void CreateAspects(all::CameraControl*) {}
-};
+#if ALLEGIANCE_SERENITY
+#include "serenity_impl.h"
+using Implementation = SerenityImpl;
+using Application = all::SerenityGuiApplication;
+#else
+#include "qt3d_impl.h"
+using Implementation = Qt3DImpl;
+using Application = QApplication;
+#endif
 
 
 class WindowDestructionWatcher : public QObject
@@ -40,13 +40,6 @@ private:
 
 
 class App {
-	using Application =
-		std::conditional_t<ALLEGIANCE_SERENITY, all::SerenityGuiApplication,
-		QApplication>;
-	using Implementation =
-		std::conditional_t<ALLEGIANCE_SERENITY, SerenityImpl,
-		Qt3DImpl>;
-
 public:
 	App(int& argc, char** argv) : app(argc, argv), impl(std::in_place), wnd(impl->GetWindow(), { 1920, 1080 }) {
 		// Basic setup of the application
