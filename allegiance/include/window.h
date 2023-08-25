@@ -2,6 +2,7 @@
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QDockWidget>
+#include <QKeyEvent>
 #include "camera_control.h"
 
 namespace all
@@ -35,6 +36,14 @@ namespace all
 			dock->setWidget(camera_control);
 			addDockWidget(Qt::RightDockWidgetArea, dock);
 			dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
+		}
+		void keyPressEvent(QKeyEvent* e) override
+		{
+			if ((e->key() == Qt::Key_Return) && (e->modifiers() & Qt::AltModifier))
+				setWindowState(Qt::WindowFullScreen);
+			if (e->key() == Qt::Key_Escape)
+				if (isFullScreen())
+					setWindowState(Qt::WindowNoState);
 		}
 	signals:
 		void OnClose();
