@@ -2,5 +2,5 @@
 
 int main(int argc, char** argv)
 {
-	return App{argc, argv}.Start();
+    return App{ argc, argv }.Start();
 }

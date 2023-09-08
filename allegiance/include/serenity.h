@@ -19,6 +19,8 @@
 #include <Serenity/gui/light.h>
 #include <Serenity/gui/mesh_generators.h>
 #include <Serenity/gui/mesh_renderer.h>
+#include <Serenity/gui/mesh_loader.h>
+#include <Serenity/gui/texture.h>
 #include <Serenity/core/ecs/transform.h>
 #include <Serenity/core/ecs/camera.h>
 #include <Serenity/logic/frame_action.h>
@@ -38,73 +40,73 @@
 
 namespace all
 {
-	class SerenityUpdateEvent : public QEvent
-	{
-	public:
-		SerenityUpdateEvent()
-			: QEvent(static_cast<QEvent::Type>(SerenityUpdateEvent::m_type))
-		{
-		}
+    class SerenityUpdateEvent : public QEvent
+    {
+    public:
+        SerenityUpdateEvent()
+            : QEvent(static_cast<QEvent::Type>(SerenityUpdateEvent::m_type))
+        {
+        }
 
-		static int eventType() { return m_type; }
+        static int eventType() { return m_type; }
 
-	private:
-		static inline const int m_type = QEvent::registerEventType();
-	};
+    private:
+        static inline const int m_type = QEvent::registerEventType();
+    };
 
-	class SerenityGuiApplication : public QApplication
-	{
-	public:
-		explicit SerenityGuiApplication(int& ac, char** av)
-			: QApplication(ac, av)
-		{
-			loop();
-		}
+    class SerenityGuiApplication : public QApplication
+    {
+    public:
+        explicit SerenityGuiApplication(int& ac, char** av)
+            : QApplication(ac, av)
+        {
+            loop();
+        }
 
-	protected:
-		bool event(QEvent* e) override
-		{
-			if (e->type() == SerenityUpdateEvent::eventType()) {
-				m_serenityApp.processEvents();
-				loop();
-			}
+    protected:
+        bool event(QEvent* e) override
+        {
+            if (e->type() == SerenityUpdateEvent::eventType()) {
+                m_serenityApp.processEvents();
+                loop();
+            }
 
-			// We want to have the qApp call app->processEvent periodically
-			return QApplication::event(e);
-		}
+            // We want to have the qApp call app->processEvent periodically
+            return QApplication::event(e);
+        }
 
-		void loop()
-		{
-			postEvent(this, new SerenityUpdateEvent());
-		}
+        void loop()
+        {
+            postEvent(this, new SerenityUpdateEvent());
+        }
 
-	private:
-		KDGui::GuiApplication m_serenityApp;
-	};
+    private:
+        KDGui::GuiApplication m_serenityApp;
+    };
 
-	class QWindowExtentWatcher : public Serenity::WindowExtentWatcher
-	{
-	public:
-		explicit QWindowExtentWatcher(QWindow* w)
-			: m_window(w), m_screen(w->screen())
-		{
-			qApp->setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
-		}
+    class QWindowExtentWatcher : public Serenity::WindowExtentWatcher
+    {
+    public:
+        explicit QWindowExtentWatcher(QWindow* w)
+            : m_window(w), m_screen(w->screen())
+        {
+            qApp->setHighDpiScaleFactorRoundingPolicy(Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
+        }
 
-		uint32_t width() const override
-		{
-			return std::ceil(m_window->width() * m_window->screen()->devicePixelRatio());
-		}
+        uint32_t width() const override
+        {
+            return std::ceil(m_window->width() * m_window->screen()->devicePixelRatio());
+        }
 
-		uint32_t height() const override
-		{
-			return std::ceil(m_window->height() * m_window->screen()->devicePixelRatio());
-		}
+        uint32_t height() const override
+        {
+            return std::ceil(m_window->height() * m_window->screen()->devicePixelRatio());
+        }
 
-	private:
-		QWindow* m_window = nullptr;
-		QScreen* m_screen = nullptr;
-		qreal m_dpi_scale = 1.0;
-	};
+    private:
+        QWindow* m_window = nullptr;
+        QScreen* m_screen = nullptr;
+        qreal m_dpi_scale = 1.0;
+    };
 }
 

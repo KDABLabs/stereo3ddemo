@@ -6,6 +6,7 @@ layout(location = 0) out vec4 fragColor;
 
 layout(location = 0) in vec3 worldNormal;
 layout(location = 1) in vec3 worldPosition;
+layout(location = 2) in vec2 texCoords;
 
 const int MAX_LIGHTS = 8;
 const int TYPE_POINT = 0;
@@ -14,7 +15,7 @@ const int TYPE_SPOT = 2;
 
 struct Light {
     vec4 color;
-
+    
     vec3 worldDirection;
     float intensity;
 
@@ -56,6 +57,8 @@ layout(std140, set = 3, binding = 0) uniform SerenityPhongMaterial {
     vec4 specular;
     float shininess;
 } material;
+
+layout(set = 2, binding = 2) uniform sampler2D texSampler;
 
 void adsModel(const in vec3 worldPos,
               const in vec3 worldNormal,
@@ -135,9 +138,9 @@ void main()
     vec3 diffuseColor, specularColor;
     adsModel(worldPosition, worldNormal, worldView,
              material.shininess, diffuseColor, specularColor);
-
+    
     // Combine spec with ambient+diffuse for final fragment color
-    vec3 color = (material.ambient.rgb + diffuseColor) * material.diffuse.rgb
+    vec3 color = (material.ambient.rgb + diffuseColor) * texture(texSampler, texCoords).rgb
                + specularColor * material.specular.rgb;
 
     fragColor = vec4(color, 1.0);

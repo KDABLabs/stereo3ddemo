@@ -1,8 +1,6 @@
 project(allegiance${POSTFIX})
 
-if(SERENITY_BUILD)
-    CompileShaderSet(SerenityScene multiview-scene)
-endif()
+
 
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
@@ -25,6 +23,9 @@ target_link_libraries(${PROJECT_NAME}
                 Qt6::3DExtras
                 Qt6::Quick
 )
+if(SERENITY_BUILD)
+    CompileShaderSet(${PROJECT_NAME} multiview-scene)
+endif()
 if(NOT FORCE_QT)
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
