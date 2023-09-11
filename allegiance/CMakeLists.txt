@@ -92,3 +92,25 @@ if(WIN32 AND SERENITY_BUILD)
             $<TARGET_FILE:KDGpu::KDGpuKDGui>
             ${CMAKE_CURRENT_BINARY_DIR})
 endif()
+
+install(TARGETS ${PROJECT_NAME}
+    BUNDLE  DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT applications
+)
+
+if (NOT SERENITY_BUILD)
+    qt_generate_deploy_app_script(
+        TARGET ${PROJECT_NAME}
+        OUTPUT_SCRIPT deploy_script
+    )
+
+#    qt_generate_deploy_qml_app_script(
+#        TARGET ${PROJECT_NAME}
+#        OUTPUT_SCRIPT deploy_script
+#        MACOS_BUNDLE_POST_BUILD
+#        NO_UNSUPPORTED_PLATFORM_ERROR
+#        DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+#    )
+    install(SCRIPT ${deploy_script} COMPONENT applications)
+endif()
