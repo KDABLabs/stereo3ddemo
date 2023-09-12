@@ -1,5 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>tlr.ico</file>
+        <file>a.png</file>
+        <file>b.png</file>
+        <file>close.png</file>
+        <file>stereo3.png</file>
+        <file>3D.png</file>
+        <file>3Dcursor.png</file>
     </qresource>
 </RCC>

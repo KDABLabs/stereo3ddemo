@@ -16,13 +16,14 @@ public:
     {
         angles = glm::vec2(0.0f, 0.0f);
         radius = 10.0f;
-        static auto change = [this]() {updateViewMatrix(); };
+        static auto change = [this]() { updateViewMatrix(); };
 
         radius.valueChanged().connect(change);
         angles.valueChanged().connect(change);
     }
+
 protected:
-    void updateViewMatrix()override
+    void updateViewMatrix() override
     {
         auto pos = glm::vec3(radius(), radius(), radius());
         auto sins = glm::sin(angles());
@@ -34,23 +35,24 @@ protected:
         (*const_cast<KDBindings::Property<glm::vec3>*>(&position)) = pos;
         const glm::vec3 right = glm::normalize(glm::cross(viewDirection(), up())) * interocularDistance() * 0.5f;
 
-        *(const_cast<KDBindings::Property<glm::mat4> *>(&leftEyeViewMatrix)) =
-            stereoShear(shearCoefficient(convergencePlaneDistance(), -interocularDistance() * 0.5f, convergeOnNear())) * glm::lookAt(position() + right, right + viewDirection(), up());
-        *(const_cast<KDBindings::Property<glm::mat4> *>(&rightEyeViewMatrix)) =
-            stereoShear(shearCoefficient(convergencePlaneDistance(), interocularDistance() * 0.5f, convergeOnNear())) * glm::lookAt(position() - right, -right + viewDirection(), up());
-        *(const_cast<KDBindings::Property<glm::mat4> *>(&centerEyeViewMatrix)) =
-            glm::lookAt(position(), viewDirection(), up());
+        *(const_cast<KDBindings::Property<glm::mat4>*>(&leftEyeViewMatrix)) =
+                stereoShear(shearCoefficient(convergencePlaneDistance(), -interocularDistance() * 0.5f, convergeOnNear())) * glm::lookAt(position() + right, right + viewDirection(), up());
+        *(const_cast<KDBindings::Property<glm::mat4>*>(&rightEyeViewMatrix)) =
+                stereoShear(shearCoefficient(convergencePlaneDistance(), interocularDistance() * 0.5f, convergeOnNear())) * glm::lookAt(position() - right, -right + viewDirection(), up());
+        *(const_cast<KDBindings::Property<glm::mat4>*>(&centerEyeViewMatrix)) =
+                glm::lookAt(position(), viewDirection(), up());
     }
+
 public:
     KDBindings::Property<float> radius;
     KDBindings::Property<glm::vec2> angles;
 };
 
-
 class SerenityImpl
 {
 public:
-    SerenityImpl() {}
+    SerenityImpl() { }
+
 public:
     QWindow* GetWindow()
     {
@@ -62,8 +64,7 @@ public:
         fd.setFileMode(QFileDialog::ExistingFile);
         fd.setNameFilter("*.obj");
         fd.setViewMode(QFileDialog::Detail);
-        if (fd.exec())
-        {
+        if (fd.exec()) {
             auto path = fd.selectedFiles()[0];
             auto folder = fd.directory().path();
 
@@ -99,8 +100,10 @@ public:
             m_mesh = std::move(model);
         }
     }
+
 public:
-    std::unique_ptr<Entity> CreateScene() noexcept {
+    std::unique_ptr<Entity> CreateScene() noexcept
+    {
         auto rootEntity = std::make_unique<Entity>();
         rootEntity->setObjectName("Root Entity");
 
@@ -116,7 +119,7 @@ public:
 
         auto pointLightEntity = rootEntity->createChildEntity<Entity>();
         auto pointLightTransform =
-            pointLightEntity->createComponent<SrtTransform>();
+                pointLightEntity->createComponent<SrtTransform>();
         pointLightTransform->translation = glm::vec3(0.0f, 2.0f, 0.0f);
         auto pointLight = pointLightEntity->createComponent<Light>();
         pointLight->type = Light::Type::Point;
@@ -143,17 +146,16 @@ public:
 
         const Material::UboDataBuilder materialDataBuilder[] = {
             [](uint32_t set, uint32_t binding) {
-              const PhongData data{{0.2f, 0.2f, 0.2f, 1.0f},
-                                   {0.6f, 0.6f, 0.6f, 1.0f},
-                                   {1.0f, 1.0f, 1.0f, 1.0f},
-                                   5.0f,
-                                   {0.0f, 0.0f, 0.0f}};
-              std::vector<uint8_t> rawData(sizeof(PhongData));
-              std::memcpy(rawData.data(), &data, sizeof(PhongData));
-              return rawData;
+                const PhongData data{ { 0.2f, 0.2f, 0.2f, 1.0f },
+                                      { 0.6f, 0.6f, 0.6f, 1.0f },
+                                      { 1.0f, 1.0f, 1.0f, 1.0f },
+                                      5.0f,
+                                      { 0.0f, 0.0f, 0.0f } };
+                std::vector<uint8_t> rawData(sizeof(PhongData));
+                std::memcpy(rawData.data(), &data, sizeof(PhongData));
+                return rawData;
             },
         };
-
 
         Entity* e = rootEntity->createChildEntity<Entity>();
 
@@ -177,7 +179,8 @@ public:
 
         return std::move(rootEntity);
     }
-    void CreateAspects(all::CameraControl* cc) {
+    void CreateAspects(all::CameraControl* cc)
+    {
         // Create Qt Vulkan Instance
         vk_instance.setApiVersion(QVersionNumber(1, 2, 0));
         if (!vk_instance.create()) {
@@ -188,7 +191,6 @@ public:
         qwin.setVulkanInstance(&vk_instance);
         qwin.create();
 
-
         VkSurfaceKHR vkSurface = QVulkanInstance::surfaceForWindow(&qwin);
 
         // Initialize KDGpu
@@ -196,11 +198,11 @@ public:
 
         // Create KDGpu Instance from VkInstance
         m_instance = m_graphicsApi->createInstanceFromExistingVkInstance(
-            vk_instance.vkInstance());
+                vk_instance.vkInstance());
         m_surface = m_graphicsApi->createSurfaceFromExistingVkSurface(m_instance,
-            vkSurface);
+                                                                      vkSurface);
         KDGpu::AdapterAndDevice defaultDevice =
-            m_instance.createDefaultDevice(m_surface);
+                m_instance.createDefaultDevice(m_surface);
         KDGpu::Device device = std::move(defaultDevice.device);
 
         auto rootEntity = CreateScene();
@@ -208,35 +210,32 @@ public:
         // Add Camera into the Scene
 
         auto camera = rootEntity->createChildEntity<OrbitalStereoCamera>();
-        camera->lookAt(glm::vec3(10.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-            glm::vec3(0.0f, 1.0f, 0.0f));
+        camera->lookAt(glm::vec3(10.0f, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                       glm::vec3(0.0f, 1.0f, 0.0f));
         camera->lens()->setPerspectiveProjection(
-            45.0f, float(qwin.width()) / qwin.height(), 0.01f, 1000.0f);
+                45.0f, float(qwin.width()) / qwin.height(), 0.01f, 1000.0f);
         camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
 
         QObject::connect(&qwin, &QWindow::widthChanged, [camera, this](int width) {
             camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
-            });
+        });
         QObject::connect(&qwin, &QWindow::heightChanged, [camera, this](int height) {
             camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
-            });
+        });
         QObject::connect(cc, &all::CameraControl::OnFocusPlaneChanged, [camera, this](float v) {
             camera->convergencePlaneDistance = v;
-            });
+        });
         QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [camera, this](float v) {
             camera->interocularDistance = v;
-            });
+        });
 
-        QObject::connect(&cc->x, &all::FloatSlider::OnValueChanged, [camera](float v) {
-            camera->radius = v;
-            });
-        QObject::connect(&cc->y, &all::FloatSlider::OnValueChanged, [camera](float v) {
-            camera->angles = glm::vec2(v * glm::half_pi<float>() - glm::half_pi<float>(), camera->angles().y);
-            });
-        QObject::connect(&cc->z, &all::FloatSlider::OnValueChanged, [camera](float v) {
-            camera->angles = glm::vec2(camera->angles().x, v * glm::two_pi<float>());
-            });
+        QObject::connect(cc, &all::CameraControl::OnLoadModel, [this]() {
+            LoadModel();
+        });
+
         camera->interocularDistance = 0.005f;
+        camera->radius = 20.0f;
+        camera->angles = { 0.5, 0.5 };
 
         // Create Render Algo
         auto algo = std::make_unique<StereoForwardAlgorithm>();
@@ -244,7 +243,8 @@ public:
         auto createOpaquePhase = []() {
             StereoForwardAlgorithm::RenderPhase phase{
                 0, StereoForwardAlgorithm::RenderPhase::Type::Opaque,
-                LayerFilterType::AcceptAll };
+                LayerFilterType::AcceptAll
+            };
 
             auto depthState = std::make_shared<DepthStencilState>();
             depthState->depthTestEnabled = true;
@@ -253,7 +253,7 @@ public:
             phase.renderStates.setDepthStencilState(std::move(depthState));
 
             return phase;
-            };
+        };
 
         auto spatialAspect = engine.createAspect<SpatialAspect>();
         auto renderAspect = engine.createAspect<RenderAspect>(std::move(device));
@@ -284,6 +284,7 @@ public:
 
         engine.running = true;
     }
+
 private:
     QVulkanInstance vk_instance;
     QWindow qwin;

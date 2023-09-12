@@ -15,33 +15,53 @@ using Implementation = Qt3DImpl;
 using Application = QApplication;
 #endif
 
-
 class WindowDestructionWatcher : public QObject
 {
     Q_OBJECT
 public:
-    explicit WindowDestructionWatcher(QObject* window)
+    explicit WindowDestructionWatcher(all::Window* window)
         : m_window(window)
     {
-        m_window->installEventFilter(this);
+        qApp->installEventFilter(this);
     }
 
-    bool eventFilter(QObject* obj, QEvent* event) override {
-        if (event->type() == QEvent::Type::Close) {
-            OnClose();
+    bool eventFilter(QObject* obj, QEvent* event) override
+    {
+        switch (event->type()) {
+        case QEvent::Type::Close:
+            if (obj != m_window)
+                break;
+            qApp->removeEventFilter(this);
+            emit OnClose();
+            break;
+        case QEvent::Type::KeyPress:
+            m_window->OnKeyPress(static_cast<::QKeyEvent*>(event));
+            break;
+        case QEvent::Type::MouseButtonPress:
+            if (obj == m_window->GetGraphicsWindow()) {
+                // OutputDebugStringA("Event caught\n");
+                emit OnMousePress(static_cast<::QMouseEvent*>(event));
+            }
+            break;
+        default:
+            break;
         }
         return QObject::eventFilter(obj, event);
     }
 signals:
     void OnClose();
+    void OnMousePress(::QMouseEvent* e);
+
 private:
-    QObject* m_window;
+    all::Window* m_window;
 };
 
-
-class App {
+class App
+{
 public:
-    App(int& argc, char** argv) : app(argc, argv), impl(std::in_place), wnd(impl->GetWindow(), { 1920, 1080 }) {
+    App(int& argc, char** argv)
+        : app(argc, argv), impl(std::in_place), wnd(impl->GetWindow(), { 1920, 1080 })
+    {
         // Basic setup of the application
         QCoreApplication::setApplicationName(QStringLiteral("Schneider Demo"));
         QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
@@ -65,19 +85,19 @@ public:
         darkPalette.setColor(QPalette::HighlightedText, Qt::black);
         app.setPalette(darkPalette);
 
-        QObject::connect(&watcher, &WindowDestructionWatcher::OnClose,
-            [this]() {
-                impl.reset();
-                app.quit();
-            }
-        );
-        QObject::connect(&wnd, &all::Window::OnLoadModel, [this] {
-#if ALLEGIANCE_SERENITY // quick and dirty
-            impl->LoadModel();
-#endif
-            });
+        auto* cc = wnd.GetCameraControl();
 
-        impl->CreateAspects(wnd.GetCameraControl());
+        QObject::connect(&watcher, &WindowDestructionWatcher::OnClose,
+                         [this]() {
+                             impl.reset();
+                             app.quit();
+                         });
+        QObject::connect(cc, &all::CameraControl::OnClose,
+                         [this]() {
+                             app.postEvent(&wnd, new QCloseEvent);
+                         });
+
+        impl->CreateAspects(cc);
         wnd.show();
     }
 
@@ -85,8 +105,7 @@ public:
     int Start() noexcept { return app.exec(); }
 
 private:
-
-    void MakeScene() {}
+    void MakeScene() { }
 
 private:
     Application app;
