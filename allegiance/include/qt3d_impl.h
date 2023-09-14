@@ -24,6 +24,9 @@
 #include <Qt3DInput/QAxis>
 #include <Qt3DInput/QAnalogAxisInput>
 #include <Qt3DInput/QKeyboardHandler>
+#include <QFileDialog>
+#include <Qt3dRender/QMesh>
+#include <Qt3DRender/QSceneLoader>
 
 class QStereoCamera : public Qt3DCore::QEntity
 {
@@ -348,20 +351,13 @@ public:
         using namespace Qt3DRender;
         using namespace Qt3DExtras;
 
-        auto r = new QEntity(root);
-        r->addComponent(new QCuboidMesh);
-        auto m = new QDiffuseSpecularMaterial;
-        m->setShininess(30.f);
-        m->setDiffuse(QColor{0, 255, 200});
-        m->setAmbient(QColor{255, 0, 255});
-        m->setSpecular(QColor{0, 255, 200});
-        r->addComponent(m);
-        auto t = new Qt3DCore::QTransform;
-        r->addComponent(t);
+        m_transform = new Qt3DCore::QTransform{ m_rootEntity.get() };
+        m_transform->setTranslation(QVector3D{ 0, -10, -50 });
 
-        auto manip = new ObjectManipulatorController(root);
-        manip->setTargetTransform(t);
+        m_controller = new ObjectManipulatorController(m_rootEntity.get());
+        m_controller->setTargetTransform(m_transform);
 	}
+
     void CreateAspects(all::CameraControl* cc)
 	{
         using namespace Qt3DCore;
@@ -398,13 +394,92 @@ public:
         QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
             m_camera->setInterocularDistance(v);
         });
+        QObject::connect(cc, &all::CameraControl::OnLoadModel,
+                         [this]() { LoadModel(); });
 
         m_view.setRootEntity(m_rootEntity.get());
     }
+
     QWindow* GetWindow() { return &m_view; }
+
+    void LoadModel()
+    {
+        QFileDialog fd;
+        fd.setFileMode(QFileDialog::ExistingFile);
+        fd.setNameFilter("*.obj");
+        fd.setViewMode(QFileDialog::Detail);
+        if (fd.exec()) {
+            auto path = fd.selectedFiles()[0];
+            auto folder = fd.directory().path();
+
+            auto mesh = new Qt3DRender::QMesh();
+            mesh->setObjectName("Model Mesh");
+            mesh->setSource(QUrl::fromLocalFile(path));
+
+            if (m_userEntity) {
+                m_userEntity->removeComponent(m_transform);
+                delete m_userEntity;
+            }
+            m_userEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
+            m_userEntity->addComponent(mesh);
+            m_userEntity->addComponent(m_transform);
+
+            // reset transform
+
+
+            QString texturePath;
+            QDirIterator it(fd.directory());
+            while (it.hasNext()) {
+                QString filename = it.next();
+                QFileInfo file(filename);
+
+                if (file.isDir()) { // Check if it's a dir
+                    continue;
+                }
+
+                // If the filename contains target string - put it in the hitlist
+                if (file.fileName().contains("diffuse", Qt::CaseInsensitive)) {
+                    texturePath = file.filePath();
+                    break;
+                }
+            }
+
+            if (false && !texturePath.isEmpty()) {
+                // crashes on cottage
+                qDebug() << "setting texutre: " << texturePath;
+                auto m_texture = std::make_unique<Qt3DRender::QTextureImage>();
+                m_texture->setObjectName("Model Texture");
+                if (!texturePath.isEmpty())
+                     m_texture->setSource(QUrl::fromLocalFile(texturePath));
+
+                auto* material = new Qt3DExtras::QTextureMaterial(m_rootEntity.get());
+
+                // Create a texture and set its image
+                auto* texture2D = new Qt3DRender::QTexture2D(material);
+                texture2D->addTextureImage(m_texture.get());
+
+                // Assign the texture to the material
+                material->setTexture(texture2D);
+
+                // Apply the material to the mesh entity
+                m_userEntity->addComponent(material);
+            } else {
+                auto m = new Qt3DExtras::QDiffuseSpecularMaterial;
+                m->setShininess(30.f);
+                m->setDiffuse(QColor{ 0, 255, 200 });
+                m->setAmbient(QColor{ 255, 0, 255 });
+                m->setSpecular(QColor{ 0, 255, 200 });
+                m_userEntity->addComponent(m);
+            }
+        }
+    }
+
 private:
     Qt3DExtras::Qt3DWindow m_view;
     std::unique_ptr<Qt3DCore::QEntity> m_rootEntity;
+    Qt3DCore::QEntity* m_userEntity{ nullptr };
+    ObjectManipulatorController* m_controller;
+    Qt3DCore::QTransform* m_transform;
     QStereoForwardRenderer* m_renderer;
     QStereoCamera* m_camera;
 };
