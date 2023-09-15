@@ -14,10 +14,14 @@
 #include <Qt3DRender/QClearBuffers>
 #include <Qt3DRender/QViewport>
 #include <Qt3DRender/QDebugOverlay>
+#include <Qt3dRender/QMesh>
+#include <Qt3DRender/QSceneLoader>
+#include <Qt3dRender/QTextureImage>
+#include <Qt3dRender/QTexture>
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QCuboidMesh>
 #include <Qt3DExtras/QDiffuseSpecularMaterial>
-#include <Qt3DExtras/QOrbitCameraController>
+#include <Qt3DExtras/QTextureMaterial>
 #include <Qt3DInput/QMouseDevice>
 #include <Qt3DInput/QKeyboardDevice>
 #include <Qt3DInput/QLogicalDevice>
@@ -25,8 +29,6 @@
 #include <Qt3DInput/QAnalogAxisInput>
 #include <Qt3DInput/QKeyboardHandler>
 #include <QFileDialog>
-#include <Qt3dRender/QMesh>
-#include <Qt3DRender/QSceneLoader>
 
 class QStereoCamera : public Qt3DCore::QEntity
 {
