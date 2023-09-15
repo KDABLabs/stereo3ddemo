@@ -14,10 +14,10 @@
 #include <Qt3DRender/QClearBuffers>
 #include <Qt3DRender/QViewport>
 #include <Qt3DRender/QDebugOverlay>
-#include <Qt3dRender/QMesh>
+#include <Qt3DRender/QMesh>
 #include <Qt3DRender/QSceneLoader>
-#include <Qt3dRender/QTextureImage>
-#include <Qt3dRender/QTexture>
+#include <Qt3DRender/QTextureImage>
+#include <Qt3DRender/QTexture>
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QCuboidMesh>
 #include <Qt3DExtras/QDiffuseSpecularMaterial>
