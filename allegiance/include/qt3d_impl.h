@@ -1,33 +1,7 @@
 #pragma once
-#include "camera_control.h"
+#if !ALLEGIANCE_SERENITY
 
-#include <Qt3DCore/QEntity>
-#include <Qt3DCore/QTransform>
-#include <Qt3DRender/QCamera>
-#include <Qt3DRender/QCameraSelector>
-#include <Qt3DRender/QCameraLens>
-#include <Qt3DRender/QRenderSettings>
-#include <Qt3DRender/QRenderSurfaceSelector>
-#include <Qt3DRender/QRenderTargetSelector>
-#include <Qt3DRender/QRenderTarget>
-#include <Qt3DRender/QRenderTargetOutput>
-#include <Qt3DRender/QClearBuffers>
-#include <Qt3DRender/QViewport>
-#include <Qt3DRender/QDebugOverlay>
-#include <Qt3DRender/QMesh>
-#include <Qt3DRender/QSceneLoader>
-#include <Qt3DRender/QTextureImage>
-#include <Qt3DRender/QTexture>
-#include <Qt3DExtras/Qt3DWindow>
-#include <Qt3DExtras/QCuboidMesh>
-#include <Qt3DExtras/QDiffuseSpecularMaterial>
-#include <Qt3DExtras/QTextureMaterial>
-#include <Qt3DInput/QMouseDevice>
-#include <Qt3DInput/QKeyboardDevice>
-#include <Qt3DInput/QLogicalDevice>
-#include <Qt3DInput/QAxis>
-#include <Qt3DInput/QAnalogAxisInput>
-#include <Qt3DInput/QKeyboardHandler>
+#include "camera_control.h"
 #include <QFileDialog>
 
 class QStereoCamera : public Qt3DCore::QEntity
@@ -486,6 +460,5 @@ private:
     QStereoCamera* m_camera;
 };
 
-
-
+#endif
 
