@@ -25,6 +25,13 @@ target_link_libraries(${PROJECT_NAME}
 )
 if(SERENITY_BUILD)
     CompileShaderSet(${PROJECT_NAME} multiview-scene)
+    set(RESOURCE_FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.vert.spv"
+        "${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.frag.spv"
+    )
+    install(FILES ${RESOURCE_FILES}
+            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            COMPONENT applications)
 endif()
 if(NOT FORCE_QT)
     target_link_libraries(${PROJECT_NAME}
