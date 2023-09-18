@@ -6,8 +6,19 @@
 #include <QFileDialog>
 #include <QDirIterator>
 #include <glm/gtx/compatibility.hpp>
+#include <QMouseEvent>
+
+#include <format>
 
 using namespace Serenity;
+
+struct Input {
+public:
+    bool m_left_mouse = false;
+    bool m_fired = false;
+    int m_last_x = 0;
+    int m_last_y = 0;
+};
 
 class OrbitalStereoCamera : public StereoCamera
 {
@@ -102,6 +113,44 @@ public:
     }
 
 public:
+    void OnMouseEvent(::QMouseEvent* e)
+    {
+        switch (e->type()) {
+        case QEvent::MouseButtonPress:
+            switch (e->button()) {
+            case Qt::MouseButton::LeftButton:
+                m_input.m_left_mouse = true;
+                break;
+            default:
+                break;
+            }
+            break;
+        case QEvent::MouseButtonRelease:
+            switch (e->button()) {
+            case Qt::MouseButton::LeftButton:
+                m_input.m_left_mouse = false;
+                m_input.m_fired = false;
+                break;
+            default:
+                break;
+            }
+            break;
+        case QEvent::MouseMove:
+            if (m_input.m_left_mouse) {
+                if (m_input.m_fired) {
+                    auto dx = e->x() - m_input.m_last_x;
+                    auto dy = e->y() - m_input.m_last_y;
+
+                    m_camera->angles = m_camera->angles() + glm::vec2(-dy * 0.01f, dx * 0.01f);
+                }
+
+                m_input.m_last_x = e->x();
+                m_input.m_last_y = e->y();
+
+                m_input.m_fired = true;
+            }
+        }
+    }
     std::unique_ptr<Entity> CreateScene() noexcept
     {
         auto rootEntity = std::make_unique<Entity>();
@@ -209,24 +258,24 @@ public:
 
         // Add Camera into the Scene
 
-        auto camera = rootEntity->createChildEntity<OrbitalStereoCamera>();
-        camera->lookAt(glm::vec3(10.0f, 10.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+        auto camera = m_camera = rootEntity->createChildEntity<OrbitalStereoCamera>();
+        camera->lookAt(glm::vec3(10.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                        glm::vec3(0.0f, 1.0f, 0.0f));
         camera->lens()->setPerspectiveProjection(
                 45.0f, float(qwin.width()) / qwin.height(), 0.01f, 1000.0f);
         camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
 
-        QObject::connect(&qwin, &QWindow::widthChanged, [camera, this](int width) {
-            camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
+        QObject::connect(&qwin, &QWindow::widthChanged, [this](int width) {
+            m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
         });
-        QObject::connect(&qwin, &QWindow::heightChanged, [camera, this](int height) {
-            camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
+        QObject::connect(&qwin, &QWindow::heightChanged, [this](int height) {
+            m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
         });
-        QObject::connect(cc, &all::CameraControl::OnFocusPlaneChanged, [camera, this](float v) {
-            camera->convergencePlaneDistance = v;
+        QObject::connect(cc, &all::CameraControl::OnFocusPlaneChanged, [this](float v) {
+            m_camera->convergencePlaneDistance = v;
         });
-        QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [camera, this](float v) {
-            camera->interocularDistance = v;
+        QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
+            m_camera->interocularDistance = v;
         });
 
         QObject::connect(cc, &all::CameraControl::OnLoadModel, [this]() {
@@ -299,4 +348,7 @@ private:
     std::unique_ptr<Texture2D> m_texture;
     Entity* m_scene;
     MeshRenderer* m_model;
+
+    OrbitalStereoCamera* m_camera;
+    Input m_input;
 };

@@ -37,10 +37,11 @@ public:
         case QEvent::Type::KeyPress:
             m_window->OnKeyPress(static_cast<::QKeyEvent*>(event));
             break;
+        case QEvent::Type::MouseMove:
         case QEvent::Type::MouseButtonPress:
+        case QEvent::Type::MouseButtonRelease:
             if (obj == m_window->GetGraphicsWindow()) {
-                // OutputDebugStringA("Event caught\n");
-                emit OnMousePress(static_cast<::QMouseEvent*>(event));
+                emit OnMouseEvent(static_cast<::QMouseEvent*>(event));
             }
             break;
         default:
@@ -50,7 +51,7 @@ public:
     }
 signals:
     void OnClose();
-    void OnMousePress(::QMouseEvent* e);
+    void OnMouseEvent(::QMouseEvent* e);
 
 private:
     all::Window* m_window;
@@ -96,7 +97,12 @@ public:
                          [this]() {
                              app.postEvent(&wnd, new QCloseEvent);
                          });
-
+#if ALLEGIANCE_SERENITY
+        QObject::connect(&watcher, &WindowDestructionWatcher::OnMouseEvent,
+                         [this](::QMouseEvent* e) {
+                             impl->OnMouseEvent(e);
+                         });
+#endif
         impl->CreateAspects(cc);
         wnd.show();
     }
