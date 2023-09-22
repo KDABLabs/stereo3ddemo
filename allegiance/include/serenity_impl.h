@@ -157,8 +157,8 @@ public:
         rootEntity->setObjectName("Root Entity");
 
         auto shader = rootEntity->createChild<SpirVShaderProgram>();
-        shader->vertexShader = "multiview-scene.vert.spv";
-        shader->fragmentShader = "multiview-scene.frag.spv";
+        shader->vertexShader = "scene/multiview-scene.vert.spv";
+        shader->fragmentShader = "scene/multiview-scene.frag.spv";
 
         // Lights
         auto directionalLight = rootEntity->createComponent<Light>();
@@ -222,6 +222,15 @@ public:
         SrtTransform* transform = e->createComponent<SrtTransform>();
 
         m_mesh = std::make_unique<Mesh>();
+        m_mesh->setObjectName("Model Mesh");
+        MeshLoader meshloader;
+        meshloader.load("scene/cottage.obj", m_mesh.get());
+
+        m_texture = std::make_unique<Texture2D>();
+        m_texture->setObjectName("Model Texture");
+        m_texture->setPath("scene/cottage_diffuse.png");
+        material->setTexture(2, 2, m_texture.get());
+
         m_model = e->createComponent<MeshRenderer>();
         m_model->mesh = m_mesh.get();
         m_model->material = material;

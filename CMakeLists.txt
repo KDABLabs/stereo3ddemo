@@ -26,12 +26,12 @@ qt_standard_project_setup()
 
 set(POSTFIX "_qt")
 set(SERENITY_BUILD 0)
-add_subdirectory("allegiance" ${CMAKE_BINARY_DIR}/allegiance_qt)
+add_subdirectory("allegiance" ${CMAKE_CURRENT_BINARY_DIR}/allegiance_qt)
 
 if(NOT FORCE_QT)
     set(POSTFIX "_serenity")
     set(SERENITY_BUILD 1)
-    add_subdirectory("allegiance" ${CMAKE_BINARY_DIR}/allegiance_serenity)
+    add_subdirectory("allegiance" ${CMAKE_CURRENT_BINARY_DIR}/allegiance_serenity)
 endif()
 
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)

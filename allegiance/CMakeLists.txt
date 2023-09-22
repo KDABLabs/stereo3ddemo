@@ -1,7 +1,5 @@
 project(allegiance${POSTFIX})
 
-
-
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
         PRIVATE
@@ -24,15 +22,42 @@ target_link_libraries(${PROJECT_NAME}
                 Qt6::Quick
 )
 if(SERENITY_BUILD)
+    set(SCENE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../scene")
     CompileShaderSet(${PROJECT_NAME} multiview-scene)
     add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}Shaders)
-    set(RESOURCE_FILES
-        "${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.vert.spv"
-        "${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.frag.spv"
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+			"${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.frag.spv"
+			"${SCENE_DIR}/multiview-scene.frag.spv"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.vert.spv"
+            "${SCENE_DIR}/multiview-scene.vert.spv"
+        DEPENDS ${PROJECT_NAME}Shaders
     )
-    #file(COPY ${RESOURCE_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../)
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/../shared/cottage.obj"
+            "${SCENE_DIR}/cottage.obj"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/../shared/cottage_diffuse.png"
+            "${SCENE_DIR}/cottage_diffuse.png"
+    )
+
+    set(RESOURCE_FILES
+        "${SCENE_DIR}/multiview-scene.vert.spv"
+        "${SCENE_DIR}/multiview-scene.frag.spv"
+    )
+    set(SCENE_FILES
+        "${SCENE_DIR}/cottage.obj"
+        "${SCENE_DIR}/cottage_diffuse.png"
+    )
     install(FILES ${RESOURCE_FILES}
             DESTINATION ${CMAKE_INSTALL_BINDIR}
+            COMPONENT applications)
+    install(FILES ${SCENE_FILES}
+            DESTINATION ${CMAKE_INSTALL_BINDIR}/scene
             COMPONENT applications)
 endif()
 if(NOT FORCE_QT)
@@ -62,45 +87,6 @@ target_compile_definitions(${PROJECT_NAME}
     PRIVATE
         ALLEGIANCE_SERENITY=${SERENITY_BUILD}
 )
-
-if(WIN32 AND SERENITY_BUILD)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Serenity::Gui>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Serenity::Logic>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:KDGpu::KDGpu>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:KDGui>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:Serenity::Core>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:KDFoundation>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:KDUtils>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:spdlog::spdlog>
-            ${CMAKE_CURRENT_BINARY_DIR})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            $<TARGET_FILE:KDGpu::KDGpuKDGui>
-            ${CMAKE_CURRENT_BINARY_DIR})
-endif()
 
 install(TARGETS ${PROJECT_NAME}
     BUNDLE  DESTINATION .
