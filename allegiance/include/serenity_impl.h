@@ -7,6 +7,7 @@
 #include <QDirIterator>
 #include <glm/gtx/compatibility.hpp>
 #include <QMouseEvent>
+#include "stereo_camera.h"
 
 #include <format>
 
@@ -59,6 +60,20 @@ public:
     KDBindings::Property<glm::vec2> angles;
 };
 
+class StereoProxyCamera : public StereoCamera
+{
+public:
+    using StereoCamera::StereoCamera;
+
+public:
+    void SetMatrices(const glm::mat4& left, const glm::mat4& right, const glm::mat4& center)
+    {
+        *(const_cast<KDBindings::Property<glm::mat4>*>(&leftEyeViewMatrix)) = left;
+        *(const_cast<KDBindings::Property<glm::mat4>*>(&rightEyeViewMatrix)) = right;
+        *(const_cast<KDBindings::Property<glm::mat4>*>(&centerEyeViewMatrix)) = center;
+    }
+};
+
 class SerenityImpl
 {
 public:
@@ -71,7 +86,6 @@ public:
     }
     void LoadModel()
     {
-        
     }
 
 public:
@@ -103,7 +117,9 @@ public:
                     auto dx = e->x() - m_input.m_last_x;
                     auto dy = e->y() - m_input.m_last_y;
 
-                    m_camera->angles = m_camera->angles() + glm::vec2(-dy * 0.01f, dx * 0.01f);
+                    m_camera2->SetPhi(m_camera2->GetPhi() + dx * 0.01f);
+                    m_camera2->SetTheta(m_camera2->GetTheta() + dy * 0.01f);
+                    //m_camera->angles = m_camera->angles() + glm::vec2(-dy * 0.01f, dx * 0.01f);
                 }
 
                 m_input.m_last_x = e->x();
@@ -229,7 +245,7 @@ public:
 
         // Add Camera into the Scene
 
-        auto camera = m_camera = rootEntity->createChildEntity<OrbitalStereoCamera>();
+        auto camera = m_camera = rootEntity->createChildEntity<StereoProxyCamera>();
         camera->lookAt(glm::vec3(10.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
                        glm::vec3(0.0f, 1.0f, 0.0f));
         camera->lens()->setPerspectiveProjection(
@@ -237,25 +253,35 @@ public:
         camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
 
         QObject::connect(&qwin, &QWindow::widthChanged, [this](int width) {
-            m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
+            // m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
+            m_camera2->SetAspectRatio(float(qwin.width()) / qwin.height());
         });
         QObject::connect(&qwin, &QWindow::heightChanged, [this](int height) {
-            m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
+            // m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
+            m_camera2->SetAspectRatio(float(qwin.width()) / qwin.height());
         });
         QObject::connect(cc, &all::CameraControl::OnFocusPlaneChanged, [this](float v) {
-            m_camera->convergencePlaneDistance = v;
+            // m_camera->convergencePlaneDistance = v;
+            m_camera2->SetConvergencePlaneDistance(v);
         });
         QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
-            m_camera->interocularDistance = v;
+            // m_camera->interocularDistance = v;
+            m_camera2->SetInterocularDistance(v);
         });
 
         QObject::connect(cc, &all::CameraControl::OnLoadModel, [this]() {
             LoadModel();
         });
 
-        camera->interocularDistance = 0.005f;
-        camera->radius = 20.0f;
-        camera->angles = { 0.5, 0.5 };
+        QObject::connect(m_camera2, &all::OrbitalStereoCamera::OnViewChanged, [this]() {
+            m_camera->SetMatrices(m_camera2->GetViewLeft(), m_camera2->GetViewRight(), m_camera2->GetViewCenter());
+        });
+        QObject::connect(m_camera2, &all::OrbitalStereoCamera::OnProjectionChanged, [this]() {
+            m_camera->lens()->setPerspectiveProjection(45.0f, m_camera2->GetAspectRatio(), m_camera2->GetNearPlane(), m_camera2->GetFarPlane());
+        });
+        // camera->interocularDistance = 0.005f;
+        // camera->radius = 20.0f;
+        // camera->angles = { 0.5, 0.5 };
 
         // Create Render Algo
         auto algo = std::make_unique<StereoForwardAlgorithm>();
@@ -320,6 +346,8 @@ private:
     Entity* m_scene;
     MeshRenderer* m_model;
 
-    OrbitalStereoCamera* m_camera;
+    // Camera
+    all::OrbitalStereoCamera* m_camera2 = new all::OrbitalStereoCamera;
+    StereoProxyCamera* m_camera;
     Input m_input;
 };

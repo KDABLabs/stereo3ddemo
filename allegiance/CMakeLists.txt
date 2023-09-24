@@ -11,6 +11,7 @@ target_sources(${PROJECT_NAME}
                 "include/serenity_impl.h"
                 "include/sliders.h"
                 "include/camera_control.h"
+                "include/stereo_camera.h"
                 "include/qt3d_impl.h"
  "include/vertical_label.h")
 target_link_libraries(${PROJECT_NAME}
