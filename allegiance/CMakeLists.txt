@@ -12,7 +12,7 @@ target_sources(${PROJECT_NAME}
                 "include/sliders.h"
                 "include/camera_control.h"
                 "include/qt3d_impl.h"
-)
+ "include/vertical_label.h")
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
                 Qt6::Core

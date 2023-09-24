@@ -71,45 +71,7 @@ public:
     }
     void LoadModel()
     {
-        QFileDialog fd;
-        fd.setFileMode(QFileDialog::ExistingFile);
-        fd.setNameFilter("*.obj");
-        fd.setViewMode(QFileDialog::Detail);
-        if (fd.exec()) {
-            auto path = fd.selectedFiles()[0];
-            auto folder = fd.directory().path();
-
-            auto model = std::make_unique<Mesh>();
-            model->setObjectName("Model Mesh");
-            MeshLoader meshloader;
-            meshloader.load(path.toStdString(), model.get());
-            m_model->mesh = model.get();
-
-            QString texturePath;
-            QDirIterator it(fd.directory());
-            while (it.hasNext()) {
-                QString filename = it.next();
-                QFileInfo file(filename);
-
-                if (file.isDir()) { // Check if it's a dir
-                    continue;
-                }
-
-                // If the filename contains target string - put it in the hitlist
-                if (file.fileName().contains("diffuse", Qt::CaseInsensitive)) {
-                    texturePath = file.filePath();
-                    break;
-                }
-            }
-
-            m_texture = std::make_unique<Texture2D>();
-            m_texture->setObjectName("Model Texture");
-            if (!texturePath.isEmpty())
-                m_texture->setPath(texturePath.toStdString());
-            m_model->material()->setTexture(2, 2, m_texture.get());
-
-            m_mesh = std::move(model);
-        }
+        
     }
 
 public:

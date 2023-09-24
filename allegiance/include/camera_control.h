@@ -1,9 +1,98 @@
 #pragma once
 #include "sliders.h"
+#include "vertical_label.h"
 #include <QGroupBox>
 #include <QPushButton>
+#include <QMouseEvent>
 
 namespace all {
+struct MouseTracker {
+    QPoint last_pos = {};
+    bool is_pressed = false;
+    bool skip_first = false;
+};
+
+enum class LabelPosition {
+    Right,
+    Bottom
+};
+class ValueButton : public QPushButton
+{
+    Q_OBJECT
+public:
+    ValueButton(const QIcon& icon, LabelPosition pos, std::pair<float, float> boundaries, float initial, QWidget* parent = nullptr)
+        : QPushButton(icon, {}, parent)
+        , label(pos == LabelPosition::Right ? new VerticalLabel(this) : new QLabel(this))
+        , value(initial)
+        , boundaries(boundaries)
+        , label_position(pos)
+    {
+        label->setFont(QFont{ u"Arial"_qs, 15 });
+        label->setAlignment(Qt::AlignCenter);
+        label->setText(QString::number(value, 'f', 2));
+
+        QBoxLayout* layout = pos == LabelPosition::Right
+                ? (QBoxLayout*)new QHBoxLayout(this)
+                : (QBoxLayout*)new QVBoxLayout(this);
+
+        layout->setSpacing(0);
+        layout->setContentsMargins(0, 0, 0, 0);
+        layout->addWidget(label);
+        layout->setAlignment(pos == LabelPosition::Right
+                                     ? Qt::AlignVCenter | Qt::AlignRight
+                                     : Qt::AlignHCenter | Qt::AlignBottom);
+        setLayout(layout);
+    }
+
+public:
+    void mouseMoveEvent(QMouseEvent* e) override
+    {
+        if (e->buttons() & Qt::LeftButton) {
+            auto pos = e->pos();
+
+            if (tracker.skip_first) {
+                tracker.skip_first = false;
+                tracker.last_pos = pos;
+                return QPushButton::mouseMoveEvent(e);
+            }
+            value += (label_position == LabelPosition::Right
+                              ? (tracker.last_pos.y() - pos.y())
+                              : (pos.x() - tracker.last_pos.x())) *
+                    (boundaries.second - boundaries.first) * 0.005f;
+
+            value = std::clamp(value, boundaries.first, boundaries.second);
+            tracker.last_pos = pos;
+            label->setText(QString::number(value, 'f', 2));
+            emit OnValueChanged(value);
+        }
+        return QPushButton::mouseMoveEvent(e);
+    }
+    void mousePressEvent(QMouseEvent* e) override
+    {
+        if (e->button() == Qt::LeftButton) {
+            tracker.is_pressed = true;
+            tracker.skip_first = true;
+        }
+        return QPushButton::mousePressEvent(e);
+    }
+    void mouseReleaseEvent(QMouseEvent* e) override
+    {
+        if (e->button() == Qt::LeftButton) {
+            tracker.is_pressed = false;
+        }
+        return QPushButton::mouseReleaseEvent(e);
+    }
+signals:
+    void OnValueChanged(float value);
+
+private:
+    QLabel* label;
+    std::pair<float, float> boundaries;
+    float value = 0.0f;
+    MouseTracker tracker;
+    LabelPosition label_position;
+};
+
 class CameraControl : public QWidget
 {
     Q_OBJECT
@@ -15,26 +104,40 @@ public:
         QPushButton* load_model = new QPushButton(QIcon{ u":/3D.png"_qs }, u""_qs, this);
         QPushButton* toggle_cursor = new QPushButton(QIcon{ u":/3Dcursor.png"_qs }, u""_qs, this);
         QPushButton* close = new QPushButton(QIcon{ u":/close.png"_qs }, u""_qs, this);
-        QPushButton* eye_disparity = new QPushButton(QIcon{ u":/a.png"_qs }, u""_qs, this);
-        QPushButton* focus_distance = new QPushButton(QIcon{ u":/b.png"_qs }, u""_qs, this);
-
+        ValueButton* eye_disparity = new ValueButton(QIcon{ u":/b.png"_qs }, LabelPosition::Bottom, { 0.0f, 1.0f }, 0.06f, this);
+        ValueButton* focus_distance = new ValueButton(QIcon{ u":/a.png"_qs }, LabelPosition::Right, { 0.5f, 100.0f }, 5.0f, this);
 
         connect(load_image, &QPushButton::clicked, this, &CameraControl::OnLoadImage);
         connect(load_model, &QPushButton::clicked, this, &CameraControl::OnLoadModel);
         connect(toggle_cursor, &QPushButton::clicked, this, &CameraControl::OnToggleCursor);
         connect(close, &QPushButton::clicked, this, &CameraControl::OnClose);
+        connect(eye_disparity, &ValueButton::OnValueChanged, this, &CameraControl::OnEyeDisparityChanged);
+        connect(focus_distance, &ValueButton::OnValueChanged, this, &CameraControl::OnFocusPlaneChanged);
 
         QVBoxLayout* layout = new QVBoxLayout(this);
         layout->setAlignment(Qt::AlignTop);
         layout->setContentsMargins(20, 20, 20, 20);
 
         auto make_button = [](QPushButton* b) {
-            b->setFixedSize({ 150, 100 });
-            b->setIconSize({ 100, 100 });
+            b->setFixedSize({ 128, 128 });
+            b->setIconSize({ 128, 128 });
             b->setFlat(true);
+            b->setStyleSheet(uR"(QPushButton {
+                border: 2px solid #8f8f91;
+                border-radius: 20px;
+                min-width: 128px;
+                min-height: 128px;
+            }
+            QPushButton:hover:!pressed {
+                border: 4px solid #ff0000;
+            }
+            QPushButton:pressed {
+                border: 4px solid #ffff00;
+            }
+        )"_qs);
         };
 
-        QVBoxLayout* function_layout = new QVBoxLayout(this);
+        QVBoxLayout* function_layout = new QVBoxLayout;
         function_layout->setSpacing(50);
 
         make_button(load_image);
@@ -48,7 +151,7 @@ public:
         function_layout->addWidget(load_model);
         function_layout->addWidget(toggle_cursor);
 
-        QVBoxLayout* camera_layout = new QVBoxLayout(this);
+        QVBoxLayout* camera_layout = new QVBoxLayout;
 
         make_button(eye_disparity);
         make_button(focus_distance);
@@ -63,8 +166,6 @@ public:
         make_button(close);
         layout->addStretch();
         layout->addWidget(close);
-
-        setLayout(layout);
     }
 signals:
     void OnEyeDisparityChanged(float value);
