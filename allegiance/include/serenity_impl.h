@@ -207,7 +207,7 @@ public:
         m_texture = std::make_unique<Texture2D>();
         m_texture->setObjectName("Model Texture");
         m_texture->setPath("scene/cottage_diffuse.png");
-        material->setTexture(2, 2, m_texture.get());
+        material->setTexture(4, 0, m_texture.get());
 
         m_model = e->createComponent<MeshRenderer>();
         m_model->mesh = m_mesh.get();

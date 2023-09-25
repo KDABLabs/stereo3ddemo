@@ -1,5 +1,16 @@
 project(allegiance${POSTFIX})
 
+find_package(glm QUIET)
+
+if (NOT glm_FOUND)
+    FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        master
+    )
+    FetchContent_MakeAvailable(glm)
+endif()
+
 add_executable(${PROJECT_NAME})
 target_sources(${PROJECT_NAME}
         PRIVATE
@@ -21,6 +32,7 @@ target_link_libraries(${PROJECT_NAME}
                 Qt6::Widgets
                 Qt6::3DExtras
                 Qt6::Quick
+                glm::glm
 )
 if(SERENITY_BUILD)
     set(SCENE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../scene")

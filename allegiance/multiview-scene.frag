@@ -58,7 +58,7 @@ layout(std140, set = 3, binding = 0) uniform SerenityPhongMaterial {
     float shininess;
 } material;
 
-layout(set = 2, binding = 2) uniform sampler2D texSampler;
+layout(set = 4, binding = 0) uniform sampler2D texSampler;
 
 void adsModel(const in vec3 worldPos,
               const in vec3 worldNormal,
