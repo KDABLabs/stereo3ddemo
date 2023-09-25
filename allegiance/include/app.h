@@ -4,6 +4,7 @@
 #include <QPalette>
 #include <QStyleFactory>
 #include <window.h>
+#include <stereo_camera.h>
 
 #if ALLEGIANCE_SERENITY
 #include "serenity_impl.h"
@@ -37,6 +38,11 @@ public:
         case QEvent::Type::KeyPress:
             m_window->OnKeyPress(static_cast<::QKeyEvent*>(event));
             break;
+        case QEvent::Type::Wheel:
+            if (obj == m_window->GetGraphicsWindow()) {
+                emit OnScroll(static_cast<::QWheelEvent*>(event));
+            }
+            break;
         case QEvent::Type::MouseMove:
         case QEvent::Type::MouseButtonPress:
         case QEvent::Type::MouseButtonRelease:
@@ -52,6 +58,7 @@ public:
 signals:
     void OnClose();
     void OnMouseEvent(::QMouseEvent* e);
+    void OnScroll(::QWheelEvent* e);
 
 private:
     all::Window* m_window;
@@ -87,28 +94,84 @@ public:
         app.setPalette(darkPalette);
 
         auto* cc = wnd.GetCameraControl();
+        auto& qwin = *impl->GetWindow();
 
         QObject::connect(&watcher, &WindowDestructionWatcher::OnClose,
                          [this]() {
                              impl.reset();
                              app.quit();
                          });
+        QObject::connect(&watcher, &WindowDestructionWatcher::OnScroll,
+                         [this](::QWheelEvent* e) {
+                             camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
+                         });
         QObject::connect(cc, &all::CameraControl::OnClose,
                          [this]() {
                              app.postEvent(&wnd, new QCloseEvent);
                          });
-#if ALLEGIANCE_SERENITY
         QObject::connect(&watcher, &WindowDestructionWatcher::OnMouseEvent,
                          [this](::QMouseEvent* e) {
-                             impl->OnMouseEvent(e);
+                             switch (e->type()) {
+                             case QEvent::MouseButtonPress:
+                                 if (e->buttons() & Qt::MouseButton::LeftButton) {
+                                     input.is_pressed = true;
+                                     input.skip_first = true;
+                                 }
+                                 break;
+
+                             case QEvent::MouseButtonRelease:
+                                 if (e->button() == Qt::MouseButton::LeftButton) {
+                                     input.is_pressed = false;
+                                 }
+                                 break;
+                             case QEvent::MouseMove: {
+                                 if (!input.is_pressed)
+                                     break;
+
+                                 auto pos = e->pos();
+
+                                 if (input.skip_first) {
+                                     input.skip_first = false;
+                                     input.last_pos = pos;
+                                     break;
+                                 }
+
+                                 auto dx = pos.x() - input.last_pos.x();
+                                 auto dy = pos.y() - input.last_pos.y();
+
+                                 camera.SetPhi(camera.GetPhi() + dx * 0.01f);
+                                 camera.SetTheta(camera.GetTheta() - dy * 0.01f);
+                                 input.last_pos = pos;
+                             } break;
+                             default:
+                                 break;
+                             }
                          });
-#endif
-        impl->CreateAspects(cc);
+
+        QObject::connect(&qwin, &QWindow::widthChanged, [this, &qwin](int width) {
+            camera.SetAspectRatio(float(qwin.width()) / qwin.height());
+        });
+        QObject::connect(&qwin, &QWindow::heightChanged, [this, &qwin](int height) {
+            camera.SetAspectRatio(float(qwin.width()) / qwin.height());
+        });
+        QObject::connect(cc, &all::CameraControl::OnFocusPlaneChanged, [this](float v) {
+            camera.SetConvergencePlaneDistance(v);
+        });
+        QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
+            camera.SetInterocularDistance(v);
+        });
+
+        impl->CreateAspects(cc, &camera);
+
         wnd.show();
     }
 
 public:
-    int Start() noexcept { return app.exec(); }
+    int
+    Start() noexcept
+    {
+        return app.exec();
+    }
 
 private:
     void MakeScene() { }
@@ -118,4 +181,6 @@ private:
     std::optional<Implementation> impl;
     all::Window wnd;
     WindowDestructionWatcher watcher{ &wnd };
+    all::OrbitalStereoCamera camera;
+    all::MouseTracker input;
 };

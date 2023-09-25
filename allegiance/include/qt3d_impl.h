@@ -2,6 +2,7 @@
 #if !ALLEGIANCE_SERENITY
 
 #include "camera_control.h"
+#include "stereo_camera.h"
 #include <QFileDialog>
 
 class QStereoCamera : public Qt3DCore::QEntity
@@ -334,7 +335,7 @@ public:
         m_controller->setTargetTransform(m_transform);
 	}
 
-    void CreateAspects(all::CameraControl* cc)
+    void CreateAspects(all::CameraControl* cc, all::OrbitalStereoCamera* camera)
 	{
         using namespace Qt3DCore;
         using namespace Qt3DRender;

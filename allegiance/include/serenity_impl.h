@@ -66,7 +66,7 @@ public:
     using StereoCamera::StereoCamera;
 
 public:
-    void SetMatrices(const glm::mat4& left, const glm::mat4& right, const glm::mat4& center)
+    void SetMatrices(const glm::mat4& left, const glm::mat4& right, const glm::mat4& center)noexcept
     {
         *(const_cast<KDBindings::Property<glm::mat4>*>(&leftEyeViewMatrix)) = left;
         *(const_cast<KDBindings::Property<glm::mat4>*>(&rightEyeViewMatrix)) = right;
@@ -84,51 +84,48 @@ public:
     {
         return &qwin;
     }
-    void LoadModel()
-    {
-    }
 
 public:
-    void OnMouseEvent(::QMouseEvent* e)
-    {
-        switch (e->type()) {
-        case QEvent::MouseButtonPress:
-            switch (e->button()) {
-            case Qt::MouseButton::LeftButton:
-                m_input.m_left_mouse = true;
-                break;
-            default:
-                break;
-            }
-            break;
-        case QEvent::MouseButtonRelease:
-            switch (e->button()) {
-            case Qt::MouseButton::LeftButton:
-                m_input.m_left_mouse = false;
-                m_input.m_fired = false;
-                break;
-            default:
-                break;
-            }
-            break;
-        case QEvent::MouseMove:
-            if (m_input.m_left_mouse) {
-                if (m_input.m_fired) {
-                    auto dx = e->x() - m_input.m_last_x;
-                    auto dy = e->y() - m_input.m_last_y;
-
-                    m_camera2->SetPhi(m_camera2->GetPhi() + dx * 0.01f);
-                    m_camera2->SetTheta(m_camera2->GetTheta() + dy * 0.01f);
-                    //m_camera->angles = m_camera->angles() + glm::vec2(-dy * 0.01f, dx * 0.01f);
-                }
-
-                m_input.m_last_x = e->x();
-                m_input.m_last_y = e->y();
-
-                m_input.m_fired = true;
-            }
-        }
-    }
+    // void OnMouseEvent(::QMouseEvent* e)
+    //{
+    //     switch (e->type()) {
+    //     case QEvent::MouseButtonPress:
+    //         switch (e->button()) {
+    //         case Qt::MouseButton::LeftButton:
+    //             m_input.m_left_mouse = true;
+    //             break;
+    //         default:
+    //             break;
+    //         }
+    //         break;
+    //     case QEvent::MouseButtonRelease:
+    //         switch (e->button()) {
+    //         case Qt::MouseButton::LeftButton:
+    //             m_input.m_left_mouse = false;
+    //             m_input.m_fired = false;
+    //             break;
+    //         default:
+    //             break;
+    //         }
+    //         break;
+    //     case QEvent::MouseMove:
+    //         if (m_input.m_left_mouse) {
+    //             if (m_input.m_fired) {
+    //                 auto dx = e->x() - m_input.m_last_x;
+    //                 auto dy = e->y() - m_input.m_last_y;
+    //
+    //                 m_camera2->SetPhi(m_camera2->GetPhi() + dx * 0.01f);
+    //                 m_camera2->SetTheta(m_camera2->GetTheta() + dy * 0.01f);
+    //                 //m_camera->angles = m_camera->angles() + glm::vec2(-dy * 0.01f, dx * 0.01f);
+    //             }
+    //
+    //             m_input.m_last_x = e->x();
+    //             m_input.m_last_y = e->y();
+    //
+    //             m_input.m_fired = true;
+    //         }
+    //     }
+    // }
     std::unique_ptr<Entity> CreateScene() noexcept
     {
         auto rootEntity = std::make_unique<Entity>();
@@ -147,20 +144,11 @@ public:
         auto pointLightEntity = rootEntity->createChildEntity<Entity>();
         auto pointLightTransform =
                 pointLightEntity->createComponent<SrtTransform>();
-        pointLightTransform->translation = glm::vec3(0.0f, 2.0f, 0.0f);
+        pointLightTransform->translation = glm::vec3(0.0f, 10.0f, 0.0f);
         auto pointLight = pointLightEntity->createComponent<Light>();
         pointLight->type = Light::Type::Point;
         pointLight->color = glm::vec4(0.7, 0.5, 0.5, 1.0f);
         pointLight->intensity = 1.0f;
-
-        auto spotLightEntity = rootEntity->createChildEntity<Entity>();
-        auto spotLightTransform = spotLightEntity->createComponent<SrtTransform>();
-        spotLightTransform->translation = glm::vec3(0.0f, 10.0f, 0.0f);
-        auto spotLight = spotLightEntity->createComponent<Light>();
-        spotLight->type = Light::Type::Spot;
-        spotLight->color = glm::vec4(0.4, 0.7, 0.4, 1.0f);
-        spotLight->localDirection = glm::vec3(0.0f, -1.0f, 0.0f);
-        spotLight->cutOffAngleDegrees = 30.0f;
 
         struct PhongData {
             float ambient[4];
@@ -215,7 +203,7 @@ public:
 
         return std::move(rootEntity);
     }
-    void CreateAspects(all::CameraControl* cc)
+    void CreateAspects(all::CameraControl* cc, all::OrbitalStereoCamera* camera)
     {
         // Create Qt Vulkan Instance
         vk_instance.setApiVersion(QVersionNumber(1, 2, 0));
@@ -245,43 +233,16 @@ public:
 
         // Add Camera into the Scene
 
-        auto camera = m_camera = rootEntity->createChildEntity<StereoProxyCamera>();
-        camera->lookAt(glm::vec3(10.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                       glm::vec3(0.0f, 1.0f, 0.0f));
-        camera->lens()->setPerspectiveProjection(
-                45.0f, float(qwin.width()) / qwin.height(), 0.01f, 1000.0f);
-        camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
+        m_camera = rootEntity->createChildEntity<StereoProxyCamera>();
+        m_camera->SetMatrices(camera->GetViewLeft(), camera->GetViewRight(), camera->GetViewCenter());
+        m_camera->lens()->setPerspectiveProjection(45.0f, camera->GetAspectRatio(), camera->GetNearPlane(), camera->GetFarPlane());
 
-        QObject::connect(&qwin, &QWindow::widthChanged, [this](int width) {
-            // m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
-            m_camera2->SetAspectRatio(float(qwin.width()) / qwin.height());
+        QObject::connect(camera, &all::OrbitalStereoCamera::OnViewChanged, [this, camera]() {
+            m_camera->SetMatrices(camera->GetViewLeft(), camera->GetViewRight(), camera->GetViewCenter());
         });
-        QObject::connect(&qwin, &QWindow::heightChanged, [this](int height) {
-            // m_camera->lens()->aspectRatio = float(qwin.width()) / qwin.height();
-            m_camera2->SetAspectRatio(float(qwin.width()) / qwin.height());
+        QObject::connect(camera, &all::OrbitalStereoCamera::OnProjectionChanged, [this, camera]() {
+            m_camera->lens()->setPerspectiveProjection(45.0f, camera->GetAspectRatio(), camera->GetNearPlane(), camera->GetFarPlane());
         });
-        QObject::connect(cc, &all::CameraControl::OnFocusPlaneChanged, [this](float v) {
-            // m_camera->convergencePlaneDistance = v;
-            m_camera2->SetConvergencePlaneDistance(v);
-        });
-        QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
-            // m_camera->interocularDistance = v;
-            m_camera2->SetInterocularDistance(v);
-        });
-
-        QObject::connect(cc, &all::CameraControl::OnLoadModel, [this]() {
-            LoadModel();
-        });
-
-        QObject::connect(m_camera2, &all::OrbitalStereoCamera::OnViewChanged, [this]() {
-            m_camera->SetMatrices(m_camera2->GetViewLeft(), m_camera2->GetViewRight(), m_camera2->GetViewCenter());
-        });
-        QObject::connect(m_camera2, &all::OrbitalStereoCamera::OnProjectionChanged, [this]() {
-            m_camera->lens()->setPerspectiveProjection(45.0f, m_camera2->GetAspectRatio(), m_camera2->GetNearPlane(), m_camera2->GetFarPlane());
-        });
-        // camera->interocularDistance = 0.005f;
-        // camera->radius = 20.0f;
-        // camera->angles = { 0.5, 0.5 };
 
         // Create Render Algo
         auto algo = std::make_unique<StereoForwardAlgorithm>();
@@ -318,7 +279,7 @@ public:
         // offscreen content + optional Overlays on Window backbuffer (using the
         // Window Render Target)
 
-        algo->camera = camera;
+        algo->camera = m_camera;
         algo->renderPhases = { createOpaquePhase() };
         algo->offscreenMultiViewRenderTargetRefIndex = 0;
         algo->presentRenderTargetRefIndex = 0;
@@ -347,7 +308,6 @@ private:
     MeshRenderer* m_model;
 
     // Camera
-    all::OrbitalStereoCamera* m_camera2 = new all::OrbitalStereoCamera;
     StereoProxyCamera* m_camera;
     Input m_input;
 };

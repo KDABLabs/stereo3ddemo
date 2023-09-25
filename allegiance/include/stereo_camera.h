@@ -143,7 +143,10 @@ class OrbitalStereoCamera : public StereoCamera
 {
     Q_OBJECT
 public:
-    OrbitalStereoCamera() = default;
+    OrbitalStereoCamera()
+    {
+        UpdateViewMatrix();
+    }
 
 public:
     void SetRadius(float radius) noexcept
@@ -162,7 +165,7 @@ public:
 
     void SetTheta(float theta) noexcept
     {
-        this->theta = theta;
+        this->theta = std::clamp(theta, 0.001f, glm::pi<float>() - 0.001f);
         UpdateViewMatrix();
     }
     float GetTheta() const noexcept { return theta; }
@@ -185,7 +188,7 @@ private:
 private:
     float radius = 20.0f;
     float phi = 0.0f;
-    float theta = 0.0f;
+    float theta = 0.001f;
     glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
 };
 } // namespace all
