@@ -13,53 +13,6 @@
 
 using namespace Serenity;
 
-struct Input {
-public:
-    bool m_left_mouse = false;
-    bool m_fired = false;
-    int m_last_x = 0;
-    int m_last_y = 0;
-};
-
-class OrbitalStereoCamera : public StereoCamera
-{
-public:
-    OrbitalStereoCamera()
-    {
-        angles = glm::vec2(0.0f, 0.0f);
-        radius = 10.0f;
-        static auto change = [this]() { updateViewMatrix(); };
-
-        radius.valueChanged().connect(change);
-        angles.valueChanged().connect(change);
-    }
-
-protected:
-    void updateViewMatrix() override
-    {
-        auto pos = glm::vec3(radius(), radius(), radius());
-        auto sins = glm::sin(angles());
-        auto coss = glm::cos(angles());
-        pos.x *= sins.x * coss.y;
-        pos.y *= coss.x;
-        pos.z *= sins.x * sins.y;
-
-        (*const_cast<KDBindings::Property<glm::vec3>*>(&position)) = pos;
-        const glm::vec3 right = glm::normalize(glm::cross(viewDirection(), up())) * interocularDistance() * 0.5f;
-
-        *(const_cast<KDBindings::Property<glm::mat4>*>(&leftEyeViewMatrix)) =
-                stereoShear(shearCoefficient(convergencePlaneDistance(), -interocularDistance() * 0.5f, convergeOnNear())) * glm::lookAt(position() + right, right + viewDirection(), up());
-        *(const_cast<KDBindings::Property<glm::mat4>*>(&rightEyeViewMatrix)) =
-                stereoShear(shearCoefficient(convergencePlaneDistance(), interocularDistance() * 0.5f, convergeOnNear())) * glm::lookAt(position() - right, -right + viewDirection(), up());
-        *(const_cast<KDBindings::Property<glm::mat4>*>(&centerEyeViewMatrix)) =
-                glm::lookAt(position(), viewDirection(), up());
-    }
-
-public:
-    KDBindings::Property<float> radius;
-    KDBindings::Property<glm::vec2> angles;
-};
-
 class StereoProxyCamera : public StereoCamera
 {
 public:
@@ -86,46 +39,7 @@ public:
     }
 
 public:
-    // void OnMouseEvent(::QMouseEvent* e)
-    //{
-    //     switch (e->type()) {
-    //     case QEvent::MouseButtonPress:
-    //         switch (e->button()) {
-    //         case Qt::MouseButton::LeftButton:
-    //             m_input.m_left_mouse = true;
-    //             break;
-    //         default:
-    //             break;
-    //         }
-    //         break;
-    //     case QEvent::MouseButtonRelease:
-    //         switch (e->button()) {
-    //         case Qt::MouseButton::LeftButton:
-    //             m_input.m_left_mouse = false;
-    //             m_input.m_fired = false;
-    //             break;
-    //         default:
-    //             break;
-    //         }
-    //         break;
-    //     case QEvent::MouseMove:
-    //         if (m_input.m_left_mouse) {
-    //             if (m_input.m_fired) {
-    //                 auto dx = e->x() - m_input.m_last_x;
-    //                 auto dy = e->y() - m_input.m_last_y;
-    //
-    //                 m_camera2->SetPhi(m_camera2->GetPhi() + dx * 0.01f);
-    //                 m_camera2->SetTheta(m_camera2->GetTheta() + dy * 0.01f);
-    //                 //m_camera->angles = m_camera->angles() + glm::vec2(-dy * 0.01f, dx * 0.01f);
-    //             }
-    //
-    //             m_input.m_last_x = e->x();
-    //             m_input.m_last_y = e->y();
-    //
-    //             m_input.m_fired = true;
-    //         }
-    //     }
-    // }
+
     std::unique_ptr<Entity> CreateScene() noexcept
     {
         auto rootEntity = std::make_unique<Entity>();
@@ -309,5 +223,5 @@ private:
 
     // Camera
     StereoProxyCamera* m_camera;
-    Input m_input;
+    //Input m_input;
 };

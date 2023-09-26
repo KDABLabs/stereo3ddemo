@@ -24,7 +24,8 @@ target_sources(${PROJECT_NAME}
                 "include/camera_control.h"
                 "include/stereo_camera.h"
                 "include/qt3d_impl.h"
- "include/vertical_label.h")
+                "include/vertical_label.h"
+                "include/qt3d_shaders.h")
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
                 Qt6::Core

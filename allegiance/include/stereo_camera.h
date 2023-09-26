@@ -1,4 +1,5 @@
 #pragma once
+//#define GLM_FORCE_LEFT_HANDED
 #include <glm/glm.hpp>
 #include <QObject>
 #include <glm/ext/matrix_clip_space.hpp>
