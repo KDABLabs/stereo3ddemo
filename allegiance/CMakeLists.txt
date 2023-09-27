@@ -67,7 +67,7 @@ if(SERENITY_BUILD)
         "${SCENE_DIR}/cottage_diffuse.png"
     )
     install(FILES ${RESOURCE_FILES}
-            DESTINATION ${CMAKE_INSTALL_BINDIR}
+            DESTINATION ${CMAKE_INSTALL_BINDIR}/scene
             COMPONENT applications)
     install(FILES ${SCENE_FILES}
             DESTINATION ${CMAKE_INSTALL_BINDIR}/scene
