@@ -4,8 +4,24 @@
         <file>a.png</file>
         <file>b.png</file>
         <file>close.png</file>
+        <file>gray.png</file>
+        <file>normal.png</file>
+        <file>white.png</file>
+        <file>car_sem.png</file>
         <file>stereo3.png</file>
         <file>3D.png</file>
         <file>3Dcursor.png</file>
+        <file>gltf/showroom2303.gltf</file>
+        <file>gltf/diamonds-normal.png</file>
+        <file>gltf/plate-schneider-normal.png</file>
+        <file>gltf/plate-schneider.png</file>
+        <file>gltf/shadow-car-2.png</file>
+        <file>gltf/shadow-car-2-opaque.png</file>
+        <file>gltf/showroom2303.bin</file>
+        <file>gltf/tire-normal.png</file>
+        <file>gltf/venice1-env-spec0_1-256.png</file>
+        <file>gltf/venice1-env-spec0_05-512.png</file>
+        <file>gltf/venice1-env-2k.png</file>
+        <file>gltf/venice1-sem-512.png</file>
     </qresource>
 </RCC>

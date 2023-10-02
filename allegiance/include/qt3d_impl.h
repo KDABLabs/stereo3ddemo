@@ -3,6 +3,7 @@
 #include "qt3d_shaders.h"
 #include "camera_control.h"
 #include "stereo_camera.h"
+#include "qt3d_materials.h"
 #include <QFileDialog>
 
 class QStereoProxyCamera : Qt3DCore::QEntity
@@ -169,88 +170,66 @@ public:
         });
 
         CreateScene(m_rootEntity.get());
-
-        QObject::connect(cc, &all::CameraControl::OnLoadModel,
-                         [this]() { LoadModel(); });
+        LoadModel();
+        // QObject::connect(cc, &all::CameraControl::OnLoadModel,
+        //                  [this]() { LoadModel(); });
 
         m_view.setRootEntity(m_rootEntity.get());
     }
 
     QWindow* GetWindow() { return &m_view; }
 
-    void CreateMaterial(QString name, std::string_view vs, std::string_view ps)
-    {
-        auto material = new Qt3DRender::QMaterial;
-        material->setObjectName(name);
-
-        auto* shader = new Qt3DRender::QShaderProgram(material);
-        shader->setVertexShaderCode(vs.data());
-        shader->setFragmentShaderCode(ps.data());
-
-        auto* rp = new Qt3DRender::QRenderPass(material);
-        rp->setShaderProgram(shader);
-
-        auto* t = new Qt3DRender::QTechnique(material);
-        t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::OpenGL);
-        t->graphicsApiFilter()->setProfile(Qt3DRender::QGraphicsApiFilter::CoreProfile);
-        t->graphicsApiFilter()->setMajorVersion(3);
-        t->graphicsApiFilter()->setMinorVersion(2);
-        t->addRenderPass(rp);
-
-        auto* effect = new Qt3DRender::QEffect(material);
-        effect->addTechnique(t);
-
-        material->setEffect(effect);
-        m_materials[name] = material;
-    }
-
     void LoadModel()
     {
-        QFileDialog fd;
-        fd.setFileMode(QFileDialog::ExistingFile);
-        fd.setNameFilter("*.obj");
-        fd.setViewMode(QFileDialog::Detail);
-        if (fd.exec()) {
-            auto path = fd.selectedFiles()[0];
-            auto folder = fd.directory().path();
+        auto* scene = new Qt3DRender::QSceneLoader(m_rootEntity.get());
+        scene->setObjectName("Model Scene");
+        scene->setSource(QUrl::fromLocalFile(u":/gltf/showroom2303.gltf"_qs));
 
-            auto* scene = new Qt3DRender::QSceneLoader(m_rootEntity.get());
-            scene->setObjectName("Model Scene");
-            scene->setSource(QUrl::fromLocalFile(path));
+        QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
+            if (s != Qt3DRender::QSceneLoader::Status::Ready)
+                return;
 
-            QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
-                if (s != Qt3DRender::QSceneLoader::Status::Ready)
-                    return;
+            auto names = scene->entityNames();
+            for (auto&& name : names) {
+                auto* e = scene->entity(name);
+                auto m = e->componentsOfType<Qt3DRender::QMaterial>();
+                if (m.empty())
+                    continue;
 
-                auto names = scene->entityNames();
-                for (auto&& name : names) {
-                    auto* e = scene->entity(name);
-                    auto m = e->componentsOfType<Qt3DRender::QMaterial>();
-                    if (m.empty())
-                        continue;
+                int underscore = name.lastIndexOf(u"_"_qs);
+                if (underscore == -1)
+                    continue;
 
-                    int underscore = name.lastIndexOf(u"_"_qs);
-                    if (underscore == -1)
-                        continue;
+                QString materialName = name.mid(underscore + 1);
 
-                    QString materialName = name.mid(underscore + 1);
-
-                    if (auto it = m_materials.find(materialName); it != m_materials.end()) {
-                        e->removeComponent(m[0]);
-                        e->addComponent(it->second);
-                        continue;
-                    }
+                if (auto it = m_materials.find(materialName); it != m_materials.end()) {
+                    e->removeComponent(m[0]);
+                    e->addComponent(it->second);
+                    continue;
                 }
-            });
+            }
+        });
 
-            m_userEntity.reset(new Qt3DCore::QEntity{ m_rootEntity.get() });
-            m_userEntity->addComponent(scene);
+        m_userEntity.reset(new Qt3DCore::QEntity{ m_rootEntity.get() });
+        m_userEntity->addComponent(scene);
 
-            auto e = m_rootEntity->findChildren<Qt3DCore::QEntity*>();
+        auto e = m_rootEntity->findChildren<Qt3DCore::QEntity*>();
 
-            CreateMaterial("CarPaint", all::simple_vs, all::simple_ps_yellow);
-            CreateMaterial("DarkGlass", all::simple_vs, all::simple_ps_red);
-        }
+#define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::##name##ST, all::##name##SU, m_rootEntity.get())
+        MMat(CarPaint);
+        MMat(DarkGlass);
+        MMat(DarkGloss);
+        MMat(Dark);
+        MMat(Chrome);
+        MMat(Plate);
+        MMat(Tire);
+        MMat(ShadowPlane);
+#undef MMat
+        m_materials["Skybox"]= new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
+        // CreateMaterial("Dummy", all::fresnel_vs, all::fresnel_ps, all::DarkGlossSU, all::DarkGlossST);
+
+        m_widget = all::ControlWindow(m_materials[u"CarPaint"_qs]);
+        m_widget->show();
     }
 
 private:
@@ -261,6 +240,8 @@ private:
     std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
     QStereoForwardRenderer* m_renderer;
     QStereoProxyCamera* m_camera;
+
+    std::unique_ptr<QWidget> m_widget;
 };
 
 #endif

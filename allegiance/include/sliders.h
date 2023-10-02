@@ -15,7 +15,7 @@ namespace all {
         constexpr static auto precision = 1000;
         constexpr static auto fprecision = float(precision);
     public:
-        inline FloatSlider(float value, const QString& name, float min = -20, float max = 20);
+        inline FloatSlider(float value, const QString& name, float min = -20, float max = 20, QWidget* parent = nullptr);
     public:
         inline void SetMin(float min);
         inline void SetMax(float max);
@@ -33,8 +33,8 @@ namespace all {
         float min;
     };
 
-    FloatSlider::FloatSlider(float value, const QString& name, float xmin, float xmax)
-        :valid(xmin, xmax, 4), min(xmin), max(xmax), slider(Qt::Horizontal), val(value), dpi(fabs(xmax - xmin) / fprecision)
+    FloatSlider::FloatSlider(float value, const QString& name, float xmin, float xmax, QWidget* parent)
+        : QWidget(parent), valid(xmin, xmax, 4), min(xmin), max(xmax), slider(Qt::Horizontal), val(value), dpi(fabs(xmax - xmin) / fprecision)
     {
         vl.setContentsMargins(0, 0, 0, 0);
         lay.setContentsMargins(0, 0, 0, 0);

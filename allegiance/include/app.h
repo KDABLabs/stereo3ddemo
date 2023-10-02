@@ -162,7 +162,6 @@ public:
         });
 
         impl->CreateAspects(cc, &camera);
-
         wnd.show();
     }
 
