@@ -8,17 +8,25 @@ option(FORCE_QT "Force Use Qt3D" OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(NOT FORCE_QT)
-    message("Loading Serenity...")
-    FetchContent_Declare(
-            Serenity
-            GIT_REPOSITORY "ssh://codereview.kdab.com:29418/kdab/serenity.git"
-            GIT_TAG origin/master
-    )
-    set(SERENITY_BUILD_SHARED_LIBS OFF)
-    set(SERENITY_BUILD_EXAMPLES OFF)
-    set(SERENITY_BUILD_TESTS OFF)
-    set(SERENITY_ENABLE_RMLUI OFF)
-    FetchContent_MakeAvailable(Serenity)
+    find_package(Serenity)
+
+    if(NOT Serenity_FOUND)
+        message("Loading Serenity...")
+        FetchContent_Declare(
+                Serenity
+                GIT_REPOSITORY "ssh://codereview.kdab.com:29418/kdab/serenity.git"
+                GIT_TAG origin/master
+        )
+        set(SERENITY_BUILD_SHARED_LIBS OFF)
+        set(SERENITY_BUILD_EXAMPLES OFF)
+        set(SERENITY_BUILD_TESTS OFF)
+        set(SERENITY_ENABLE_RMLUI OFF)
+        FetchContent_MakeAvailable(Serenity)
+    endif()
+
+    if(NOT DEFINED CompileShaderSet)
+        include(CompileShader.cmake)
+    endif()
 endif()
 
 find_package(Qt6 COMPONENTS Core Gui Widgets Quick 3DCore 3DExtras 3DRender 3DInput REQUIRED)
