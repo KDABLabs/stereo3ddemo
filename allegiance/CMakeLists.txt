@@ -24,12 +24,8 @@ target_sources(${PROJECT_NAME}
                 "include/camera_control.h"
                 "include/stereo_camera.h"
                 "include/qt3d_impl.h"
-<<<<<<< PATCH SET (ef6442 qt3d scene cleanup)
  "include/vertical_label.h" "include/qt3d_shaders.h" "include/qt3d_materials.h")
-=======
-                "include/vertical_label.h"
-                "include/qt3d_shaders.h")
->>>>>>> BASE      (9285c3 universal camera works for qt3d!)
+
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
                 Qt6::Core
