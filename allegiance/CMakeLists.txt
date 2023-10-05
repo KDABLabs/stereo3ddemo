@@ -11,7 +11,7 @@ if (NOT glm_FOUND)
     FetchContent_MakeAvailable(glm)
 endif()
 
-add_executable(${PROJECT_NAME})
+add_executable(${PROJECT_NAME} MACOSX_BUNDLE)
 target_sources(${PROJECT_NAME}
         PRIVATE
                 "../shared/resources.qrc"

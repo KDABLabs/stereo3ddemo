@@ -215,7 +215,7 @@ public:
 
         auto e = m_rootEntity->findChildren<Qt3DCore::QEntity*>();
 
-#define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::##name##ST, all::##name##SU, m_rootEntity.get())
+#define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::name##ST, all::name##SU, m_rootEntity.get())
         MMat(CarPaint);
         MMat(DarkGlass);
         MMat(DarkGloss);
