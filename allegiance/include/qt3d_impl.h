@@ -48,10 +48,13 @@ public:
         m_leftTransform->setMatrix(left.inverted());
         m_rightTransform->setMatrix(right.inverted());
     }
-    void SetProjection(const QMatrix4x4& proj)
+    void SetProjection(const QMatrix4x4& proj, qreal skew)
     {
-        m_leftCameraLens->setProjectionMatrix(proj);
-        m_rightCameraLens->setProjectionMatrix(proj);
+        QMatrix4x4 m;
+        m(0, 2) = -skew;
+        m_leftCameraLens->setProjectionMatrix(m * proj);
+        m(0, 2) = skew;
+        m_rightCameraLens->setProjectionMatrix(m * proj);
     }
 
 private:
@@ -124,9 +127,15 @@ private:
 
 inline QMatrix4x4 toMatrix(const glm::mat4x4& m)
 {
-    QMatrix4x4 q;
-    std::copy(&m[0][0], &m[0][0] + 16, q.data());
-    return q;
+    QMatrix4x4 q{
+        m[0][0], m[0][1], m[0][2], m[0][3],
+        m[1][0], m[1][1], m[1][2], m[1][3],
+        m[2][0], m[2][1], m[2][2], m[2][3],
+        m[3][0], m[3][1], m[3][2], m[3][3]
+    };
+    // QMatrix4x4 q2{ };
+    // std::copy(&m[0][0], &m[0][0] + 16, q2.data());
+    return q.transposed();
 }
 
 class Qt3DImpl
@@ -160,13 +169,14 @@ public:
         m_renderer->setCamera(m_camera);
 
         m_camera->SetMatrices(toMatrix(camera->GetViewLeft()), toMatrix(camera->GetViewRight()));
-        m_camera->SetProjection(toMatrix(camera->GetProjection()));
+        m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
 
         QObject::connect(camera, &all::OrbitalStereoCamera::OnViewChanged, [this, camera]() {
             m_camera->SetMatrices(toMatrix(camera->GetViewLeft()), toMatrix(camera->GetViewRight()));
+            m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
         });
         QObject::connect(camera, &all::OrbitalStereoCamera::OnProjectionChanged, [this, camera]() {
-            m_camera->SetProjection(toMatrix(camera->GetProjection()));
+            m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
         });
 
         CreateScene(m_rootEntity.get());
@@ -225,7 +235,7 @@ public:
         MMat(Tire);
         MMat(ShadowPlane);
 #undef MMat
-        m_materials["Skybox"]= new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
+        m_materials["Skybox"] = new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
         // CreateMaterial("Dummy", all::fresnel_vs, all::fresnel_ps, all::DarkGlossSU, all::DarkGlossST);
 
         m_widget = all::ControlWindow(m_materials[u"CarPaint"_qs]);

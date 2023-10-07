@@ -1,5 +1,5 @@
 #pragma once
-//#define GLM_FORCE_LEFT_HANDED
+// #define GLM_FORCE_LEFT_HANDED
 #include <glm/glm.hpp>
 #include <QObject>
 #include <glm/ext/matrix_clip_space.hpp>
@@ -90,15 +90,22 @@ public:
         UpdateViewMatrix();
     }
     glm::vec3 GetUpVector() const noexcept { return up; }
+
+    float ShearCoefficient()const noexcept
+    {
+        return converge_on_near * interocular_distance * 0.5f / convergence_plane_distance;
+    }
+    void SetShear(bool shear) noexcept
+    {
+        this->shear = shear;
+        UpdateViewMatrix();
+    }
 signals:
     void OnViewChanged();
     void OnProjectionChanged();
 
-protected:
-    float ShearCoefficient() noexcept
-    {
-        return converge_on_near * interocular_distance * 0.5f / convergence_plane_distance;
-    }
+    // protected:
+public:
     static glm::mat4 StereoShear(float x) noexcept
     {
         glm::mat4 i{ 1.0f };
@@ -110,8 +117,12 @@ protected:
     {
         // we can do that, since right is unit length
         auto right = glm::normalize(glm::cross(forward, up)) * interocular_distance * 0.5f;
-        view_left = StereoShear(ShearCoefficient()) * glm::lookAt(position - right, -right + forward, up);
-        view_right = StereoShear(-ShearCoefficient()) * glm::lookAt(position + right, +right + forward, up);
+        view_left = shear
+                ? StereoShear(ShearCoefficient()) * glm::lookAt(position - right, -right + forward, up)
+                : glm::lookAt(position - right, -right + forward, up);
+        view_right = shear
+                ? StereoShear(-ShearCoefficient()) * glm::lookAt(position + right, +right + forward, up)
+                : glm::lookAt(position + right, +right + forward, up);
         view_center = glm::lookAt(position, forward, up);
         emit OnViewChanged();
     }
@@ -134,6 +145,7 @@ private:
     float far_plane = 1000.0f;
     float aspect_ratio = 1.0f;
     bool converge_on_near = true;
+    bool shear = true;
 
     glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
     glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);

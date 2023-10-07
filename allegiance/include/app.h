@@ -76,6 +76,8 @@ public:
         app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
         app.setWindowIcon(QIcon{ QStringLiteral(":/tlr.ico") });
 
+        camera.SetShear(ALLEGIANCE_SERENITY);
+
         // Style definition (darkmode)
         QPalette darkPalette;
         darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
