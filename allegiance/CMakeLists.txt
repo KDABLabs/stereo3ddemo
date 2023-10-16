@@ -100,6 +100,7 @@ target_precompile_headers(${PROJECT_NAME}
 target_compile_definitions(${PROJECT_NAME}
     PRIVATE
         ALLEGIANCE_SERENITY=${SERENITY_BUILD}
+        QT_NO_KEYWORDS
 )
 
 install(TARGETS ${PROJECT_NAME}

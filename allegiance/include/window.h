@@ -47,7 +47,7 @@ private:
         dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
     }
 
-signals:
+Q_SIGNALS:
     void OnClose();
 
 private:

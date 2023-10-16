@@ -63,7 +63,7 @@ public:
             value = std::clamp(value, boundaries.first, boundaries.second);
             tracker.last_pos = pos;
             label->setText(QString::number(value, 'f', 2));
-            emit OnValueChanged(value);
+            Q_EMIT OnValueChanged(value);
         }
         return QPushButton::mouseMoveEvent(e);
     }
@@ -82,7 +82,7 @@ public:
         }
         return QPushButton::mouseReleaseEvent(e);
     }
-signals:
+Q_SIGNALS:
     void OnValueChanged(float value);
 
 private:
@@ -167,7 +167,7 @@ public:
         layout->addStretch();
         layout->addWidget(close);
     }
-signals:
+Q_SIGNALS:
     void OnEyeDisparityChanged(float value);
     void OnFocusPlaneChanged(float value);
 

@@ -19,7 +19,7 @@ namespace all {
     public:
         inline void SetMin(float min);
         inline void SetMax(float max);
-    signals:
+    Q_SIGNALS:
         void OnValueChanged(float val);
     private:
         QVBoxLayout vl;
@@ -47,13 +47,13 @@ namespace all {
             [this](const QString& v) {
                 val = v.toFloat();
                 slider.setValue(int(roundf((val - min) / dpi)));
-                emit OnValueChanged(val);
+                Q_EMIT OnValueChanged(val);
             });
         connect(&slider, &QSlider::sliderMoved,
             [this](int v) {
                 val = v * dpi + min;
                 text.setText(QString::number(val));
-                emit OnValueChanged(val);
+                Q_EMIT OnValueChanged(val);
             });
 
         text.setText(QString::number(value));
@@ -92,7 +92,7 @@ namespace all {
         Q_OBJECT
     public:
         inline CheckBox(bool value, const QString& name);
-    signals:
+    Q_SIGNALS:
         void OnValueChanged(bool v);
     private:
         QVBoxLayout lay;
@@ -105,6 +105,6 @@ namespace all {
         box.setChecked(value);
         lay.addWidget(&box);
         setLayout(&lay);
-        connect(&box, &QCheckBox::stateChanged, [this](int a) { emit OnValueChanged(bool(a)); });
+        connect(&box, &QCheckBox::stateChanged, [this](int a) { Q_EMIT OnValueChanged(bool(a)); });
     }
 }

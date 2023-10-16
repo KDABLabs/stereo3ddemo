@@ -100,7 +100,7 @@ public:
         this->shear = shear;
         UpdateViewMatrix();
     }
-signals:
+Q_SIGNALS:
     void OnViewChanged();
     void OnProjectionChanged();
 
@@ -124,12 +124,12 @@ public:
                 ? StereoShear(-ShearCoefficient()) * glm::lookAt(position + right, +right + forward, up)
                 : glm::lookAt(position + right, +right + forward, up);
         view_center = glm::lookAt(position, forward, up);
-        emit OnViewChanged();
+        Q_EMIT OnViewChanged();
     }
     void UpdateProjectionMatrix() noexcept
     {
         projection = glm::perspective(glm::radians(45.0f), aspect_ratio, near_plane, far_plane);
-        emit OnProjectionChanged();
+        Q_EMIT OnProjectionChanged();
     }
 
 private:

@@ -108,7 +108,7 @@ public:
         if (m_camera == newCamera)
             return;
         m_camera = newCamera;
-        emit cameraChanged();
+        Q_EMIT cameraChanged();
 
         if (m_camera) {
             m_leftCamera->setCamera(m_camera->GetLeftCamera());
@@ -116,7 +116,7 @@ public:
         }
     }
 
-signals:
+Q_SIGNALS:
     void cameraChanged();
 
 private:
