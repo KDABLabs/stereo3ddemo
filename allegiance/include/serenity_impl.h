@@ -1,15 +1,19 @@
 #pragma once
 #include "serenity.h"
 #include "camera_control.h"
-#include <QVulkanInstance>
-#include <filesystem>
-#include <QFileDialog>
-#include <QDirIterator>
-#include <glm/gtx/compatibility.hpp>
-#include <QMouseEvent>
 #include "stereo_camera.h"
 #include "serenity_stereo_graph.h"
+
+#include <QVulkanInstance>
+#include <QFileDialog>
+#include <QDirIterator>
+#include <QMouseEvent>
+
 #include <Serenity/gui/triangle_bounding_volume.h>
+
+#include <glm/gtx/compatibility.hpp>
+
+#include <filesystem>
 
 using namespace Serenity;
 
@@ -47,13 +51,14 @@ public:
         // Perform ray cast
         const auto cursorPos = m_wnd->mapFromGlobal(QCursor::pos());
         const auto hits = spatialAspect->screenCast(glm::vec2(cursorPos.x(), cursorPos.y()), viewportRect, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix());
-        if (hits.size() > 1)
-        {
-            auto& hit = hits[1];
-            glm::vec3 vcursorPos = glm::vec3(cursorPos.x(), -cursorPos.y(), hit.worldIntersection.z);
 
-            auto unpos = glm::unProject(vcursorPos, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix(), viewportRect);
-            m_ctransform->translation = hit.worldIntersection;
+        if (!hits.empty()) {
+            // Find closest intersection
+            const auto closest = std::ranges::min_element(hits, [](const SpatialAspect::Hit& a, const SpatialAspect::Hit& b) {
+                return a.distance < b.distance;
+            });
+            assert(closest != hits.end());
+            m_ctransform->translation = closest->worldIntersection;
         }
     }
 
@@ -156,10 +161,9 @@ public:
         TriangleBoundingVolume* bv = e->createComponent<TriangleBoundingVolume>();
         bv->meshRenderer = m_model;
         bv->cacheTriangles = true;
-        bv->cullBackFaces = true;
+        bv->cullBackFaces = false;
 
         m_ctransform = ec->createComponent<SrtTransform>();
-        m_ctransform->scale.set({ 0.1f, 0.1f, 0.1f });
 
         m_cmesh = std::make_unique<Mesh>();
         m_cmesh->setObjectName("Cursor Mesh");
