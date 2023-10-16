@@ -8,6 +8,8 @@
 #include <glm/gtx/compatibility.hpp>
 #include <QMouseEvent>
 #include "stereo_camera.h"
+#include "serenity_stereo_graph.h"
+#include <Serenity/gui/triangle_bounding_volume.h>
 
 #include <format>
 
@@ -19,12 +21,50 @@ public:
     using StereoCamera::StereoCamera;
 
 public:
-    void SetMatrices(const glm::mat4& left, const glm::mat4& right, const glm::mat4& center)noexcept
+    void SetMatrices(const glm::mat4& left, const glm::mat4& right, const glm::mat4& center) noexcept
     {
         *(const_cast<KDBindings::Property<glm::mat4>*>(&leftEyeViewMatrix)) = left;
         *(const_cast<KDBindings::Property<glm::mat4>*>(&rightEyeViewMatrix)) = right;
         *(const_cast<KDBindings::Property<glm::mat4>*>(&centerEyeViewMatrix)) = center;
     }
+};
+
+class PickingApplicationLayer : public ApplicationLayer
+{
+public:
+    PickingApplicationLayer(StereoProxyCamera* camera, QWindow* wnd, SpatialAspect* spatialAspect, SrtTransform* ctransform)
+        : m_camera(camera), m_wnd(wnd), spatialAspect(spatialAspect), m_ctransform(ctransform)
+    {
+    }
+
+    void onAfterRootEntityChanged(Entity* oldRoot, Entity* newRoot) override
+    {
+        m_pickedEntities.clear();
+    }
+
+    void update() override
+    {
+        const glm::vec4 viewportRect = { 0.0f, 0.0f, m_wnd->width(), m_wnd->height() };
+
+        // Perform ray cast
+        const auto cursorPos = m_wnd->mapFromGlobal(QCursor::pos());
+        const auto hits = spatialAspect->screenCast(glm::vec2(cursorPos.x(), cursorPos.y()), viewportRect, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix());
+        if (hits.size() > 1)
+        {
+            auto& hit = hits[1];
+            glm::vec3 vcursorPos = glm::vec3(cursorPos.x(), -cursorPos.y(), hit.worldIntersection.z);
+
+            auto unpos = glm::unProject(vcursorPos, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix(), viewportRect);
+            m_ctransform->translation = hit.worldIntersection;
+        }
+    }
+
+private:
+    SrtTransform* m_ctransform;
+    SpatialAspect* spatialAspect;
+    QWindow* m_wnd;
+    StereoProxyCamera* m_camera = nullptr;
+    std::vector<Entity*> m_pickedEntities;
 };
 
 class SerenityImpl
@@ -39,7 +79,6 @@ public:
     }
 
 public:
-
     std::unique_ptr<Entity> CreateScene() noexcept
     {
         auto rootEntity = std::make_unique<Entity>();
@@ -87,6 +126,7 @@ public:
         };
 
         Entity* e = rootEntity->createChildEntity<Entity>();
+        Entity* ec = rootEntity->createChildEntity<Entity>();
 
         Material* material = e->createChild<Material>();
         material->shaderProgram = shader;
@@ -114,6 +154,22 @@ public:
         m_model = e->createComponent<MeshRenderer>();
         m_model->mesh = m_mesh.get();
         m_model->material = material;
+
+        TriangleBoundingVolume* bv = e->createComponent<TriangleBoundingVolume>();
+        bv->meshRenderer = m_model;
+        bv->cacheTriangles = true;
+        bv->cullBackFaces = true;
+
+        m_ctransform = ec->createComponent<SrtTransform>();
+        m_ctransform->scale.set({ 0.1f, 0.1f, 0.1f });
+
+        m_cmesh = std::make_unique<Mesh>();
+        m_cmesh->setObjectName("Cursor Mesh");
+        MeshGenerators::sphereGenerator(m_cmesh.get(), 24, 24, 1.0f);
+
+        auto cmodel = ec->createComponent<MeshRenderer>();
+        cmodel->mesh = m_cmesh.get();
+        cmodel->material = material;
 
         return std::move(rootEntity);
     }
@@ -159,7 +215,7 @@ public:
         });
 
         // Create Render Algo
-        auto algo = std::make_unique<StereoForwardAlgorithm>();
+        auto algo = std::make_unique<all::StereoRenderAlgorithm>();
 
         auto createOpaquePhase = []() {
             StereoForwardAlgorithm::RenderPhase phase{
@@ -175,8 +231,9 @@ public:
 
             return phase;
         };
-
         auto spatialAspect = engine.createAspect<SpatialAspect>();
+        auto pickingLayer = engine.createApplicationLayer<PickingApplicationLayer>(m_camera, &qwin, spatialAspect, m_ctransform);
+
         auto renderAspect = engine.createAspect<RenderAspect>(std::move(device));
         auto logicAspect = engine.createAspect<LogicAspect>();
 
@@ -217,11 +274,13 @@ private:
     AspectEngine engine;
 
     std::unique_ptr<Mesh> m_mesh;
+    std::unique_ptr<Mesh> m_cmesh;
     std::unique_ptr<Texture2D> m_texture;
     Entity* m_scene;
     MeshRenderer* m_model;
 
+    SrtTransform* m_ctransform;
     // Camera
     StereoProxyCamera* m_camera;
-    //Input m_input;
+    // Input m_input;
 };
