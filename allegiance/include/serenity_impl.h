@@ -11,8 +11,6 @@
 #include "serenity_stereo_graph.h"
 #include <Serenity/gui/triangle_bounding_volume.h>
 
-#include <format>
-
 using namespace Serenity;
 
 class StereoProxyCamera : public StereoCamera
