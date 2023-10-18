@@ -134,6 +134,9 @@ public:
             QPushButton:pressed {
                 border: 4px solid #ffff00;
             }
+            QPushButton:checked {
+                border: 4px solid #ffff00;
+            }
         )"_qs);
         };
 
@@ -173,7 +176,7 @@ Q_SIGNALS:
 
     void OnLoadImage();
     void OnLoadModel();
-    void OnToggleCursor();
+    void OnToggleCursor(bool checked);
     void OnClose();
 };
 } // namespace all

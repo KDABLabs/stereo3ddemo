@@ -56,6 +56,7 @@ layout(std140, set = 3, binding = 0) uniform SerenityPhongMaterial {
     vec4 diffuse;
     vec4 specular;
     float shininess;
+    int hasDiffuseTexture;
 } material;
 
 layout(set = 4, binding = 0) uniform sampler2D texSampler;
@@ -139,8 +140,14 @@ void main()
     adsModel(worldPosition, worldNormal, worldView,
              material.shininess, diffuseColor, specularColor);
     
+    vec3 diffuseTex = material.diffuse.rgb;
+    if(material.hasDiffuseTexture>0)
+    {
+        diffuseTex = texture(texSampler, texCoords).rgb;
+    }
+
     // Combine spec with ambient+diffuse for final fragment color
-    vec3 color = (material.ambient.rgb + diffuseColor) * texture(texSampler, texCoords).rgb
+    vec3 color = (material.ambient.rgb + diffuseColor) * diffuseTex
                + specularColor * material.specular.rgb;
 
     fragColor = vec4(color, 1.0);

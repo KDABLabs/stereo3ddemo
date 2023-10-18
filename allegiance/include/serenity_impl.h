@@ -46,11 +46,17 @@ public:
 
     void update() override
     {
+        if (!enabled) {
+            return;
+        }
+
         const glm::vec4 viewportRect = { 0.0f, 0.0f, m_wnd->width(), m_wnd->height() };
 
         // Perform ray cast
         const auto cursorPos = m_wnd->mapFromGlobal(QCursor::pos());
         const auto hits = spatialAspect->screenCast(glm::vec2(cursorPos.x(), cursorPos.y()), viewportRect, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix());
+
+        auto unv = glm::unProject(glm::vec3(cursorPos.x(), m_wnd->size().height() - cursorPos.y(), 1.0f), m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix(), viewportRect);
 
         if (!hits.empty()) {
             // Find closest intersection
@@ -59,7 +65,15 @@ public:
             });
             assert(closest != hits.end());
             m_ctransform->translation = closest->worldIntersection;
+            m_ctransform->scale = glm::vec3(std::clamp(closest->distance * 10.f, 0.01f, 1.0f));
+        } else {
+            m_ctransform->translation = unv;
+            m_ctransform->scale = glm::vec3(10.0f);
         }
+    }
+    void SetEnabled( bool en)
+    {
+        enabled = en;
     }
 
 private:
@@ -68,6 +82,7 @@ private:
     QWindow* m_wnd;
     StereoProxyCamera* m_camera = nullptr;
     std::vector<Entity*> m_pickedEntities;
+    bool enabled = true;
 };
 
 class SerenityImpl
@@ -111,17 +126,34 @@ public:
             float diffuse[4];
             float specular[4];
             float shininess;
-            float _pad[3];
+            int useTexture = true;
+            float _pad[2];
         };
         static_assert(sizeof(PhongData) == (4 * 4 * sizeof(float)));
 
         const Material::UboDataBuilder materialDataBuilder[] = {
             [](uint32_t set, uint32_t binding) {
-                const PhongData data{ { 0.2f, 0.2f, 0.2f, 1.0f },
-                                      { 0.6f, 0.6f, 0.6f, 1.0f },
-                                      { 1.0f, 1.0f, 1.0f, 1.0f },
-                                      5.0f,
-                                      { 0.0f, 0.0f, 0.0f } };
+                const PhongData data{
+                    { 0.2f, 0.2f, 0.2f, 1.0f },
+                    { 0.6f, 0.6f, 0.6f, 1.0f },
+                    { 1.0f, 1.0f, 1.0f, 1.0f },
+                    5.0f,
+                    true,
+                    { 0.0f, 0.0f }
+                };
+                std::vector<uint8_t> rawData(sizeof(PhongData));
+                std::memcpy(rawData.data(), &data, sizeof(PhongData));
+                return rawData;
+            },
+            [](uint32_t set, uint32_t binding) {
+                const PhongData data{
+                    { 0.2f, 0.2f, 0.2f, 1.0f },
+                    { 1.0f, 1.0f, 1.0f, 1.0f },
+                    { 1.0f, 1.0f, 1.0f, 1.0f },
+                    5.0f,
+                    false,
+                    { 0.0f, 0.0f }
+                };
                 std::vector<uint8_t> rawData(sizeof(PhongData));
                 std::memcpy(rawData.data(), &data, sizeof(PhongData));
                 return rawData;
@@ -169,9 +201,19 @@ public:
         m_cmesh->setObjectName("Cursor Mesh");
         MeshGenerators::sphereGenerator(m_cmesh.get(), 24, 24, 1.0f);
 
+        StaticUniformBuffer* phongUbo2 = ec->createChild<StaticUniformBuffer>();
+        phongUbo2->size = sizeof(PhongData);
+
+        Material* material2 = ec->createChild<Material>();
+        material2->shaderProgram = shader;
+        material2->setUniformBuffer(3, 0, phongUbo2);
+
+        // This is how we feed Material properties
+        material2->setUniformBufferDataBuilder(materialDataBuilder[1]);
+
         auto cmodel = ec->createComponent<MeshRenderer>();
         cmodel->mesh = m_cmesh.get();
-        cmodel->material = material;
+        cmodel->material = material2;
 
         return std::move(rootEntity);
     }
@@ -215,6 +257,11 @@ public:
         QObject::connect(camera, &all::OrbitalStereoCamera::OnProjectionChanged, [this, camera]() {
             m_camera->lens()->setPerspectiveProjection(45.0f, camera->GetAspectRatio(), camera->GetNearPlane(), camera->GetFarPlane());
         });
+        QObject::connect(cc, &all::CameraControl::OnToggleCursor, [this](bool checked) {
+            if (!checked)
+                m_ctransform->scale = glm::vec3(0.0f);
+            m_pickingLayer->SetEnabled(checked);
+        });
 
         // Create Render Algo
         auto algo = std::make_unique<all::StereoRenderAlgorithm>();
@@ -234,7 +281,7 @@ public:
             return phase;
         };
         auto spatialAspect = engine.createAspect<SpatialAspect>();
-        auto pickingLayer = engine.createApplicationLayer<PickingApplicationLayer>(m_camera, &qwin, spatialAspect, m_ctransform);
+        m_pickingLayer = engine.createApplicationLayer<PickingApplicationLayer>(m_camera, &qwin, spatialAspect, m_ctransform);
 
         auto renderAspect = engine.createAspect<RenderAspect>(std::move(device));
         auto logicAspect = engine.createAspect<LogicAspect>();
@@ -284,5 +331,5 @@ private:
     SrtTransform* m_ctransform;
     // Camera
     StereoProxyCamera* m_camera;
-    // Input m_input;
+    PickingApplicationLayer* m_pickingLayer;
 };
