@@ -24,5 +24,6 @@
         <file>gltf/venice1-env-spec0_05-512.png</file>
         <file>gltf/venice1-env-2k.png</file>
         <file>gltf/venice1-sem-512.png</file>
+        <file>cursor_billboard.png</file>
     </qresource>
 </RCC>

@@ -4,6 +4,7 @@
 #include "camera_control.h"
 #include "stereo_camera.h"
 #include "qt3d_materials.h"
+#include "qt3d_cursor.h"
 #include "stereo_image_mesh.h"
 #include "stereo_image_material.h"
 
@@ -118,8 +119,10 @@ public:
             auto cb = new Qt3DRender::QClearBuffers(rts);
             cb->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
             //            cb->setClearColor(attachment == Qt3DRender::QRenderTargetOutput::AttachmentPoint::Left ? QColor(Qt::blue) : QColor(Qt::red));
+            auto s = new QSortPolicy{cb};
+            s->setSortTypes(QList<QSortPolicy::SortType>{QSortPolicy::Material});
 
-            return new Qt3DRender::QCameraSelector(cb);
+            return new Qt3DRender::QCameraSelector(s);
         };
 
         m_leftCamera = makeBranch(stereoImageLayerFilter, Qt3DRender::QRenderTargetOutput::Left);
@@ -222,8 +225,9 @@ inline QMatrix4x4 toMatrix(const glm::mat4x4& m)
     return q.transposed();
 }
 
-class Qt3DImpl
+class Qt3DImpl : public QObject
 {
+    Q_OBJECT
 public:
     Qt3DImpl()
     {
@@ -248,6 +252,7 @@ public:
 
         m_renderer = new QStereoForwardRenderer();
         m_view.setActiveFrameGraph(m_renderer);
+        m_view.renderSettings()->pickingSettings()->setPickMethod(QPickingSettings::TrianglePicking);
 
         m_camera = new QStereoProxyCamera(m_rootEntity.get());
         m_renderer->setCamera(m_camera);
@@ -263,12 +268,17 @@ public:
             m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
         });
 
+
+        m_sceneEntity = new Qt3DCore::QEntity{m_rootEntity.get()};
+        m_userEntity = new Qt3DCore::QEntity{m_sceneEntity};
+        m_cursor = new CursorEntity(m_rootEntity.get(), m_camera->GetLeftCamera(), &m_view);
+        new Picker(m_sceneEntity, m_cursor);
+        m_view.setRootEntity(m_rootEntity.get());
+
         CreateScene(m_rootEntity.get());
         LoadModel();
-        // QObject::connect(cc, &all::CameraControl::OnLoadModel,
-        //                  [this]() { LoadModel(); });
-
-        m_view.setRootEntity(m_rootEntity.get());
+        QObject::connect(cc, &all::CameraControl::OnLoadModel,
+                         [this]() { LoadModelDialog(); });
     }
 
     QWindow* GetWindow() { return &m_view; }
@@ -283,11 +293,17 @@ public:
         m_renderer->setMode(QStereoForwardRenderer::Mode::Scene);
     }
 
-    void LoadModel()
+    void LoadModelDialog()
     {
-        auto* scene = new Qt3DRender::QSceneLoader(m_rootEntity.get());
+        auto fn = QFileDialog::getOpenFileName(this->m_widget.get(), "Open Model", "", "Model Files (*.obj *.fbx *.gltf *.glb)");
+        LoadModel(QUrl{"file:" + fn});
+    }
+
+    void LoadModel(QUrl path = QUrl::fromLocalFile("scene/fbx/showroom2303.fbx"))
+    {
+        auto* scene = new Qt3DRender::QSceneLoader(m_sceneEntity);
         scene->setObjectName("Model Scene");
-        scene->setSource(QUrl::fromLocalFile(u":/gltf/showroom2303.gltf"_qs));
+        scene->setSource(path);
 
         QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
             if (s != Qt3DRender::QSceneLoader::Status::Ready)
@@ -295,6 +311,8 @@ public:
 
             auto names = scene->entityNames();
             for (auto&& name : names) {
+                auto* entity = scene->entity(name);
+
                 auto* e = scene->entity(name);
                 auto m = e->componentsOfType<Qt3DRender::QMaterial>();
                 if (m.empty())
@@ -314,7 +332,8 @@ public:
             }
         });
 
-        m_userEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
+        delete m_userEntity;
+        m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
         m_userEntity->addComponent(scene);
 
         // Create entities for the stereo image
@@ -373,6 +392,7 @@ public:
 private:
     Qt3DExtras::Qt3DWindow m_view;
     std::unique_ptr<Qt3DCore::QEntity> m_rootEntity;
+    Qt3DCore::QEntity* m_sceneEntity = nullptr;
     Qt3DCore::QEntity* m_userEntity = nullptr;
 
     std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
@@ -380,6 +400,8 @@ private:
     QStereoProxyCamera* m_camera;
 
     std::unique_ptr<QWidget> m_widget;
+
+    CursorEntity *m_cursor;
 };
 
 #endif

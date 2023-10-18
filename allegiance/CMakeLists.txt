@@ -12,28 +12,40 @@ if (NOT glm_FOUND)
 endif()
 
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE)
+set(serenity_sources)
+if (SERENITY_BUILD)
+    set(serenity_sources
+            "include/serenity/serenity.h"
+            "include/serenity_impl.h"
+            "include/serenity_stereo_graph.h"
+            "src/serenity_stereo_graph.cpp"
+            "include/serenity/cursor.h"
+    )
+else ()
+    set(qt3d_sources
+            "include/qt3d_impl.h"
+            "include/qt3d_shaders.h"
+            "include/qt3d_materials.h"
+            "include/qt3d_cursor.h"
+    )
+endif()
+
 target_sources(${PROJECT_NAME}
         PRIVATE
                 "../shared/resources.qrc"
                 "src/entry_main.cpp"
                 "include/app.h"
                 "include/window.h"
-                "include/serenity/serenity.h"
-                "include/serenity_impl.h"
                 "include/sliders.h"
                 "include/camera_control.h"
                 "include/stereo_camera.h"
-                "include/qt3d_impl.h"
                 "include/vertical_label.h"
                 "include/stereo_image_material.h"
                 "include/stereo_image_mesh.h"
                 "src/stereo_image_mesh.cpp"
                 "src/stereo_image_material.cpp"
-		"include/serenity_stereo_graph.h"
-		"src/serenity_stereo_graph.cpp"
-                "include/serenity/cursor.h"
-		"include/qt3d_shaders.h"
-		"include/qt3d_materials.h"
+               ${serenity_sources}
+               ${qt3d_sources}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -45,33 +57,31 @@ target_link_libraries(${PROJECT_NAME}
                 Qt6::Quick
                 glm::glm
 )
+
+set(SCENE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../scene")
+file(MAKE_DIRECTORY ${SCENE_DIR})
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/shared/cottage.obj"
+        "${SCENE_DIR}/cottage.obj"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/shared/cottage_diffuse.png"
+        "${SCENE_DIR}/cottage_diffuse.png"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/shared/fbx/showroom2303.fbx"
+        "${SCENE_DIR}/fbx/showroom2303.fbx"
+)
+
+install(DIRECTORY ${SCENE_DIR}
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT applications)
+
 if(SERENITY_BUILD)
-    set(SCENE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../scene")
-    file(MAKE_DIRECTORY ${SCENE_DIR})
 
     add_subdirectory("serenity")
     add_dependencies(${PROJECT_NAME} Shaders)
 
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/../shared/cottage.obj"
-            "${SCENE_DIR}/cottage.obj"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/../shared/cottage_diffuse.png"
-            "${SCENE_DIR}/cottage_diffuse.png"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_SOURCE_DIR}/../shared/cursor_billboard.png"
-            "${SCENE_DIR}/cursor_billboard.png"
-    )
-
-    set(SCENE_FILES
-        "${SCENE_DIR}/cottage.obj"
-        "${SCENE_DIR}/cottage_diffuse.png"
-        "${SCENE_DIR}/cursor_billboard.png"
-    )
-    install(FILES ${SCENE_FILES}
-            DESTINATION ${CMAKE_INSTALL_BINDIR}/scene
-            COMPONENT applications)
 endif()
 if(NOT FORCE_QT)
     target_link_libraries(${PROJECT_NAME}

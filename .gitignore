@@ -366,4 +366,6 @@ FodyWeavers.xsd
 /CMakeUserPresets.json
 *.idb
 .vscode/settings.json
-
+build*/
+.idea
+cmake-build-*/
