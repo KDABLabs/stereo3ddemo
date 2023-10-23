@@ -4,6 +4,9 @@
 #include "camera_control.h"
 #include "stereo_camera.h"
 #include "qt3d_materials.h"
+#include "stereo_image_mesh.h"
+#include "stereo_image_material.h"
+
 #include <QFileDialog>
 
 class QStereoProxyCamera : Qt3DCore::QEntity
@@ -70,29 +73,71 @@ class QStereoForwardRenderer : public Qt3DRender::QRenderSurfaceSelector
 {
     Q_OBJECT
 public:
+    enum class Mode {
+        Scene,
+        StereoImage
+    };
+    Q_ENUM(Mode)
+
     QStereoForwardRenderer(Qt3DCore::QNode* parent = nullptr)
         : Qt3DRender::QRenderSurfaceSelector(parent)
         , m_camera(nullptr)
+        , m_leftLayer(new Qt3DRender::QLayer(this))
+        , m_rightLayer(new Qt3DRender::QLayer(this))
+        , m_stereoImageLayer(new Qt3DRender::QLayer(this))
     {
         auto vp = new Qt3DRender::QViewport(this);
         auto ssel = new Qt3DRender::QRenderSurfaceSelector(vp);
 
-        auto makeBranch = [](Qt3DRender::QFrameGraphNode* parent, Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
-            auto rts = new Qt3DRender::QRenderTargetSelector(parent);
-            auto rt = new Qt3DRender::QRenderTarget();
-            auto rto = new Qt3DRender::QRenderTargetOutput;
-            rto->setAttachmentPoint(attachment);
-            rt->addOutput(rto);
-            rts->setTarget(rt);
+        // Frame graph sub branch for the 3D scene
+
+        m_sceneNoDraw = new Qt3DRender::QNoDraw(ssel);
+        m_sceneNoDraw->setObjectName("Scene");
+        m_sceneNoDraw->setEnabled(false);
+
+        auto* stereoImageLayerFilter = new Qt3DRender::QLayerFilter(m_sceneNoDraw);
+        stereoImageLayerFilter->addLayer(m_stereoImageLayer);
+        stereoImageLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::FilterMode::DiscardAnyMatchingLayers);
+
+        auto makeRenderTargetSelector = [](Qt3DRender::QFrameGraphNode* parent, Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
+            auto* output = new Qt3DRender::QRenderTargetOutput;
+            output->setAttachmentPoint(attachment);
+
+            auto* renderTarget = new Qt3DRender::QRenderTarget;
+            renderTarget->addOutput(output);
+
+            auto* selector = new Qt3DRender::QRenderTargetSelector(parent);
+            selector->setTarget(renderTarget);
+
+            return selector;
+        };
+
+        auto makeBranch = [makeRenderTargetSelector](Qt3DRender::QFrameGraphNode* parent, Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
+            auto rts = makeRenderTargetSelector(parent, attachment);
 
             auto cb = new Qt3DRender::QClearBuffers(rts);
             cb->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
             //            cb->setClearColor(attachment == Qt3DRender::QRenderTargetOutput::AttachmentPoint::Left ? QColor(Qt::blue) : QColor(Qt::red));
+
             return new Qt3DRender::QCameraSelector(cb);
         };
 
-        m_leftCamera = makeBranch(ssel, Qt3DRender::QRenderTargetOutput::Left);
-        m_rightCamera = makeBranch(ssel, Qt3DRender::QRenderTargetOutput::Right);
+        m_leftCamera = makeBranch(stereoImageLayerFilter, Qt3DRender::QRenderTargetOutput::Left);
+        m_rightCamera = makeBranch(stereoImageLayerFilter, Qt3DRender::QRenderTargetOutput::Right);
+
+        // Frame graph sub branch for the stereo image
+
+        m_stereoImageNoDraw = new Qt3DRender::QNoDraw(ssel);
+        m_stereoImageNoDraw->setObjectName("Stereo Image");
+        m_stereoImageNoDraw->setEnabled(true);
+
+        auto* imageLeftRenderTarget = makeRenderTargetSelector(m_stereoImageNoDraw, Qt3DRender::QRenderTargetOutput::Left);
+        auto* leftLayerFilter = new Qt3DRender::QLayerFilter(imageLeftRenderTarget);
+        leftLayerFilter->addLayer(m_leftLayer);
+
+        auto* imageRightRenderTarget = makeRenderTargetSelector(m_stereoImageNoDraw, Qt3DRender::QRenderTargetOutput::Right);
+        auto* rightLayerFilter = new Qt3DRender::QLayerFilter(imageRightRenderTarget);
+        rightLayerFilter->addLayer(m_rightLayer);
 
 #ifdef QT_DEBUG
         (void)new Qt3DRender::QDebugOverlay(m_rightCamera);
@@ -103,6 +148,39 @@ public:
     {
         return m_camera;
     }
+
+    Qt3DRender::QLayer* leftLayer() const
+    {
+        return m_leftLayer;
+    }
+
+    Qt3DRender::QLayer* rightLayer() const
+    {
+        return m_rightLayer;
+    }
+
+    Qt3DRender::QLayer* stereoImageLayer() const
+    {
+        return m_stereoImageLayer;
+    }
+
+    void setMode(Mode mode)
+    {
+        if (mode == m_mode)
+            return;
+        switch (mode) {
+        case Mode::Scene:
+            m_sceneNoDraw->setEnabled(false);
+            m_stereoImageNoDraw->setEnabled(true);
+            break;
+        case Mode::StereoImage:
+            m_sceneNoDraw->setEnabled(true);
+            m_stereoImageNoDraw->setEnabled(false);
+            break;
+        }
+        m_mode = mode;
+    }
+
     void setCamera(QStereoProxyCamera* newCamera)
     {
         if (m_camera == newCamera)
@@ -120,8 +198,14 @@ Q_SIGNALS:
     void cameraChanged();
 
 private:
+    Mode m_mode = Mode::Scene;
     Qt3DRender::QCameraSelector* m_leftCamera;
     Qt3DRender::QCameraSelector* m_rightCamera;
+    Qt3DRender::QLayer* m_leftLayer;
+    Qt3DRender::QLayer* m_rightLayer;
+    Qt3DRender::QLayer* m_stereoImageLayer;
+    Qt3DRender::QNoDraw* m_sceneNoDraw;
+    Qt3DRender::QNoDraw* m_stereoImageNoDraw;
     QStereoProxyCamera* m_camera;
 };
 
@@ -189,6 +273,16 @@ public:
 
     QWindow* GetWindow() { return &m_view; }
 
+    void ShowImage()
+    {
+        m_renderer->setMode(QStereoForwardRenderer::Mode::StereoImage);
+    }
+
+    void ShowModel()
+    {
+        m_renderer->setMode(QStereoForwardRenderer::Mode::Scene);
+    }
+
     void LoadModel()
     {
         auto* scene = new Qt3DRender::QSceneLoader(m_rootEntity.get());
@@ -220,10 +314,44 @@ public:
             }
         });
 
-        m_userEntity.reset(new Qt3DCore::QEntity{ m_rootEntity.get() });
+        m_userEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
         m_userEntity->addComponent(scene);
 
-        auto e = m_rootEntity->findChildren<Qt3DCore::QEntity*>();
+        // Create entities for the stereo image
+        auto* stereoImageMaterial = new StereoImageMaterial(QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"));
+
+        // Left image entity (displays the left half of the image)
+        auto* leftImageMesh = new StereoImageMesh(StereoImageMesh::Side::Left);
+        auto* leftImageEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
+        leftImageEntity->setObjectName("Left Image");
+        leftImageEntity->addComponent(leftImageMesh);
+        leftImageEntity->addComponent(stereoImageMaterial);
+        leftImageEntity->addComponent(m_renderer->leftLayer());
+        leftImageEntity->addComponent(m_renderer->stereoImageLayer());
+
+        // Right image entity (displays the right half of the image)
+        auto* rightImageMesh = new StereoImageMesh(StereoImageMesh::Side::Right);
+        auto* rightImageEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
+        rightImageEntity->setObjectName("Right Image");
+        rightImageEntity->addComponent(rightImageMesh);
+        rightImageEntity->addComponent(stereoImageMaterial);
+        rightImageEntity->addComponent(m_renderer->rightLayer());
+        rightImageEntity->addComponent(m_renderer->stereoImageLayer());
+
+        auto updateImageMeshes = [this, stereoImageMaterial, leftImageMesh, rightImageMesh] {
+            const QVector2D viewportSize{ static_cast<float>(m_view.width()), static_cast<float>(m_view.height()) };
+            const QVector2D imageSize = stereoImageMaterial->textureSize();
+
+            leftImageMesh->setViewportSize(viewportSize);
+            leftImageMesh->setImageSize(imageSize);
+
+            rightImageMesh->setViewportSize(viewportSize);
+            rightImageMesh->setImageSize(imageSize);
+        };
+        QObject::connect(&m_view, &QWindow::widthChanged, updateImageMeshes);
+        QObject::connect(&m_view, &QWindow::heightChanged, updateImageMeshes);
+        QObject::connect(stereoImageMaterial, &StereoImageMaterial::textureSizeChanged, updateImageMeshes);
+        updateImageMeshes();
 
 #define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::name##ST, all::name##SU, m_rootEntity.get())
         MMat(CarPaint);
@@ -245,7 +373,7 @@ public:
 private:
     Qt3DExtras::Qt3DWindow m_view;
     std::unique_ptr<Qt3DCore::QEntity> m_rootEntity;
-    std::unique_ptr<Qt3DCore::QEntity> m_userEntity;
+    Qt3DCore::QEntity* m_userEntity = nullptr;
 
     std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
     QStereoForwardRenderer* m_renderer;

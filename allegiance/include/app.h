@@ -107,6 +107,14 @@ public:
                          [this](::QWheelEvent* e) {
                              camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
                          });
+        QObject::connect(cc, &all::CameraControl::OnLoadImage,
+                         [this]() {
+                             impl->ShowImage();
+                         });
+        QObject::connect(cc, &all::CameraControl::OnLoadModel,
+                         [this]() {
+                             impl->ShowModel();
+                         });
         QObject::connect(cc, &all::CameraControl::OnClose,
                          [this]() {
                              app.postEvent(&wnd, new QCloseEvent);

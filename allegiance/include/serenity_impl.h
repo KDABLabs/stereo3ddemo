@@ -96,6 +96,16 @@ public:
         return &qwin;
     }
 
+    void ShowModel()
+    {
+        // TODO
+    }
+
+    void ShowImage()
+    {
+        // TODO
+    }
+
 public:
     std::unique_ptr<Entity> CreateScene() noexcept
     {
