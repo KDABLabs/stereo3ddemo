@@ -12,14 +12,14 @@ inline std::unique_ptr<QWidget> ControlWindow(Qt3DRender::QMaterial* mat)
     QVBoxLayout* l = new QVBoxLayout;
     for (auto* p : mat->parameters()) {
         const auto& val = p->value();
-        if (val.type() == QMetaType::Float) {
+        if (val.typeId() == QMetaType::Float) {
             auto* s = new all::FloatSlider(val.toFloat(), p->name(), 0.0f, 4.0f, w);
             QObject::connect(s, &all::FloatSlider::OnValueChanged, [p](float v) { p->setValue(v); });
             l->addWidget(s);
             continue;
         }
 
-        if (val.type() == QVariant::Vector3D) {
+        if (val.typeId() == QMetaType::QVector3D) {
             QGroupBox* gb = new QGroupBox(p->name(), w);
             QHBoxLayout* l1 = new QHBoxLayout;
 
