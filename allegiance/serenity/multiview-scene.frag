@@ -140,15 +140,15 @@ void main()
     adsModel(worldPosition, worldNormal, worldView,
              material.shininess, diffuseColor, specularColor);
     
-    vec3 diffuseTex = material.diffuse.rgb;
+    vec4 diffuseTex = vec4(material.diffuse.rgb, 1.0f);
     if(material.hasDiffuseTexture>0)
     {
-        diffuseTex = texture(texSampler, texCoords).rgb;
+        diffuseTex = texture(texSampler, texCoords);
     }
 
     // Combine spec with ambient+diffuse for final fragment color
-    vec3 color = (material.ambient.rgb + diffuseColor) * diffuseTex
+    vec3 color = (material.ambient.rgb + diffuseColor) * diffuseTex.rgb
                + specularColor * material.specular.rgb;
 
-    fragColor = vec4(color, 1.0);
+    fragColor = vec4(color, diffuseTex.a);
 }

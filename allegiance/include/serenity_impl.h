@@ -1,5 +1,5 @@
 #pragma once
-#include "serenity.h"
+#include "serenity/cursor.h"
 #include "camera_control.h"
 #include "stereo_camera.h"
 #include "serenity_stereo_graph.h"
@@ -9,7 +9,6 @@
 #include <QDirIterator>
 #include <QMouseEvent>
 
-#include <Serenity/gui/triangle_bounding_volume.h>
 
 #include <glm/gtx/compatibility.hpp>
 
@@ -71,7 +70,7 @@ public:
             m_ctransform->scale = glm::vec3(10.0f);
         }
     }
-    void SetEnabled( bool en)
+    void SetEnabled(bool en)
     {
         enabled = en;
     }
@@ -107,7 +106,7 @@ public:
     }
 
 public:
-    std::unique_ptr<Entity> CreateScene() noexcept
+    std::unique_ptr<Entity> CreateScene(LayerManager& layers) noexcept
     {
         auto rootEntity = std::make_unique<Entity>();
         rootEntity->setObjectName("Root Entity");
@@ -171,7 +170,6 @@ public:
         };
 
         Entity* e = rootEntity->createChildEntity<Entity>();
-        Entity* ec = rootEntity->createChildEntity<Entity>();
 
         Material* material = e->createChild<Material>();
         material->shaderProgram = shader;
@@ -205,26 +203,8 @@ public:
         bv->cacheTriangles = true;
         bv->cullBackFaces = false;
 
-        m_ctransform = ec->createComponent<SrtTransform>();
-
-        m_cmesh = std::make_unique<Mesh>();
-        m_cmesh->setObjectName("Cursor Mesh");
-        MeshGenerators::sphereGenerator(m_cmesh.get(), 24, 24, 1.0f);
-
-        StaticUniformBuffer* phongUbo2 = ec->createChild<StaticUniformBuffer>();
-        phongUbo2->size = sizeof(PhongData);
-
-        Material* material2 = ec->createChild<Material>();
-        material2->shaderProgram = shader;
-        material2->setUniformBuffer(3, 0, phongUbo2);
-
-        // This is how we feed Material properties
-        material2->setUniformBufferDataBuilder(materialDataBuilder[1]);
-
-        auto cmodel = ec->createComponent<MeshRenderer>();
-        cmodel->mesh = m_cmesh.get();
-        cmodel->material = material2;
-
+        e->layerMask = layers.layerMask({ "Opaque" });
+        m_cursor.emplace(rootEntity.get(), layers);
         return std::move(rootEntity);
     }
     void CreateAspects(all::CameraControl* cc, all::OrbitalStereoCamera* camera)
@@ -253,7 +233,11 @@ public:
                 m_instance.createDefaultDevice(m_surface);
         KDGpu::Device device = std::move(defaultDevice.device);
 
-        auto rootEntity = CreateScene();
+        auto layerManager = engine.createChild<LayerManager>();
+        for (auto&& layerName : { "Alpha", "Opaque" })
+            layerManager->addLayer(layerName);
+
+        auto rootEntity = CreateScene(*layerManager);
 
         // Add Camera into the Scene
 
@@ -269,16 +253,16 @@ public:
         });
         QObject::connect(cc, &all::CameraControl::OnToggleCursor, [this](bool checked) {
             if (!checked)
-                m_ctransform->scale = glm::vec3(0.0f);
+                m_cursor->GetTransform()->scale = glm::vec3(0.0f);
             m_pickingLayer->SetEnabled(checked);
         });
 
         // Create Render Algo
         auto algo = std::make_unique<all::StereoRenderAlgorithm>();
 
-        auto createOpaquePhase = []() {
+        auto createOpaquePhase = [layerManager]() {
             StereoForwardAlgorithm::RenderPhase phase{
-                0, StereoForwardAlgorithm::RenderPhase::Type::Opaque,
+                layerManager->layerMask({ "Opaque" }), StereoForwardAlgorithm::RenderPhase::Type::Opaque,
                 LayerFilterType::AcceptAll
             };
 
@@ -290,8 +274,36 @@ public:
 
             return phase;
         };
+        auto createtransparentPhase = [layerManager]() {
+            StereoForwardAlgorithm::RenderPhase phase{
+                layerManager->layerMask({ "Alpha" }), StereoForwardAlgorithm::RenderPhase::Type::Alpha,
+                LayerFilterType::AcceptAll
+            };
+
+            auto depthState = std::make_shared<DepthStencilState>();
+            depthState->depthTestEnabled = true;
+            depthState->depthWritesEnabled = false;
+            depthState->depthCompareOperation = KDGpu::CompareOperation::Less;
+            phase.renderStates.setDepthStencilState(std::move(depthState));
+
+            auto blendState = std::make_shared<ColorBlendState>();
+            ColorBlendState::AttachmentBlendState attachmentBlendState;
+
+            attachmentBlendState.format = KDGpu::Format::UNDEFINED;
+            attachmentBlendState.blending.blendingEnabled = true;
+            attachmentBlendState.blending.alpha.operation = KDGpu::BlendOperation::Add;
+            attachmentBlendState.blending.color.operation = KDGpu::BlendOperation::Add;
+            attachmentBlendState.blending.alpha.srcFactor = KDGpu::BlendFactor::SrcAlpha;
+            attachmentBlendState.blending.color.srcFactor = KDGpu::BlendFactor::SrcAlpha;
+            attachmentBlendState.blending.alpha.dstFactor = KDGpu::BlendFactor::OneMinusSrcAlpha;
+            attachmentBlendState.blending.color.dstFactor = KDGpu::BlendFactor::OneMinusSrcAlpha;
+            blendState->attachmentBlendStates = { attachmentBlendState };
+
+            phase.renderStates.setColorBlendState(std::move(blendState));
+            return phase;
+        };
         auto spatialAspect = engine.createAspect<SpatialAspect>();
-        m_pickingLayer = engine.createApplicationLayer<PickingApplicationLayer>(m_camera, &qwin, spatialAspect, m_ctransform);
+        m_pickingLayer = engine.createApplicationLayer<PickingApplicationLayer>(m_camera, &qwin, spatialAspect, m_cursor->GetTransform());
 
         auto renderAspect = engine.createAspect<RenderAspect>(std::move(device));
         auto logicAspect = engine.createAspect<LogicAspect>();
@@ -310,7 +322,7 @@ public:
         // Window Render Target)
 
         algo->camera = m_camera;
-        algo->renderPhases = { createOpaquePhase() };
+        algo->renderPhases = { createOpaquePhase(), createtransparentPhase() };
         algo->offscreenMultiViewRenderTargetRefIndex = 0;
         algo->presentRenderTargetRefIndex = 0;
         algo->msaaSamples = RenderAlgorithm::SamplesCount::Samples_4;
@@ -333,13 +345,13 @@ private:
     AspectEngine engine;
 
     std::unique_ptr<Mesh> m_mesh;
-    std::unique_ptr<Mesh> m_cmesh;
     std::unique_ptr<Texture2D> m_texture;
     Entity* m_scene;
     MeshRenderer* m_model;
 
-    SrtTransform* m_ctransform;
     // Camera
     StereoProxyCamera* m_camera;
     PickingApplicationLayer* m_pickingLayer;
+
+    std::optional<all::Cursor> m_cursor;
 };

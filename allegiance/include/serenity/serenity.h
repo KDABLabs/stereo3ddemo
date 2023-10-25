@@ -8,6 +8,7 @@
 #undef emit
 #undef foreach
 
+#include <Serenity/gui/triangle_bounding_volume.h>
 #include <Serenity/gui/window_extent_watcher.h>
 #include <KDGui/gui_application.h>
 #include <stdexcept>

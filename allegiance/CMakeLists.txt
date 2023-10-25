@@ -18,17 +18,22 @@ target_sources(${PROJECT_NAME}
                 "src/entry_main.cpp"
                 "include/app.h"
                 "include/window.h"
-                "include/serenity.h"
+                "include/serenity/serenity.h"
                 "include/serenity_impl.h"
                 "include/sliders.h"
                 "include/camera_control.h"
                 "include/stereo_camera.h"
                 "include/qt3d_impl.h"
- "include/vertical_label.h" "include/qt3d_shaders.h" "include/qt3d_materials.h" "include/serenity_stereo_graph.h" "src/serenity_stereo_graph.cpp"
+                "include/vertical_label.h"
+                "include/stereo_image_material.h"
                 "include/stereo_image_mesh.h"
                 "src/stereo_image_mesh.cpp"
-                "include/stereo_image_material.h"
                 "src/stereo_image_material.cpp"
+		"include/serenity_stereo_graph.h"
+		"src/serenity_stereo_graph.cpp"
+                "include/serenity/cursor.h"
+		"include/qt3d_shaders.h"
+		"include/qt3d_materials.h"
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -42,18 +47,10 @@ target_link_libraries(${PROJECT_NAME}
 )
 if(SERENITY_BUILD)
     set(SCENE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../scene")
-    CompileShaderSet(${PROJECT_NAME} multiview-scene)
-    add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}Shaders)
+    file(MAKE_DIRECTORY ${SCENE_DIR})
 
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-			"${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.frag.spv"
-			"${SCENE_DIR}/multiview-scene.frag.spv"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            "${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.vert.spv"
-            "${SCENE_DIR}/multiview-scene.vert.spv"
-        DEPENDS ${PROJECT_NAME}Shaders
-    )
+    add_subdirectory("serenity")
+    add_dependencies(${PROJECT_NAME} Shaders)
 
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -62,19 +59,16 @@ if(SERENITY_BUILD)
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_SOURCE_DIR}/../shared/cottage_diffuse.png"
             "${SCENE_DIR}/cottage_diffuse.png"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/../shared/cursor_billboard.png"
+            "${SCENE_DIR}/cursor_billboard.png"
     )
 
-    set(RESOURCE_FILES
-        "${SCENE_DIR}/multiview-scene.vert.spv"
-        "${SCENE_DIR}/multiview-scene.frag.spv"
-    )
     set(SCENE_FILES
         "${SCENE_DIR}/cottage.obj"
         "${SCENE_DIR}/cottage_diffuse.png"
+        "${SCENE_DIR}/cursor_billboard.png"
     )
-    install(FILES ${RESOURCE_FILES}
-            DESTINATION ${CMAKE_INSTALL_BINDIR}/scene
-            COMPONENT applications)
     install(FILES ${SCENE_FILES}
             DESTINATION ${CMAKE_INSTALL_BINDIR}/scene
             COMPONENT applications)

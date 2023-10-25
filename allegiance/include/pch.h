@@ -1,6 +1,6 @@
 #pragma once
 #if ALLEGIANCE_SERENITY
-#include "serenity.h"
+#include "serenity/serenity.h"
 #else
 #include <Qt3DCore>
 #include <Qt3DRender>
