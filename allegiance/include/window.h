@@ -35,6 +35,13 @@ public:
         if (e->key() == Qt::Key_Escape)
             if (isFullScreen())
                 setWindowState(Qt::WindowNoState);
+        if (e->key() == Qt::Key_Space) {
+            cursor = !cursor;
+            if (!cursor)
+                setCursor(Qt::BlankCursor);
+            else
+                setCursor(Qt::ArrowCursor);
+        }
     }
 
 private:
@@ -53,5 +60,6 @@ Q_SIGNALS:
 private:
     QWindow* window;
     CameraControl* camera_control;
+    bool cursor = true;
 };
 } // namespace all
