@@ -66,6 +66,15 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         "${CMAKE_SOURCE_DIR}/shared/cottage.obj"
         "${SCENE_DIR}/cottage.obj"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/shared/terrain.obj"
+        "${SCENE_DIR}/terrain.obj"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/shared/terrain.mtl"
+        "${SCENE_DIR}/terrain.mtl"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/shared/terrain.png"
+        "${SCENE_DIR}/terrain.png"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_SOURCE_DIR}/shared/cottage_diffuse.png"
         "${SCENE_DIR}/cottage_diffuse.png"
         COMMAND ${CMAKE_COMMAND} -E copy_if_different

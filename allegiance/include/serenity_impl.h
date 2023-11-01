@@ -143,10 +143,10 @@ public:
         const Material::UboDataBuilder materialDataBuilder[] = {
             [](uint32_t set, uint32_t binding) {
                 const PhongData data{
-                    { 0.2f, 0.2f, 0.2f, 1.0f },
+                    { 0.4f, 0.4f, 0.4f, 1.0f },
                     { 0.6f, 0.6f, 0.6f, 1.0f },
-                    { 1.0f, 1.0f, 1.0f, 1.0f },
-                    5.0f,
+                    { 0.1f, 0.1f, 0.1f, 1.0f },
+                    0.0f,
                     true,
                     { 0.0f, 0.0f }
                 };
@@ -189,11 +189,11 @@ public:
             m_mesh = std::make_unique<Mesh>();
             m_mesh->setObjectName("Model Mesh");
             MeshLoader meshloader;
-            meshloader.load("scene/cottage.obj", m_mesh.get());
+            meshloader.load("scene/terrain.obj", m_mesh.get());
 
             m_texture = std::make_unique<Texture2D>();
             m_texture->setObjectName("Model Texture");
-            m_texture->setPath("scene/cottage_diffuse.png");
+            m_texture->setPath("scene/terrain.png");
             material->setTexture(4, 0, m_texture.get());
 
             m_model = e->createComponent<MeshRenderer>();
