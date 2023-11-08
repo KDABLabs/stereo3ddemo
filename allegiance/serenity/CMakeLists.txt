@@ -7,7 +7,8 @@ if(SERENITY_BUILD)
     CompileShaderSet(serenity_multiview multiview-scene)
     CompileShaderSet(serenity_bb billboard)
     CompileShaderSet(serenity_color color)
-    add_dependencies(${PROJECT_NAME} serenity_bbShaders serenity_colorShaders serenity_multiviewShaders)
+    CompileShaderSet(serenity_stereoimage stereoimage)
+    add_dependencies(${PROJECT_NAME} serenity_bbShaders serenity_colorShaders serenity_multiviewShaders serenity_stereoimageShaders)
 
     set(COMP_SHADERS
         "${CMAKE_CURRENT_BINARY_DIR}/multiview-scene.vert.spv"
@@ -16,6 +17,8 @@ if(SERENITY_BUILD)
         "${CMAKE_CURRENT_BINARY_DIR}/color.frag.spv"
         "${CMAKE_CURRENT_BINARY_DIR}/billboard.vert.spv"
         "${CMAKE_CURRENT_BINARY_DIR}/billboard.frag.spv"
+        "${CMAKE_CURRENT_BINARY_DIR}/stereoimage.vert.spv"
+        "${CMAKE_CURRENT_BINARY_DIR}/stereoimage.frag.spv"
     )
 
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -32,6 +35,8 @@ if(SERENITY_BUILD)
         "${SCENE_DIR}/color.frag.spv"
         "${SCENE_DIR}/billboard.vert.spv"
         "${SCENE_DIR}/billboard.frag.spv"
+        "${SCENE_DIR}/stereoimage.vert.spv"
+        "${SCENE_DIR}/stereoimage.frag.spv"
     )
     install(FILES ${SHADER_FILES}
         DESTINATION ${CMAKE_INSTALL_BINDIR}/scene
