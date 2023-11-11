@@ -16,6 +16,8 @@ using Implementation = Qt3DImpl;
 using Application = QApplication;
 #endif
 
+#include "spacemouse.h"
+
 class WindowDestructionWatcher : public QObject
 {
     Q_OBJECT
@@ -105,13 +107,15 @@ public:
                          });
         QObject::connect(&watcher, &WindowDestructionWatcher::OnScroll,
                          [this](::QWheelEvent* e) {
-                             camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
+                               camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
                          });
         QObject::connect(cc, &all::CameraControl::OnLoadImage,
                          [this]() {
                              impl->ShowImage();
                          });
-        QObject::connect(cc, &all::CameraControl::OnLoadModel,
+        auto a = new QAction(QIcon{":3D_contrast.png"}, "Load Model", cc);
+        QObject::connect(cc, &all::CameraControl::OnLoadModel, a, &QAction::trigger);
+        QObject::connect(a, &QAction::triggered,
                          [this]() {
                              impl->ShowModel();
                          });
@@ -170,6 +174,9 @@ public:
         QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
             camera.SetInterocularDistance(v);
         });
+#ifdef WITH_NAVLIB
+        spacemouse.addAction(a);
+#endif
 
         impl->CreateAspects(cc, &camera);
         wnd.show();
@@ -191,5 +198,11 @@ private:
     all::Window wnd;
     WindowDestructionWatcher watcher{ &wnd };
     all::OrbitalStereoCamera camera;
+#ifdef WITH_SPNAV
+    SpacemouseSpnav spacemouse{&camera};
+#endif
+#ifdef WITH_NAVLIB
+    SpacemouseNavlib spacemouse{&camera};
+#endif
     all::MouseTracker input;
 };

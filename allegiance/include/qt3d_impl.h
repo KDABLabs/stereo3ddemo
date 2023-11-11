@@ -7,8 +7,9 @@
 #include "qt3d_cursor.h"
 #include "stereo_image_mesh.h"
 #include "stereo_image_material.h"
-
+#include "spacemouse.h"
 #include <QFileDialog>
+
 
 class QStereoProxyCamera : Qt3DCore::QEntity
 {
@@ -46,7 +47,14 @@ public:
         return m_rightCamera;
     }
 
-public:
+    void SetPositionAndForward(const QVector3D& position, const QQuaternion& rotation)
+    {
+        m_leftTransform->setTranslation(position);
+        m_leftTransform->setRotation(rotation);
+        m_rightTransform->setTranslation(position);
+        m_rightTransform->setRotation(rotation);
+    }
+
     void SetMatrices(const QMatrix4x4& left, const QMatrix4x4& right)
     {
         m_leftTransform->setMatrix(left.inverted());
@@ -232,7 +240,8 @@ public:
     Qt3DImpl()
     {
         QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-        format.setStereo(true);
+        if (qgetenv("DISABLE_STEREO") == "")
+            format.setStereo(true);
         format.setSamples(1);
         QSurfaceFormat::setDefaultFormat(format);
     }
@@ -242,7 +251,7 @@ public:
     {
     }
 
-    void CreateAspects(all::CameraControl* cc, all::OrbitalStereoCamera* camera)
+    void CreateAspects(all::CameraControl* cc, all::StereoCamera* camera)
     {
         using namespace Qt3DCore;
         using namespace Qt3DRender;
@@ -257,14 +266,17 @@ public:
         m_camera = new QStereoProxyCamera(m_rootEntity.get());
         m_renderer->setCamera(m_camera);
 
+        camera->SetPosition({0.2, 5, -10});
+        camera->SetForwardVector({0, .5, -1});
+
         m_camera->SetMatrices(toMatrix(camera->GetViewLeft()), toMatrix(camera->GetViewRight()));
         m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
 
-        QObject::connect(camera, &all::OrbitalStereoCamera::OnViewChanged, [this, camera]() {
+        QObject::connect(camera, &all::StereoCamera::OnViewChanged, [this, camera]() {
             m_camera->SetMatrices(toMatrix(camera->GetViewLeft()), toMatrix(camera->GetViewRight()));
             m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
         });
-        QObject::connect(camera, &all::OrbitalStereoCamera::OnProjectionChanged, [this, camera]() {
+        QObject::connect(camera, &all::StereoCamera::OnProjectionChanged, [this, camera]() {
             m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
         });
 
@@ -277,8 +289,6 @@ public:
 
         CreateScene(m_rootEntity.get());
         LoadModel();
-        QObject::connect(cc, &all::CameraControl::OnLoadModel,
-                         [this]() { LoadModelDialog(); });
     }
 
     QWindow* GetWindow() { return &m_view; }
@@ -291,12 +301,14 @@ public:
     void ShowModel()
     {
         m_renderer->setMode(QStereoForwardRenderer::Mode::Scene);
+        LoadModelDialog();
     }
 
     void LoadModelDialog()
     {
         auto fn = QFileDialog::getOpenFileName(this->m_widget.get(), "Open Model", "", "Model Files (*.obj *.fbx *.gltf *.glb)");
-        LoadModel(QUrl{"file:" + fn});
+        if(!fn.isEmpty())
+            LoadModel(QUrl{"file:" + fn});
     }
 
     void LoadModel(QUrl path = QUrl::fromLocalFile("scene/fbx/showroom2303.fbx"))
@@ -384,9 +396,6 @@ public:
 #undef MMat
         m_materials["Skybox"] = new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
         // CreateMaterial("Dummy", all::fresnel_vs, all::fresnel_ps, all::DarkGlossSU, all::DarkGlossST);
-
-        m_widget = all::ControlWindow(m_materials[u"CarPaint"_qs]);
-        m_widget->show();
     }
 
 private:

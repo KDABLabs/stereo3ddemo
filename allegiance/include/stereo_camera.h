@@ -2,8 +2,64 @@
 // #define GLM_FORCE_LEFT_HANDED
 #include <glm/glm.hpp>
 #include <QObject>
+#include <QMatrix4x4>
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
+
+// inline Q_LOGGING_CATEGORY(lStereoCam, "allegiance.stereo_camera", QtInfoMsg);
+
+
+inline QDebug operator<<(QDebug debug, const glm::mat4x4& matrix)
+{
+    // Set the format you want for the matrix elements
+    debug.nospace() << "glm::mat4x4(";
+
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            debug.nospace() << matrix[i][j];
+            if (i != 3 || j != 3) {
+                debug.nospace() << ", ";
+            }
+        }
+    }
+
+    debug.nospace() << ")";
+    return debug.space();
+}
+inline QDebug operator<<(QDebug debug, const glm::vec4& vec)
+{
+    debug << vec.x << ", " << vec.y << ", " << vec.z;
+    return debug;
+}
+
+inline QVector3D toQVector3D(const glm::vec3& glmVec) {
+    return QVector3D(glmVec.x, glmVec.y, glmVec.z);
+}
+
+inline glm::vec3 toGlmVec3(const QVector3D& qVec) {
+    return glm::vec3(qVec.x(), qVec.y(), qVec.z());
+}
+
+// Cast operators for glm::mat4x4 <-> QMatrix4x4
+inline QMatrix4x4 toQMatrix4x4(const glm::mat4x4& glmMat) {
+    QMatrix4x4 qMat;
+
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
+            qMat(i, j) = glmMat[j][i]; // Note the transposition
+
+    return qMat;
+}
+
+inline glm::mat4x4 toGlmMat4x4(const QMatrix4x4& qMat) {
+    glm::mat4x4 glmMat;
+
+    for (int i = 0; i < 4; ++i)
+        for (int j = 0; j < 4; ++j)
+            glmMat[j][i] = qMat(i, j); // Note the transposition
+
+    return glmMat;
+}
 
 namespace all {
 class StereoCamera : public QObject
@@ -21,6 +77,7 @@ public:
     glm::mat4x4 GetViewLeft() const noexcept { return view_left; }
     glm::mat4x4 GetViewRight() const noexcept { return view_right; }
     glm::mat4x4 GetViewCenter() const noexcept { return view_center; }
+    glm::mat4x4 GetCameraMatrix() const noexcept { return camera_matrix; }
 
     void SetInterocularDistance(float distance) noexcept
     {
@@ -66,30 +123,35 @@ public:
 
     void SetPosition(const glm::vec3& pos) noexcept
     {
-        position = pos;
+        camera_matrix[3] = glm::vec4{pos, 1};
+        //qCDebug(lStereoCam) << "set position " << camera_matrix[3];
         UpdateViewMatrix();
     }
-    glm::vec3 GetPosition() const noexcept { return position; }
+    glm::vec3 GetPosition() const noexcept { return camera_matrix[3]; }
 
     void SetForwardVector(const glm::vec3& dir) noexcept
     {
         if (dir == glm::vec3(0.0f, 0.0f, 0.0f))
             return;
 
-        forward = glm::normalize(dir);
+        auto r = glm::lookAt({0, 0, 0}, dir, {0, 1, 0});
+        r = glm::inverse(r);
+        camera_matrix[0] = r[0];
+        camera_matrix[1] = r[1];
+        camera_matrix[2] = r[2];
         UpdateViewMatrix();
     }
-    glm::vec3 GetForwardVector() const noexcept { return forward; }
+    glm::vec3 GetForwardVector() const noexcept { return -camera_matrix[2]; }
 
     void SetUpVector(const glm::vec3& up) noexcept
     {
         if (up == glm::vec3(0.0f, 0.0f, 0.0f))
             return;
 
-        this->up = glm::normalize(up);
+        camera_matrix[1] = glm::vec4{glm::normalize(up), 0};
         UpdateViewMatrix();
     }
-    glm::vec3 GetUpVector() const noexcept { return up; }
+    glm::vec3 GetUpVector() const noexcept { return camera_matrix[1]; }
 
     float ShearCoefficient()const noexcept
     {
@@ -116,27 +178,50 @@ public:
     void UpdateViewMatrix() noexcept
     {
         // we can do that, since right is unit length
+        auto position = GetPosition();
+        auto forward = -GetForwardVector();
+        auto up = GetUpVector();
         auto right = glm::normalize(glm::cross(forward, up)) * interocular_distance * 0.5f;
         view_left = shear
-                ? StereoShear(ShearCoefficient()) * glm::lookAt(position - right, -right + forward, up)
-                : glm::lookAt(position - right, -right + forward, up);
+                ? StereoShear(ShearCoefficient()) * glm::lookAt(position - right, position -right + forward, up)
+                : glm::lookAt(position - right, position -right + forward, up);
         view_right = shear
-                ? StereoShear(-ShearCoefficient()) * glm::lookAt(position + right, +right + forward, up)
-                : glm::lookAt(position + right, +right + forward, up);
-        view_center = glm::lookAt(position, forward, up);
+                ? StereoShear(-ShearCoefficient()) * glm::lookAt(position + right, position +right + forward, up)
+                : glm::lookAt(position + right, position +right + forward, up);
+        view_center = glm::lookAt(position, position + forward, up);
+
         Q_EMIT OnViewChanged();
     }
     void UpdateProjectionMatrix() noexcept
     {
-        projection = glm::perspective(glm::radians(45.0f), aspect_ratio, near_plane, far_plane);
+        projection = glm::perspective(glm::radians(fov_y), aspect_ratio, near_plane, far_plane);
         Q_EMIT OnProjectionChanged();
     }
 
-private:
+    /*
+     *  Position and Orientation of the camera
+     */
+    void SetCameraMatrix(const glm::mat4x4& viewMatrix)
+    {
+        camera_matrix = viewMatrix;
+        UpdateViewMatrix();
+    }
+
+    float GetFov() const
+    {
+        return fov_y;
+    }
+    float GetHorizontalFov() const
+    {
+        return glm::degrees(2.0f * std::atan(std::tan(glm::radians(fov_y / 2.0f)) * aspect_ratio));
+    }
+    private:
     glm::mat4x4 view_left;
     glm::mat4x4 view_right;
     glm::mat4x4 view_center;
+    glm::mat4x4 camera_matrix = glm::identity<glm::mat4x4>();
     glm::mat4x4 projection;
+    const float fov_y{ 45 };
 
 private:
     float interocular_distance = 0.06f;
@@ -146,10 +231,6 @@ private:
     float aspect_ratio = 1.0f;
     bool converge_on_near = true;
     bool shear = true;
-
-    glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f);
-    glm::vec3 forward = glm::vec3(0.0f, 0.0f, -1.0f);
-    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 };
 
 class OrbitalStereoCamera : public StereoCamera
@@ -195,7 +276,7 @@ private:
     {
         auto pos = target + glm::vec3(radius * sin(theta) * cos(phi), radius * cos(theta), radius * sin(theta) * sin(phi));
         SetPosition(pos);
-        SetForwardVector(target - pos);
+        SetForwardVector( pos);
     }
 
 private:

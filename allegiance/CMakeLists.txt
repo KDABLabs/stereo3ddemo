@@ -42,10 +42,12 @@ target_sources(${PROJECT_NAME}
                 "include/vertical_label.h"
                 "include/stereo_image_material.h"
                 "include/stereo_image_mesh.h"
+                "include/spacemouse.h"
+                "include/spacemouse.cpp"
                 "src/stereo_image_mesh.cpp"
                 "src/stereo_image_material.cpp"
-               ${serenity_sources}
-               ${qt3d_sources}
+                ${serenity_sources}
+                ${qt3d_sources}
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -58,35 +60,57 @@ target_link_libraries(${PROJECT_NAME}
                 glm::glm
 )
 
+
+if(WIN32 OR APPLE)
+    option(WITH_NAVLIB "Compile with support for 3DxWare Navlib" ON)
+    set(WITH_SPNAV OFF)
+else()
+    option(WITH_SPNAV  "Compile with libspnav for spacemouse support" ON)
+endif()
+
+if (${WITH_NAVLIB})
+    set(TDxWare_SDK_DIR "${CMAKE_SOURCE_DIR}/3rdparty/3DxWare_SDK_v4-0-3_r19962/")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC -DWITH_NAVLIB) # -DTRACE_NAVLIB
+
+    find_package(TDxWare_SDK 4.0 REQUIRED COMPONENTS 3DxWare::Navlib)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+        $<TARGET_PROPERTY:3DxWare::Navlib,INTERFACE_INCLUDE_DIRECTORIES>
+        )
+
+    #target_link_options(${PROJECT_NAME} PRIVATE "/ignore:4099")
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        $<TARGET_PROPERTY:3DxWare::Navlib,INTERFACE_LINK_LIBRARIES>
+        )
+endif()
+
+if (${WITH_SPNAV})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DWITH_SPNAV)
+    target_link_libraries(${PROJECT_NAME} PRIVATE spnav)
+endif()
+
 set(SCENE_DIR "${CMAKE_CURRENT_BINARY_DIR}/../scene")
 file(MAKE_DIRECTORY ${SCENE_DIR})
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/cottage.obj"
-        "${SCENE_DIR}/cottage.obj"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/terrain.obj"
-        "${SCENE_DIR}/terrain.obj"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/terrain.mtl"
-        "${SCENE_DIR}/terrain.mtl"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/terrain.png"
-        "${SCENE_DIR}/terrain.png"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/cottage_diffuse.png"
-        "${SCENE_DIR}/cottage_diffuse.png"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/fbx/showroom2303.fbx"
-        "${SCENE_DIR}/fbx/showroom2303.fbx"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/13_3840x2160_sbs.jpg"
-        "${SCENE_DIR}/13_3840x2160_sbs.jpg"
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/shared/cursor_billboard.png"
-        "${SCENE_DIR}/cursor_billboard.png"
+set(files_to_copy
+        cottage.obj
+        cottage_diffuse.png
+        terrain.obj
+        terrain.png
+        fbx/showroom2303.fbx
+        13_3840x2160_sbs.jpg
+        cursor_billboard.png
 )
+
+foreach(file ${files_to_copy})
+    set(src "${CMAKE_SOURCE_DIR}/shared/${file}")
+    set(dest "${SCENE_DIR}/${file}")
+
+    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${src}" "${dest}"
+    )
+endforeach()
+
 
 install(DIRECTORY ${SCENE_DIR}
         DESTINATION ${CMAKE_INSTALL_BINDIR}
