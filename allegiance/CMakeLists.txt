@@ -1,4 +1,4 @@
-project(allegiance${POSTFIX} VERSION ${PROJECT_VERSION})
+project(${POSTFIX} VERSION ${PROJECT_VERSION})
 
 find_package(glm QUIET)
 
