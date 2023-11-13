@@ -168,11 +168,9 @@ public:
         });
 
         connect(this, &Qt3DRender::QObjectPicker::entered, []() {
-            qDebug("entered");
         });
 
         connect(this, &Qt3DRender::QObjectPicker::pressed, this, [this]() {
-            qDebug() << "press";
             hidden = true;
         });
 

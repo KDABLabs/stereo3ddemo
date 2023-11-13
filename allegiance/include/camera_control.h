@@ -169,6 +169,24 @@ public:
         make_button(close);
         layout->addStretch();
         layout->addWidget(close);
+
+        QPixmap p{":/kdab.png"};
+        p = p.scaled(128, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        auto l = new QLabel;
+        l->setPixmap(p);
+        l->setScaledContents(true);
+
+        layout->addSpacing(10);
+        layout->addWidget(l);
+
+        p = QPixmap{":/schneider_white.png"};
+        p = p.scaled(128, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        l = new QLabel;
+        l->setPixmap(p);
+        l->setScaledContents(true);
+
+        layout->addSpacing(10);
+        layout->addWidget(l);
     }
 Q_SIGNALS:
     void OnEyeDisparityChanged(float value);

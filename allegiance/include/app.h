@@ -71,7 +71,7 @@ public:
         : app(argc, argv), impl(std::in_place), wnd(impl->GetWindow(), { 1920, 1080 })
     {
         // Basic setup of the application
-        QCoreApplication::setApplicationName(QStringLiteral("Schneider Demo"));
+        QCoreApplication::setApplicationName(QStringLiteral("Schneider Demo - " ) + ALLEGIANCE_BUILD_STR);
         QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
         app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
         app.setWindowIcon(QIcon{ QStringLiteral(":/tlr.ico") });
