@@ -74,6 +74,9 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${CMAKE_SOURCE_DIR}/shared/13_3840x2160_sbs.jpg"
         "${SCENE_DIR}/13_3840x2160_sbs.jpg"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/shared/cursor_billboard.png"
+        "${SCENE_DIR}/cursor_billboard.png"
 )
 
 install(DIRECTORY ${SCENE_DIR}
