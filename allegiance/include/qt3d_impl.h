@@ -120,7 +120,7 @@ public:
             cb->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
             //            cb->setClearColor(attachment == Qt3DRender::QRenderTargetOutput::AttachmentPoint::Left ? QColor(Qt::blue) : QColor(Qt::red));
             auto s = new QSortPolicy{cb};
-            s->setSortTypes(QList<QSortPolicy::SortType>{QSortPolicy::Material});
+            s->setSortTypes(QList<QSortPolicy::SortType>{QSortPolicy::BackToFront});
 
             return new Qt3DRender::QCameraSelector(s);
         };
