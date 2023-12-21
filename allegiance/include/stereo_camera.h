@@ -142,7 +142,7 @@ public:
     {
         // we can do that, since right is unit length
         auto position = GetPosition();
-        auto forward = -GetForwardVector();
+        auto forward = GetForwardVector();
         auto up = GetUpVector();
         auto right = glm::normalize(glm::cross(forward, up)) * interocular_distance * 0.5f;
         view_left = shear
@@ -169,9 +169,6 @@ public:
 #endif
     }
 
-    /*
-     *  Position and Orientation of the camera
-     */
     void SetCameraMatrix(const glm::mat4x4& viewMatrix)
     {
         camera_matrix = viewMatrix;
@@ -249,7 +246,7 @@ private:
     {
         auto pos = target + glm::vec3(radius * sin(theta) * cos(phi), radius * cos(theta), radius * sin(theta) * sin(phi));
         SetPosition(pos);
-        SetForwardVector( pos);
+        SetForwardVector( target - pos);
     }
 
 private:

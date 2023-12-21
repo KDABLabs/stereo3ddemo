@@ -456,5 +456,5 @@ protected:
     StereoProxyCamera* m_camera;
     PickingApplicationLayer* m_pickingLayer;
 
-    std::optional<all::Cursor> m_cursor;
+    std::optional<Serenity::Cursor> m_cursor;
 };

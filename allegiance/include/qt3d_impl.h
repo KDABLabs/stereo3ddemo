@@ -9,8 +9,49 @@
 #include "stereo_image_material.h"
 #include "spacemouse.h"
 #include <QFileDialog>
+#include <Qt3DCore/QEntity>
+#include <Qt3DCore/QTransform>
+#include <Qt3DRender/QMesh>
+#include <Qt3DRender/QSceneLoader>
+#include <Qt3DExtras/QPhongMaterial>
+#include <util_qt.h>
 
+inline void traverseEntities(Qt3DCore::QEntity *entity, QVector3D &minExtents, QVector3D &maxExtents) {
+    if (!entity) return;
+    Qt3DRender::QMesh *mesh = entity->findChild<Qt3DRender::QMesh *>();
+    Qt3DCore::QTransform *transform = entity->findChild<Qt3DCore::QTransform *>();
 
+    if (mesh && transform) {
+        // Iterate over attributes to find the position attribute
+        const QList<Qt3DCore::QAttribute *> attributes = mesh->geometry()->attributes();
+        for (Qt3DCore::QAttribute *attribute : attributes) {
+            if (attribute->name() == Qt3DCore::QAttribute::defaultPositionAttributeName()) {
+                const QByteArray &dataArray = attribute->buffer()->data();
+                const float *data = reinterpret_cast<const float *>(dataArray.constData());
+
+                // Transform the bounding volume by the entity's transform
+                for (int i = 0; i < attribute->count(); ++i) {
+                    QVector4D vertex(data[i * 3], data[i * 3 + 1], data[i * 3 + 2], 1.0);
+                    QVector4D transformedVertex = transform->matrix() * vertex;
+
+                    minExtents.setX(qMin(minExtents.x(), transformedVertex.x()));
+                    minExtents.setY(qMin(minExtents.y(), transformedVertex.y()));
+                    minExtents.setZ(qMin(minExtents.z(), transformedVertex.z()));
+
+                    maxExtents.setX(qMax(maxExtents.x(), transformedVertex.x()));
+                    maxExtents.setY(qMax(maxExtents.y(), transformedVertex.y()));
+                    maxExtents.setZ(qMax(maxExtents.z(), transformedVertex.z()));
+                }
+            }
+        }
+    }
+
+    QObjectList children = entity->children();
+    for (auto c : children) {
+        const auto childEntity = dynamic_cast<Qt3DCore::QEntity*>(c);
+        traverseEntities(childEntity, minExtents, maxExtents);
+    }
+}
 class QStereoProxyCamera : Qt3DCore::QEntity
 {
 public:
@@ -267,7 +308,7 @@ public:
         m_renderer->setCamera(m_camera);
 
         camera->SetPosition({0.2, 5, -10});
-        camera->SetForwardVector({0, .5, -1});
+        camera->SetForwardVector({0, -.5, 1});
 
         m_camera->SetMatrices(toMatrix(camera->GetViewLeft()), toMatrix(camera->GetViewRight()));
         m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
@@ -280,15 +321,54 @@ public:
             m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
         });
 
+        m_raycaster = new Qt3DRender::QRayCaster{m_rootEntity.get()};
+        m_raycaster->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
+        m_raycaster->setDirection(QVector3D(0.0f, 0.0f, 1.0f)); // Set your own direction
+        m_raycaster->setOrigin(QVector3D(0.0f, 0.01f, 0.0f));     // Set your own position
+        connect(m_raycaster, &QRayCaster::hitsChanged,
+            [](const Qt3DRender::QRayCaster::Hits& hits) {
+                qDebug() << "hits " << hits.size();
+                if (hits.empty()) return ;
+            });
+
+        m_raycaster->setEnabled(true);
+        m_rootEntity->addComponent(m_raycaster);
+
+        auto ent = m_rootEntity.get();
+        all::Controller::getInstance().hitTest = [this](glm::vec3 pos, glm::vec3 dir, double aperture) {
+
+            this->m_raycaster->trigger(toQVector3D(pos), toQVector3D(dir), 1000);
+
+            auto hits = this->m_raycaster->pick(toQVector3D(pos), toQVector3D(dir), 100);
+            qDebug() << "triggered ray cast" << toQVector3D(pos) << toQVector3D(dir) << " - " << hits.size() << " hits ";
+            for( auto hit : hits) {
+                qDebug() << hit.worldIntersection() << " - " << hit.distance();
+            }
+            if (hits.isEmpty()) {
+                return glm::vec3{-1};
+            }
+
+            // Use std::min_element along with a lambda function to find the minimum distance
+            auto nearestHitIterator = std::min_element(hits.begin(), hits.end(),
+                [](const QRayCasterHit& a, const QRayCasterHit& b) {
+                    return a.distance() < b.distance();
+                });
+
+            return toGlmVec3(nearestHitIterator->worldIntersection());
+        };
 
         m_sceneEntity = new Qt3DCore::QEntity{m_rootEntity.get()};
+        m_sceneEntity->setObjectName("SceneEntity");
         m_userEntity = new Qt3DCore::QEntity{m_sceneEntity};
+        m_userEntity->setObjectName("UserEntity");
         m_cursor = new CursorEntity(m_rootEntity.get(), m_camera->GetLeftCamera(), &m_view);
         new Picker(m_sceneEntity, m_cursor);
         m_view.setRootEntity(m_rootEntity.get());
 
         CreateScene(m_rootEntity.get());
         LoadModel();
+
+        LoadImage();
     }
 
     QWindow* GetWindow() { return &m_view; }
@@ -316,45 +396,10 @@ public:
             LoadModel(QUrl{"file:" + fn});
     }
 
-    void LoadModel(QUrl path = QUrl::fromLocalFile("scene/fbx/showroom2303.fbx"))
+    void LoadImage(const QUrl& path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"))
     {
-        auto* scene = new Qt3DRender::QSceneLoader(m_sceneEntity);
-        scene->setObjectName("Model Scene");
-        scene->setSource(path);
-
-        QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
-            if (s != Qt3DRender::QSceneLoader::Status::Ready)
-                return;
-
-            auto names = scene->entityNames();
-            for (auto&& name : names) {
-                auto* entity = scene->entity(name);
-
-                auto* e = scene->entity(name);
-                auto m = e->componentsOfType<Qt3DRender::QMaterial>();
-                if (m.empty())
-                    continue;
-
-                int underscore = name.lastIndexOf(u"_"_qs);
-                if (underscore == -1)
-                    continue;
-
-                QString materialName = name.mid(underscore + 1);
-
-                if (auto it = m_materials.find(materialName); it != m_materials.end()) {
-                    e->removeComponent(m[0]);
-                    e->addComponent(it->second);
-                    continue;
-                }
-            }
-        });
-
-        delete m_userEntity;
-        m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
-        m_userEntity->addComponent(scene);
-
         // Create entities for the stereo image
-        auto* stereoImageMaterial = new StereoImageMaterial(QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"));
+        auto* stereoImageMaterial = new StereoImageMaterial(path);
 
         // Left image entity (displays the left half of the image)
         auto* leftImageMesh = new StereoImageMesh(StereoImageMesh::Side::Left);
@@ -388,8 +433,58 @@ public:
         QObject::connect(&m_view, &QWindow::heightChanged, updateImageMeshes);
         QObject::connect(stereoImageMaterial, &StereoImageMaterial::textureSizeChanged, updateImageMeshes);
         updateImageMeshes();
+    }
 
-#define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::name##ST, all::name##SU, m_rootEntity.get())
+    void LoadModel(QUrl path = QUrl::fromLocalFile("scene/fbx/showroom2303.fbx"))
+    {
+        delete m_skyBox; m_skyBox = nullptr;
+        delete m_userEntity;
+        m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
+        m_userEntity->setObjectName("UserEntity");
+        auto* scene = new Qt3DRender::QSceneLoader();
+        scene->setObjectName("Model Scene");
+        scene->setSource(path);
+
+        QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
+            if (s != Qt3DRender::QSceneLoader::Status::Ready)
+                return;
+
+            auto names = scene->entityNames();
+            for (auto&& name : names) {
+                auto* e = scene->entity(name);
+
+                if (name.contains("skybox", Qt::CaseInsensitive)) {
+                    e->setParent(m_sceneEntity);
+                    m_skyBox = e;
+                }
+
+                auto m = e->componentsOfType<Qt3DRender::QMaterial>();
+                if (m.empty())
+                    continue;
+
+                int underscore = name.lastIndexOf(u"_"_qs);
+                if (underscore == -1)
+                    continue;
+
+                QString materialName = name.mid(underscore + 1);
+
+                if (auto it = m_materials.find(materialName); it != m_materials.end()) {
+                    e->removeComponent(m[0]);
+                    e->addComponent(it->second);
+                    continue;
+                }
+            }
+
+            auto ext = calculateSceneExtent(m_userEntity);
+            auto &e = all::Controller::getInstance().modelExtent;
+            e = { ext.min.x(), ext.min.y(), ext.min.z(), ext.max.x(), ext.max.y(), ext.max.z()};
+        });
+
+
+        m_userEntity->addComponent(scene);
+
+
+#define MMat(name) m_materials[u## #name## _qs] = new all::GlossyMaterial(all::name## ST, all::name## SU, m_rootEntity.get())
         MMat(CarPaint);
         MMat(DarkGlass);
         MMat(DarkGloss);
@@ -402,12 +497,109 @@ public:
         m_materials["Skybox"] = new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
         // CreateMaterial("Dummy", all::fresnel_vs, all::fresnel_ps, all::DarkGlossSU, all::DarkGlossST);
     }
+    
+     QVector2D calculateSceneDimensions(Qt3DCore::QEntity *scene) const{
+
+        QVector3D minBounds, maxBounds;
+        _calculateSceneDimensions(scene, minBounds, maxBounds);
+        qDebug() << minBounds << " max " << maxBounds;
+        QVector2D res{qMin(qMin(minBounds.x(), minBounds.y()), minBounds.z()),
+            qMax(qMax(maxBounds.x(), maxBounds.y()), maxBounds.z())};
+        return res;
+    }
+
+    struct SceneExtent
+    {
+        QVector3D min, max;
+    };
+    SceneExtent calculateSceneExtent(Qt3DCore::QNode *node) {
+        SceneExtent e;
+        _calculateSceneDimensions(node, e.min, e.max);
+        return e;
+    }
+
+protected:
+
+    void _calculateSceneDimensions(Qt3DCore::QNode* node, QVector3D& minBounds, QVector3D& maxBounds) const {
+        if (node) {
+            Qt3DCore::QEntity* entity = qobject_cast<Qt3DCore::QEntity*>(node);
+
+            for (Qt3DCore::QNode* childNode : node->childNodes()) {
+                _calculateSceneDimensions(childNode, minBounds, maxBounds);
+            }
+            if (!entity)
+                return;
+
+
+            // Check if the entity has a geometry renderer
+            auto geometryRenderers = entity->componentsOfType<Qt3DRender::QGeometryRenderer>();
+            if (geometryRenderers.size() > 0) {
+                Qt3DRender::QGeometryRenderer* renderer = geometryRenderers.first();
+
+//                qDebug() << renderer->vertexCount() << " " << renderer->instanceCount()
+//                         << "children size" << renderer->children().size();
+                Qt3DCore::QGeometry* geometry = renderer->geometry();
+                //qDebug() << "extent " << geometry->maxExtent() << " " << geometry->minExtent() << " " << geometry->boundingVolumePositionAttribute() << " ";
+                if (!geometry) {
+                    for (auto c : renderer->children()) {
+                        auto a = qobject_cast<Qt3DCore::QGeometryView*>(c);
+                        if (a) {
+                            geometry = a->geometry();
+                            if (geometry)
+                                break;
+                        }
+
+                    }
+
+                    if (!geometry)
+                    return;
+                }
+                // You need to specify the correct attribute index for position data
+                const int positionAttributeIndex = 0;  // Adjust this index based on your format
+                const Qt3DCore::QAttribute* positionAttribute = geometry->attributes().at(positionAttributeIndex);
+                size_t offset=-1, byteStride;
+                for (auto a : geometry->attributes()) {
+                    /*qDebug() << "Attribute " << a->name() << " byteOffset" << a->byteOffset() << " buffer" << a->buffer()
+                             << " - " << a->buffer()->data().size() << " - byte stride" << a->byteStride();*/
+                    if (a->name() == "vertexPosition") {
+                        offset = a->byteOffset();
+                        byteStride = a->byteStride();
+                    }
+                }
+                if (offset != -1) {
+                    if (positionAttribute) {
+                        const QByteArray& rawData = positionAttribute->buffer()->data();
+                        int dataCount;
+                        if (byteStride)
+                            dataCount = rawData.size() / byteStride;
+                        else
+                            dataCount = rawData.size() / sizeof(QVector3D);
+
+                        for (int i = 0; i < dataCount; i++) {
+                            const QVector3D* position = reinterpret_cast<const QVector3D*>(rawData.data() + byteStride * i + offset);
+
+                            //qDebug() << *position;
+                            minBounds.setX(qMin(minBounds.x(), position->x()));
+                            minBounds.setY(qMin(minBounds.y(), position->y()));
+                            minBounds.setZ(qMin(minBounds.z(), position->z()));
+                            maxBounds.setX(qMax(maxBounds.x(), position->x()));
+                            maxBounds.setY(qMax(maxBounds.y(), position->y()));
+                            maxBounds.setZ(qMax(maxBounds.z(), position->z()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 
 private:
     Qt3DExtras::Qt3DWindow m_view;
     std::unique_ptr<Qt3DCore::QEntity> m_rootEntity;
     Qt3DCore::QEntity* m_sceneEntity = nullptr;
     Qt3DCore::QEntity* m_userEntity = nullptr;
+    Qt3DCore::QEntity* m_skyBox = nullptr;
+    Qt3DRender::QRayCaster* m_raycaster;
 
     std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
     QStereoForwardRenderer* m_renderer;

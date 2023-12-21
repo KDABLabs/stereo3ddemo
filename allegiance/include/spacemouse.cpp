@@ -3,6 +3,7 @@
 #include "spacemouse.h"
 
 #include "util_qt.h"
+#include "cursor.h"
 
 #include <exception>
 
@@ -15,6 +16,12 @@
 SpacemouseNavlib::SpacemouseNavlib(all::StereoCamera* camera)
     : Spacemouse(camera), m_model(*this)
 {
+    auto * c = &all::Controller::getInstance();
+    connect(c, &all::Controller::modelExtentChanged,
+        [this](const all::extent_t e) {
+            navlib::box_t b{e.min_x, e.min_y, e.min_z, e.max_x, e.max_y, e.max_z};
+            m_model.Write("model.extents", b);
+        });
     update();
 }
 
@@ -34,11 +41,58 @@ void SpacemouseNavlib::update()
     auto m = toNavlibMatrix(gm);
     m_model.GetCameraMatrix(m);
 }
+void SpacemouseNavlib::addActions(QVector<QAction*> actions, const QString& id, const QString& menuName)
+{
+    using TDx::CImage;
+    using TDx::SpaceMouse::CCategory;
+    using TDx::SpaceMouse::CCommand;
+    using TDx::SpaceMouse::CCommandSet;
+
+    CCategory menu(id.toStdString(), menuName.toStdString());
+    std::vector<CImage> images;
+    for (auto action : actions) {
+        m_actions.push_back(action);
+
+        auto icon = action->icon();
+        if (!icon.isNull()) {
+            auto p = action->icon().pixmap(30, 30);
+            QImage image = p.toImage();
+            QByteArray byteArray;
+            QBuffer buffer(&byteArray);
+            buffer.open(QIODevice::WriteOnly);
+            image.save(&buffer, "PNG"); // Change format as needed
+
+            std::string data(byteArray.constData(), byteArray.length());
+
+            images.push_back(CImage::FromData(data, 0, action->text().toStdString().c_str()));
+        };
+
+        menu.push_back(CCommand{ action->text().toStdString(), action->toolTip().toStdString(), action->whatsThis().toStdString() });
+    }
+    m_menuBar.push_back(std::move(menu));
+    m_model.AddImages(images);
+
+    qDebug() << m_menuBar.Id;
+    m_model.AddCommandSet(m_menuBar);
+    // m_model.ActiveCommands = m_menuBar.Id;
+    m_model.PutActiveCommands(m_menuBar.Id);
+}
+
+void SpacemouseNavlib::fireCommand(QString cmd)
+{
+    if (cmd.isEmpty())
+        return;
+    auto a = std::find_if(m_actions.begin(), m_actions.end(), [cmd](auto e) { return e->text() == cmd; });
+    if (a) {
+        auto b = *a;
+        b->trigger();
+    }
+}
 
 long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 {
     auto m = toGlmMat(matrix);
-    qCDebug(spcms) << "setting app camera matrix to " << m;
+    qCDebug(spcmsView) << "setting app camera matrix to " << m;
     lib.setCameraMatrix(m);
     return 0;
 }
@@ -46,7 +100,7 @@ long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 long CNavigationModel::GetCameraMatrix(navlib::matrix_t& matrix) const
 {
     auto m = (lib.getCameraMatrix());
-    qCDebug(spcms) << "setting SpcMouse Camera Matrix to " << m;
+    qCDebug(spcmsView) << "setting SpcMouse Camera Matrix to " << m;
     matrix = toNavlibMatrix(m);
     return 0;
 }
@@ -86,13 +140,18 @@ CNavigationModel::CNavigationModel(SpacemouseNavlib& lib, bool multiThreaded, bo
 long CNavigationModel::GetPointerPosition(navlib::point_t& position) const
 {
     qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    //return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    return 0;
+}
+long CNavigationModel::SetPointerPosition(const navlib::point_t& position)
+{
+    qCDebug(spcms) << __PRETTY_FUNCTION__ << position.x << position.y << position.z;
     return 0;
 }
 
+
 long CNavigationModel::GetViewExtents(navlib::box_t& extents) const
 {
-    // return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     qCDebug(spcms) << __PRETTY_FUNCTION__;
     extents.max = { 10, 10, 1000 };
     extents.min = { -10, -10, 0.01 };
@@ -121,12 +180,11 @@ long CNavigationModel::GetViewFrustum(navlib::frustum_t& frustum) const
     frustum.top = nearPlane * tanf(halfVerticalFOV);
     frustum.bottom = -frustum.top;
     frustum.left = -nearPlane * tanf(halfHorizontalFOV);
-    qCDebug(spcms) << frustum.left;
     frustum.right = -frustum.left;
     frustum.nearVal = nearPlane;
     frustum.farVal = farPlane;
 
-    qCDebug(spcms) << "vertical fov " << verticalFieldOfView << " near/far: " << nearPlane << "/" << farPlane
+    qCDebug(spcmsView) << "vertical fov " << verticalFieldOfView << " near/far: " << nearPlane << "/" << farPlane
              << " left/right " << frustum.left << frustum.right
              << " top/bottom " << frustum.top << frustum.bottom;
 
@@ -161,6 +219,15 @@ long CNavigationModel::SetViewFrustum(const navlib::frustum_t& frustum)
     return 0;
 }
 
+long CNavigationModel::GetModelExtents(navlib::box_t& extents) const
+{
+    qCDebug(spcms) << __PRETTY_FUNCTION__;
+
+    auto e = all::Controller::getInstance().modelExtent;
+    extents = {e.min_x, e.min_y, e.min_z, e.max_x, e.max_y, e.max_z};
+    return 0;
+}
+
 long CNavigationModel::GetSelectionExtents(navlib::box_t& extents) const
 {
     qCDebug(spcms) << __PRETTY_FUNCTION__;
@@ -189,18 +256,17 @@ long CNavigationModel::SetSelectionTransform(const navlib::matrix_t& matrix)
     return 0;
 }
 
+// Pivot
 long CNavigationModel::IsUserPivot(navlib::bool_t& userPivot) const
 {
     qCDebug(spcms) << __PRETTY_FUNCTION__;
     userPivot = true;
-    // return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
 
 long CNavigationModel::SetPivotPosition(const navlib::point_t& position)
 {
-    qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    qCDebug(spcms) << __PRETTY_FUNCTION__ << position;
     return 0;
 }
 
@@ -208,76 +274,76 @@ long CNavigationModel::GetPivotVisible(navlib::bool_t& visible) const
 {
     visible = true;
     qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
 
 long CNavigationModel::SetPivotVisible(bool visible)
 {
-    qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    qCDebug(spcms) << __PRETTY_FUNCTION__ << visible;
     return 0;
 }
 
+long CNavigationModel::GetPivotPosition(navlib::point_t& position) const
+{
+    const auto &p = lib.m_pivotPoint;
+    position = navlib::point_t{p.x, p.y, p.z};
+    qCDebug(spcms) << __PRETTY_FUNCTION__ << position;
+    return 0;
+}
+
+// Hit
 long CNavigationModel::SetHitAperture(double aperture)
 {
     qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    auto &c = all::Controller::getInstance();
+    c.hitAperture = aperture;
     return 0;
 }
 
 long CNavigationModel::SetHitDirection(const navlib::vector_t& direction)
 {
     qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    auto &c = all::Controller::getInstance();
+    c.hitDirection = toGlmVec3(direction);
     return 0;
 }
 
 long CNavigationModel::SetHitLookFrom(const navlib::point_t& eye)
 {
     qCDebug(spcms) << __PRETTY_FUNCTION__ << eye.x << eye.y << eye.z;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    auto &c = all::Controller::getInstance();
+    c.hitFrom = toGlmVec3(eye);
     return 0;
 }
 
 long CNavigationModel::SetHitSelectionOnly(bool onlySelection)
 {
-    qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
-    return 0;
-}
-
-long CNavigationModel::GetModelExtents(navlib::box_t& extents) const
-{
-    qCDebug(spcms) << __PRETTY_FUNCTION__;
-    extents.max = { 2, 1.5, 6 };
-    extents.min = { -2, 0, -6 };
-    return 0;
-}
-
-long CNavigationModel::GetPivotPosition(navlib::point_t& position) const
-{
-    qCDebug(spcms) << __PRETTY_FUNCTION__;
-    return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    qCDebug(spcms) << __PRETTY_FUNCTION__ << onlySelection;
     return 0;
 }
 
 long CNavigationModel::GetHitLookAt(navlib::point_t& position) const
 {
-    qCDebug(spcms) << __PRETTY_FUNCTION__;
-    auto p = m_camera->GetPosition() + m_camera->GetForwardVector();
-    position = { p.x, p.y, p.z };
+    auto &a= all::Controller::getInstance();
+    auto res = a.hitTest(a.hitFrom, a.hitDirection, a.hitAperture);
+    qDebug() << "resulting hit " << res << " - " << (res - a.hitFrom);
+    if (res == glm::vec3{-1}) return 0;
 
-    qCDebug(spcms) << "GetHitLookat " << p.x << p.y << p.z;
+    position.x = res.x; position.y = res.y; position.z = res.z;
+
+    qCDebug(spcms) << __PRETTY_FUNCTION__<< position.x << position.y << position.z;
     return 0;
 }
+
+
 
 long CNavigationModel::SetActiveCommand(std::string commandId)
 {
     qCDebug(spcms) << commandId << __PRETTY_FUNCTION__;
-    lib.fireCommand(QLatin1String{commandId});
+    lib.fireCommand(QLatin1String{ commandId });
     return 0;
 }
+
 
 #endif // WITH_NAVLIB
 

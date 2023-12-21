@@ -9,6 +9,7 @@
 #include <QLoggingCategory>
 
 inline Q_LOGGING_CATEGORY(spcms, "allegiance.spcms", QtInfoMsg);
+inline Q_LOGGING_CATEGORY(spcmsView, "allegiance.spcms.view", QtInfoMsg);
 
 // attach me to a camera
 class Spacemouse : public QObject
@@ -19,7 +20,6 @@ public:
         : QObject(parent)
         , m_camera(camera)
     {
-        m_orbital = static_cast<all::OrbitalStereoCamera*>(m_camera);
 #if ALLEGIANCE_SERENITY
         camera->OnViewChanged.connect([this] { onViewChanged(); });
 #else
@@ -28,7 +28,10 @@ public:
 #endif
     }
 
-    public Q_SLOTS:
+public Q_SLOTS:
+    virtual void onMouseChanged(const QVector3D& position)
+    {
+    }
 
     void onViewChanged()
     {
@@ -57,7 +60,6 @@ protected:
     }
 
     all::StereoCamera *m_camera;
-    all::OrbitalStereoCamera *m_orbital;
 };
 
 
@@ -85,7 +87,25 @@ inline glm::mat4x4 toGlmMat(const navlib::matrix_t& matrix)
             matrix.m30, matrix.m31, matrix.m32, matrix.m33
     );
     return gmatrix;
-    }
+}
+inline glm::vec3 toGlmVec3(const navlib::vector_t& point)
+{
+    return {point.x, point.y, point.z};
+}
+inline glm::vec3 toGlmVec3(const navlib::point_t& point)
+{
+    return {point.x, point.y, point.z};
+}
+
+inline QDebug operator<<(QDebug debug, const glm::vec3& vec)
+{
+    return debug << vec.x << vec.y << vec.z;
+}
+
+inline QDebug operator<<(QDebug debug, const navlib::point_t &position)
+{
+    return debug << position.x << position.y << position.z;
+}
 
 inline QDebug operator<<(QDebug debug, const navlib::matrix_t& matrix)
 {
@@ -106,7 +126,8 @@ inline QDebug operator<<(QDebug debug, const navlib::matrix_t& matrix)
 class SpacemouseNavlib;
 class CNavigationModel : public TDx::SpaceMouse::Navigation3D::CNavigation3D
 {
-    typedef TDx::SpaceMouse::Navigation3D::CNavigation3D base_type;
+    friend SpacemouseNavlib;
+
     typedef TDx::SpaceMouse::Navigation3D::CNavigation3D nav3d;
     SpacemouseNavlib& lib;
 
@@ -119,47 +140,43 @@ public:
     explicit CNavigationModel(SpacemouseNavlib& lib, bool multiThreaded = false, bool rowMajor = false);
 
     // Inherited via CNavigation3D
-    long GetPointerPosition(navlib::point_t& position) const override;
-    long GetViewExtents(navlib::box_t& extents) const override;
-    long GetViewFOV(double& fov) const override;
-    long GetViewFrustum(navlib::frustum_t& frustum) const override;
-    long GetIsViewPerspective(navlib::bool_t& perspective) const override;
+    long GetCameraMatrix(navlib::matrix_t& matrix) const override;
     long SetCameraMatrix(const navlib::matrix_t& matrix) override;
-    long SetViewExtents(const navlib::box_t& extents) override;
+    long GetViewFOV(double& fov) const override;
     long SetViewFOV(double fov) override;
+    long GetViewFrustum(navlib::frustum_t& frustum) const override;
     long SetViewFrustum(const navlib::frustum_t& frustum) override;
+    long GetIsViewPerspective(navlib::bool_t& perspective) const override;
+    long GetViewExtents(navlib::box_t& extents) const override;
+
+    long SetPointerPosition(const navlib::point_t &position) override;
+    long GetPointerPosition(navlib::point_t& position) const override;
+
+    // Model
+    long SetViewExtents(const navlib::box_t& extents) override;
+    long GetModelExtents(navlib::box_t& extents) const override;
     long GetSelectionExtents(navlib::box_t& extents) const override;
     long GetSelectionTransform(navlib::matrix_t& transform) const override;
     long GetIsSelectionEmpty(navlib::bool_t& empty) const override;
     long SetSelectionTransform(const navlib::matrix_t& matrix) override;
+    // Pivot
+    long GetPivotPosition(navlib::point_t& position) const override;
     long IsUserPivot(navlib::bool_t& userPivot) const override;
     long SetPivotPosition(const navlib::point_t& position) override;
     long GetPivotVisible(navlib::bool_t& visible) const override;
     long SetPivotVisible(bool visible) override;
+    // Hit
     long SetHitAperture(double aperture) override;
     long SetHitDirection(const navlib::vector_t& direction) override;
     long SetHitLookFrom(const navlib::point_t& eye) override;
     long SetHitSelectionOnly(bool onlySelection) override;
-    long GetCameraMatrix(navlib::matrix_t& matrix) const override;
-    long GetModelExtents(navlib::box_t& extents) const override;
-    long GetPivotPosition(navlib::point_t& position) const override;
     long GetHitLookAt(navlib::point_t& position) const override;
-    long SetActiveCommand(std::string commandId) override;
 
-    navlib::matrix_t* m_viewMatrix{nullptr};
+    long SetActiveCommand(std::string commandId) override;
+protected:
     all::StereoCamera *m_camera{nullptr};
 };
 
-inline std::string convertPixmapToString(const QPixmap& pixmap) {
-    QImage image = pixmap.toImage();
-
-    QByteArray byteArray;
-    QBuffer buffer(&byteArray);
-    buffer.open(QIODevice::WriteOnly);
-    image.save(&buffer, "PNG");
-
-    return std::string(byteArray.constData(), byteArray.length());
-}
 
 class SpacemouseNavlib : public Spacemouse
 {
@@ -172,59 +189,28 @@ public:
     glm::mat4x4 getCameraMatrix();
     void update() override; // tell device about new coordinates
 
-    void addAction(QAction* action, int slot = 0)
+public Q_SLOTS:
+    void onSetPivotPoint(const glm::vec3& position)
     {
-        using TDx::SpaceMouse::CCategory;
-        using TDx::SpaceMouse::CCommand;
-        using TDx::SpaceMouse::CCommandSet;
-        using TDx::CImage;
-
-
-        auto icon = action->icon();
-        if(!icon.isNull()) {
-            qDebug() << "Adding icon";
-            auto p = action->icon().pixmap(30, 30);
-            QImage image = p.toImage();
-
-            QByteArray byteArray;
-            QBuffer buffer(&byteArray);
-            buffer.open(QIODevice::WriteOnly);
-            image.save(&buffer, "PNG");  // Change format as needed
-            std::string data(byteArray.constData(), byteArray.length());
-            std::vector<CImage> images = {
-                CImage::FromData(data, 0, action->text().toStdString().c_str())
-            };
-            m_model.AddImages(images);
-        }
-
-        CCategory menu("FileMenu", "File");
-        menu.push_back(CCommand{action->text().toStdString(), action->toolTip().toStdString(), action->whatsThis().toStdString()});
-        m_menuBar.push_back(std::move(menu));
-
-        qDebug() << m_menuBar.Id;
-        m_model.AddCommandSet(m_menuBar);
-        //m_model.ActiveCommands = m_menuBar.Id;
-        m_model.PutActiveCommands(m_menuBar.Id);
-
-
-        m_actions.push_back(action);
+        m_pivotPoint = position;
+        m_model.Write("pivot.user", true);
     }
+    void onMouseChanged(const glm::vec3& position)
+    {
+        m_model.SetPointerPosition({position.x, position.y, position.z});
+    }
+
+    void addActions(QVector<QAction*> actions, const QString& id, const QString& menuName);
 
 public Q_SLOTS:
-    void fireCommand(QString cmd)
-    {
-        if (cmd.isEmpty()) return;
-        auto a = std::find_if(m_actions.begin(), m_actions.end(), [cmd](auto e) { return e->text() == cmd; });
-        if (a) {
-            auto b = *a;
-            b->trigger();
-        }
-    }
+    void fireCommand(QString cmd);
 
 protected:
     TDx::SpaceMouse::CCommandSet m_menuBar{"Default", "Ribbon"};
     QList<QAction*> m_actions;
     CNavigationModel m_model;
+    glm::vec3 m_pivotPoint;
+    friend CNavigationModel;
 };
 #endif
 

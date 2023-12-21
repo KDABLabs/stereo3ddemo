@@ -16,6 +16,8 @@ if(ALLEGIANCE_UI STREQUAL "Qt")
         include/vertical_label.h
         include/spacemouse.h
         include/spacemouse.cpp
+        include/cursor.h
+        include/cursor.cpp
     )
 elseif(ALLEGIANCE_UI STREQUAL "Flutter")
     set(ALLEGIANCE_SOURCES src/entry_main_flutter.cpp)

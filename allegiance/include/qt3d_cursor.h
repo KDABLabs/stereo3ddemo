@@ -6,6 +6,7 @@
 #include <Qt3DCore/QTransform>
 #include <Qt3DRender/QObjectPicker>
 #include <Qt3DRender/QPickEvent>
+#include <util_qt.h>
 
 using namespace Qt3DRender;
 
@@ -15,7 +16,6 @@ public:
     CursorBillboard(QNode *parent)
     :Qt3DCore::QEntity(parent) {
         m_plane = new Qt3DExtras::QPlaneMesh;
-        // rendering is not working as expected, that is why this and setAlphaBlendingEnabled is commented out
         addComponent(m_plane);
 
         auto m = new Qt3DExtras::QTextureMaterial;
@@ -79,6 +79,7 @@ public:
     }
 
     void setPosition(const QVector3D& positionInScene) {
+
         m_transform->setTranslation(positionInScene);
         updateSize();
     }
@@ -165,6 +166,7 @@ public:
         QObject::connect(this, &Qt3DRender::QObjectPicker::moved, this, [this](Qt3DRender::QPickEvent* pick) {
             // qDebug() << "move" << parentNode()->objectName();
             m_cursor->setPosition(pick->worldIntersection());
+            all::Cursor::getInstance().setWorldPosition(toGlmVec3(pick->worldIntersection()));
         });
 
         connect(this, &Qt3DRender::QObjectPicker::entered, []() {

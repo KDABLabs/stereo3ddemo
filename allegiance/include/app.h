@@ -1,4 +1,6 @@
 #pragma once
+#include "cursor.h"
+
 #include <QApplication>
 #include <QIcon>
 #include <QPalette>
@@ -110,7 +112,10 @@ public:
                          [this](::QWheelEvent* e) {
                                camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
                          });
-        QObject::connect(cc, &all::CameraControl::OnLoadImage,
+
+        auto b = new QAction(QIcon{":stereo3_contrast.png"}, "Show Image", cc);
+        QObject::connect(cc, &all::CameraControl::OnLoadImage, b, &QAction::trigger);
+        QObject::connect(b, &QAction::triggered,
                          [this]() {
                              impl->ShowImage();
                          });
@@ -131,6 +136,12 @@ public:
                                  if (e->buttons() & Qt::MouseButton::LeftButton) {
                                      input.is_pressed = true;
                                      input.skip_first = true;
+                                 } else if (e->buttons() & Qt::MouseButton::RightButton) {
+                                     auto pos = all::Cursor::getInstance().getWorldPosition();
+#ifdef WITH_NAVLIB
+                                     qDebug() << " setting pivot " << pos;
+                                     spacemouse.onSetPivotPoint({pos.x, pos.y, pos.z});
+#endif
                                  }
                                  break;
 
@@ -179,7 +190,8 @@ public:
             impl->SetCursorEnabled(checked);
         });
 #ifdef WITH_NAVLIB
-        spacemouse.addAction(a);
+        spacemouse.addActions({a, b}, "Application", "AppModi");
+        // connect spacemouse.onMouseChanged
 #endif
 
         impl->CreateAspects(&camera);

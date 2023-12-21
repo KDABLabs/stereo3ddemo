@@ -1,6 +1,6 @@
 #pragma once
 
-namespace all {
+namespace Serenity {
 class Cursor
 {
 public:
