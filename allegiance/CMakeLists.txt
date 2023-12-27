@@ -4,6 +4,12 @@ add_executable(
     ${PROJECT_NAME} MACOSX_BUNDLE
 )
 
+if (MSVC AND WIN32 AND NOT MSVC_VERSION VERSION_LESS 142)
+    target_link_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
+    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:/ZI>)
+
+endif()
+
 if(ALLEGIANCE_UI STREQUAL "Qt")
     set(ALLEGIANCE_SOURCES
         ../shared/resources.qrc
@@ -18,6 +24,8 @@ if(ALLEGIANCE_UI STREQUAL "Qt")
         include/spacemouse.cpp
         include/cursor.h
         include/cursor.cpp
+        include/ui/style.h
+        include/ui/camera_controller.h
     )
 elseif(ALLEGIANCE_UI STREQUAL "Flutter")
     set(ALLEGIANCE_SOURCES src/entry_main_flutter.cpp)
@@ -65,6 +73,8 @@ if(ALLEGIANCE_UI STREQUAL "Qt")
                 Qt6::Widgets
                 Qt6::Quick
                 glm::glm
+                Qt6::QuickWidgets
+                Qt6::QuickControls2
     )
 endif()
 if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
@@ -142,6 +152,17 @@ execute_process(
 target_compile_definitions(${PROJECT_NAME} PRIVATE ALLEGIANCE_BUILD_STR="v${PROJECT_VERSION} - ${GIT_COMMIT_DATE}")
 if(ALLEGIANCE_UI STREQUAL "Qt")
     target_compile_definitions(${PROJECT_NAME} PRIVATE QT_NO_KEYWORDS)
+    qt_add_qml_module(${PROJECT_NAME}
+            URI Schneider
+            NO_RESOURCE_TARGET_PATH
+            RESOURCES ./resources/checked.svg ./resources/unchecked.svg
+            QML_FILES
+            resources/camera_control.qml
+            resources/MainMenu.qml
+            resources/PageBase.qml
+            resources/SliderValue.qml
+            resources/CheckBoxX.qml
+            resources/ButtonX.qml )
 elseif(ALLEGIANCE_UI STREQUAL "Flutter")
     target_compile_definitions(${PROJECT_NAME} PRIVATE FLUTTER_UI_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 endif()
@@ -162,15 +183,14 @@ install(
 )
 
 if(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
-    qt_generate_deploy_app_script(TARGET ${PROJECT_NAME} OUTPUT_SCRIPT deploy_script)
-
-    #    qt_generate_deploy_qml_app_script(
-    #        TARGET ${PROJECT_NAME}
-    #        OUTPUT_SCRIPT deploy_script
-    #        MACOS_BUNDLE_POST_BUILD
-    #        NO_UNSUPPORTED_PLATFORM_ERROR
-    #        DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
-    #    )
+    qt_finalize_target(${PROJECT_NAME})
+    qt_generate_deploy_qml_app_script(
+            TARGET ${PROJECT_NAME}
+            OUTPUT_SCRIPT deploy_script
+            MACOS_BUNDLE_POST_BUILD
+            NO_UNSUPPORTED_PLATFORM_ERROR
+            DEPLOY_USER_QML_MODULES_ON_UNSUPPORTED_PLATFORM
+    )
     install(SCRIPT ${deploy_script} COMPONENT applications)
 endif()
 

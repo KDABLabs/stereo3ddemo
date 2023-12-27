@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg">
+  <g id="layer1" transform="matrix(1, 0, 0, 1, -2.6875000000000004, -42.6746826171875)">
+    <rect style="opacity: 1; fill-opacity: 1; fill-rule: evenodd; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0; stroke-opacity: 1; fill: none; stroke: rgb(255, 255, 255);" id="rect2383" width="40" height="40" x="-66" y="1.625" rx="10" ry="10.428932" transform="translate(69.6875,42.049683)"/>
+    <rect transform="translate(69.6875,42.049683)" ry="6.3883219" rx="5.9593897" y="6.625" x="-61" height="30" width="30" id="rect2475" style="opacity: 1; fill-opacity: 0.5; fill-rule: evenodd; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0; stroke-opacity: 1; fill: none; stroke: rgb(255, 255, 255);"/>
+    <path style="fill-opacity: 0.75; fill-rule: evenodd; stroke-width: 4; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-opacity: 1; fill: none; stroke: rgb(255, 255, 255);" d="M 13.6875,53.674683 L 33.6875,73.674683" id="path3157"/>
+    <path style="fill-opacity: 0.75; fill-rule: evenodd; stroke-width: 4; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-opacity: 1; fill: none; stroke: rgb(255, 255, 255);" d="M 13.6875,73.674683 L 33.6875,53.674683" id="path3159"/>
+  </g>
+</svg>

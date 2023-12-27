@@ -42,6 +42,8 @@ public:
             else
                 setCursor(Qt::ArrowCursor);
         }
+        if (e->key() == Qt::Key_F1)
+            camera_control->Reload();
     }
 
 private:

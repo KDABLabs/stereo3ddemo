@@ -4,6 +4,9 @@
 #include <QGroupBox>
 #include <QPushButton>
 #include <QMouseEvent>
+#include <QQuickWidget>
+#include <QQuickStyle>
+#include <QQmlEngine>
 
 namespace all {
 struct MouseTracker {
@@ -100,93 +103,120 @@ public:
     CameraControl(QWidget* parent)
         : QWidget(parent)
     {
-        QPushButton* load_image = new QPushButton(QIcon{ u":/stereo3.png"_qs }, u""_qs, this);
-        QPushButton* load_model = new QPushButton(QIcon{ u":/3D.png"_qs }, u""_qs, this);
-        QPushButton* toggle_cursor = new QPushButton(QIcon{ u":/3Dcursor.png"_qs }, u""_qs, this);
-        QPushButton* close = new QPushButton(QIcon{ u":/close.png"_qs }, u""_qs, this);
-        ValueButton* eye_disparity = new ValueButton(QIcon{ u":/b.png"_qs }, LabelPosition::Bottom, { 0.0f, 1.0f }, 0.06f, this);
-        ValueButton* focus_distance = new ValueButton(QIcon{ u":/a.png"_qs }, LabelPosition::Right, { 0.5f, 100.0f }, 5.0f, this);
+        QQuickStyle::setStyle("Fusion");
+        // QPushButton* load_image = new QPushButton(QIcon{ u":/stereo3.png"_qs }, u""_qs, this);
+        // QPushButton* load_model = new QPushButton(QIcon{ u":/3D.png"_qs }, u""_qs, this);
+        // QPushButton* toggle_cursor = new QPushButton(QIcon{ u":/3Dcursor.png"_qs }, u""_qs, this);
+        // QPushButton* close = new QPushButton(QIcon{ u":/close.png"_qs }, u""_qs, this);
+        // ValueButton* eye_disparity = new ValueButton(QIcon{ u":/b.png"_qs }, LabelPosition::Bottom, { 0.0f, 1.0f }, 0.06f, this);
+        // ValueButton* focus_distance = new ValueButton(QIcon{ u":/a.png"_qs }, LabelPosition::Right, { 0.5f, 100.0f }, 5.0f, this);
 
-        connect(load_image, &QPushButton::clicked, this, &CameraControl::OnLoadImage);
-        connect(load_model, &QPushButton::clicked, this, &CameraControl::OnLoadModel);
-        connect(toggle_cursor, &QPushButton::clicked, this, &CameraControl::OnToggleCursor);
-        connect(close, &QPushButton::clicked, this, &CameraControl::OnClose);
-        connect(eye_disparity, &ValueButton::OnValueChanged, this, &CameraControl::OnEyeDisparityChanged);
-        connect(focus_distance, &ValueButton::OnValueChanged, this, &CameraControl::OnFocusPlaneChanged);
+        // connect(load_image, &QPushButton::clicked, this, &CameraControl::OnLoadImage);
+        // connect(load_model, &QPushButton::clicked, this, &CameraControl::OnLoadModel);
+        // connect(toggle_cursor, &QPushButton::clicked, this, &CameraControl::OnToggleCursor);
+        // connect(close, &QPushButton::clicked, this, &CameraControl::OnClose);
+        // connect(eye_disparity, &ValueButton::OnValueChanged, this, &CameraControl::OnEyeDisparityChanged);
+        // connect(focus_distance, &ValueButton::OnValueChanged, this, &CameraControl::OnFocusPlaneChanged);
 
-        QVBoxLayout* layout = new QVBoxLayout(this);
+        layout = new QVBoxLayout(this);
         layout->setAlignment(Qt::AlignTop);
         layout->setContentsMargins(20, 20, 20, 20);
 
-        auto make_button = [](QPushButton* b) {
-            b->setFixedSize({ 128, 128 });
-            b->setIconSize({ 128, 128 });
-            b->setFlat(true);
-            b->setStyleSheet(uR"(QPushButton {
-                border: 2px solid #8f8f91;
-                border-radius: 20px;
-                min-width: 128px;
-                min-height: 128px;
-            }
-            QPushButton:hover:!pressed {
-                border: 4px solid #ff0000;
-            }
-            QPushButton:pressed {
-                border: 4px solid #ffff00;
-            }
-            QPushButton:checked {
-                border: 4px solid #ffff00;
-            }
-        )"_qs);
-        };
+        // auto make_button = [](QPushButton* b) {
+        //     b->setFixedSize({ 128, 128 });
+        //     b->setIconSize({ 128, 128 });
+        //     b->setFlat(true);
+        //     b->setStyleSheet(uR"(QPushButton {
+        //         border: 2px solid #8f8f91;
+        //         border-radius: 20px;
+        //         min-width: 128px;
+        //         min-height: 128px;
+        //     }
+        //     QPushButton:hover:!pressed {
+        //         border: 4px solid #ff0000;
+        //     }
+        //     QPushButton:pressed {
+        //         border: 4px solid #ffff00;
+        //     }
+        //     QPushButton:checked {
+        //         border: 4px solid #ffff00;
+        //     }
+        //)"_qs);
+        // };
 
-        QVBoxLayout* function_layout = new QVBoxLayout;
-        function_layout->setSpacing(50);
+        // QVBoxLayout* function_layout = new QVBoxLayout;
+        // function_layout->setSpacing(50);
 
-        make_button(load_image);
-        make_button(load_model);
-        make_button(toggle_cursor);
+        // make_button(load_image);
+        // make_button(load_model);
+        // make_button(toggle_cursor);
 
-        toggle_cursor->setCheckable(true);
-        toggle_cursor->setChecked(true);
+        // toggle_cursor->setCheckable(true);
+        // toggle_cursor->setChecked(true);
 
-        function_layout->addWidget(load_image);
-        function_layout->addWidget(load_model);
-        function_layout->addWidget(toggle_cursor);
+        // function_layout->addWidget(load_image);
+        // function_layout->addWidget(load_model);
+        // function_layout->addWidget(toggle_cursor);
 
-        QVBoxLayout* camera_layout = new QVBoxLayout;
+        // QVBoxLayout* camera_layout = new QVBoxLayout;
 
-        make_button(eye_disparity);
-        make_button(focus_distance);
+        // make_button(eye_disparity);
+        // make_button(focus_distance);
 
-        camera_layout->addWidget(eye_disparity);
-        camera_layout->addWidget(focus_distance);
+        // camera_layout->addWidget(eye_disparity);
+        // camera_layout->addWidget(focus_distance);
 
-        layout->addLayout(function_layout);
-        layout->insertSpacing(1, 50);
-        layout->addLayout(camera_layout);
+        //// layout->addLayout(function_layout);
+        //// layout->insertSpacing(1, 50);
+        //// layout->addLayout(camera_layout);
 
-        make_button(close);
-        layout->addStretch();
-        layout->addWidget(close);
+        // make_button(close);
+        //// layout->addStretch();
+        //// layout->addWidget(close);
+        engine = new QQmlEngine(this);
+        qw = new QQuickWidget(engine, this);
+        qw->setSource(QUrl(u"qrc:/resources/camera_control.qml"_qs));
+        qw->setResizeMode(QQuickWidget::SizeRootObjectToView);
+        qw->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-        QPixmap p{":/kdab.png"};
-        p = p.scaled(128, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        auto l = new QLabel;
-        l->setPixmap(p);
-        l->setScaledContents(true);
+        layout->addWidget(qw);
+        // layout->addWidget(new QQuickWidget(QUrl{ u"qrc:/camera_control.qml"_qs }, this));
 
-        layout->addSpacing(10);
-        layout->addWidget(l);
+        // QPixmap p{ ":/kdab.png" };
+        // p = p.scaled(128, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        // auto l = new QLabel;
+        // l->setPixmap(p);
+        // l->setScaledContents(true);
 
-        p = QPixmap{":/schneider_white.png"};
-        p = p.scaled(128, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
-        l = new QLabel;
-        l->setPixmap(p);
-        l->setScaledContents(true);
+        //// layout->addSpacing(10);
+        //// layout->addWidget(l);
 
-        layout->addSpacing(10);
-        layout->addWidget(l);
+        // p = QPixmap{ ":/schneider_white.png" };
+        // p = p.scaled(128, 60, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+        // l = new QLabel;
+        // l->setPixmap(p);
+        // l->setScaledContents(true);
+
+        // layout->addSpacing(10);
+        // layout->addWidget(l);
+    }
+    void Reload()
+    {
+        //engine->clearComponentCache();
+        //qw->setSource(QUrl::fromLocalFile(u"C:/Users/Agrae/source/repos/qt3d/allegiance/resources/camera_control.qml"_qs));
+        //return;
+
+        //auto state = qw->status();
+        //if (state != QQuickWidget::Ready && state != QQuickWidget::Error)
+        //    return;
+
+        //auto qw1 = new QQuickWidget(engine, this);
+        //qw1->setSource(QUrl::fromLocalFile(u"C:/Users/Agrae/source/repos/qt3d/allegiance/resources/camera_control.qml"_qs));
+        //qw1->setResizeMode(QQuickWidget::SizeRootObjectToView);
+        //qw1->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+        //layout->replaceWidget(qw, qw1);
+        //delete qw;
+        //qw = qw1;
     }
 Q_SIGNALS:
     void OnEyeDisparityChanged(float value);
@@ -196,5 +226,10 @@ Q_SIGNALS:
     void OnLoadModel();
     void OnToggleCursor(bool checked);
     void OnClose();
+
+private:
+    QQuickWidget* qw;
+    QVBoxLayout* layout;
+    QQmlEngine* engine;
 };
 } // namespace all

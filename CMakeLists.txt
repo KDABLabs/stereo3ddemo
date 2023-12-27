@@ -37,6 +37,7 @@ if(BUILD_SERENITY_RENDERER)
     find_package(Serenity)
 
     if(NOT Serenity_FOUND)
+        find_package(spdlog)
         message("Loading Serenity...")
         FetchContent_Declare(
             Serenity
@@ -81,7 +82,7 @@ if(NOT glm_FOUND)
 endif()
 
 if(BUILD_QT_UI)
-    set(QT_COMPONENTS Core Gui Widgets Quick)
+    set(QT_COMPONENTS Core Gui Widgets Quick QuickWidgets QuickControls2)
     if(BUILD_QT3D_RENDERER)
         list(
             APPEND

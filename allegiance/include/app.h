@@ -7,6 +7,8 @@
 #include <QStyleFactory>
 #include <window.h>
 #include <stereo_camera.h>
+#include <ui/style.h>
+#include <ui/camera_controller.h>
 
 #if ALLEGIANCE_SERENITY
 #include "serenity/serenity_qt.h"
@@ -42,6 +44,7 @@ public:
             break;
         case QEvent::Type::KeyPress:
             m_window->OnKeyPress(static_cast<::QKeyEvent*>(event));
+            event->accept();
             break;
         case QEvent::Type::Wheel:
             if (obj == m_window->GetGraphicsWindow()) {
@@ -69,6 +72,24 @@ private:
     all::Window* m_window;
 };
 
+class QMLNodes
+{
+public:
+    QMLNodes()
+    {
+        qmlRegisterSingletonInstance("Schneider", 1, 0, "Scene", &scene);
+        qmlRegisterSingletonInstance("Schneider", 1, 0, "Camera", &camera);
+        qmlRegisterSingletonInstance("Schneider", 1, 0, "Cursor", &cursor);
+        qmlRegisterSingletonInstance("Schneider", 1, 0, "Style", &style);
+    }
+
+public:
+    SceneController scene;
+    CameraController camera;
+    CursorController cursor;
+    AppStyle style;
+};
+
 class App
 {
 public:
@@ -76,29 +97,13 @@ public:
         : app(argc, argv), impl(std::in_place), wnd(impl->GetWindow(), { 1920, 1080 })
     {
         // Basic setup of the application
-        QCoreApplication::setApplicationName(QStringLiteral("Schneider Demo - " ) + ALLEGIANCE_BUILD_STR);
+        QCoreApplication::setApplicationName(QStringLiteral("Schneider Demo - ") + ALLEGIANCE_BUILD_STR);
         QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
         app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
         app.setWindowIcon(QIcon{ QStringLiteral(":/tlr.ico") });
+        app.setPalette(qml.style.palette());
 
         camera.SetShear(ALLEGIANCE_SERENITY);
-
-        // Style definition (darkmode)
-        QPalette darkPalette;
-        darkPalette.setColor(QPalette::Window, QColor(53, 53, 53));
-        darkPalette.setColor(QPalette::WindowText, Qt::white);
-        darkPalette.setColor(QPalette::Base, QColor(25, 25, 25));
-        darkPalette.setColor(QPalette::AlternateBase, QColor(53, 53, 53));
-        darkPalette.setColor(QPalette::ToolTipBase, Qt::white);
-        darkPalette.setColor(QPalette::ToolTipText, Qt::white);
-        darkPalette.setColor(QPalette::Text, Qt::white);
-        darkPalette.setColor(QPalette::Button, QColor(53, 53, 53));
-        darkPalette.setColor(QPalette::ButtonText, Qt::white);
-        darkPalette.setColor(QPalette::BrightText, Qt::red);
-        darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-        darkPalette.setColor(QPalette::Highlight, QColor(42, 130, 218));
-        darkPalette.setColor(QPalette::HighlightedText, Qt::black);
-        app.setPalette(darkPalette);
 
         auto* cc = wnd.GetCameraControl();
         auto& qwin = *impl->GetWindow();
@@ -110,7 +115,7 @@ public:
                          });
         QObject::connect(&watcher, &WindowDestructionWatcher::OnScroll,
                          [this](::QWheelEvent* e) {
-                               camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
+                             camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
                          });
 
         auto b = new QAction(QIcon{":stereo3_contrast.png"}, "Show Image", cc);
@@ -119,7 +124,7 @@ public:
                          [this]() {
                              impl->ShowImage();
                          });
-        auto a = new QAction(QIcon{":3D_contrast.png"}, "Load Model", cc);
+        auto a = new QAction(QIcon{ ":3D_contrast.png" }, "Load Model", cc);
         QObject::connect(cc, &all::CameraControl::OnLoadModel, a, &QAction::trigger);
         QObject::connect(a, &QAction::triggered,
                          [this]() {
@@ -180,14 +185,19 @@ public:
         QObject::connect(&qwin, &QWindow::heightChanged, [this, &qwin](int height) {
             camera.SetAspectRatio(float(qwin.width()) / qwin.height());
         });
-        QObject::connect(cc, &all::CameraControl::OnFocusPlaneChanged, [this](float v) {
+        QObject::connect(&qml.camera, &CameraController::OnFocusDistanceChanged, [this](float v) {
             camera.SetConvergencePlaneDistance(v);
         });
-        QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
+        QObject::connect(&qml.camera, &CameraController::OnEyeDistanceChanged, [this](float v) {
             camera.SetInterocularDistance(v);
         });
-        QObject::connect(cc, &all::CameraControl::OnToggleCursor, [this](bool checked) {
+        QObject::connect(&qml.cursor, &CursorController::OnCursorVisibilityChanged, [this](bool checked) {
             impl->SetCursorEnabled(checked);
+        });
+        QObject::connect(&qml.scene, &SceneController::OnModelChanged, [this](QUrl model) {
+        #if !ALLEGIANCE_SERENITY
+            impl->LoadModel(model);
+        #endif
         });
 #ifdef WITH_NAVLIB
         spacemouse.addActions({a, b}, "Application", "AppModi");
@@ -210,15 +220,17 @@ private:
 
 private:
     Application app;
+    QMLNodes qml;
+
     std::optional<Implementation> impl;
     all::Window wnd;
     WindowDestructionWatcher watcher{ &wnd };
     all::OrbitalStereoCamera camera;
 #ifdef WITH_SPNAV
-    SpacemouseSpnav spacemouse{&camera};
+    SpacemouseSpnav spacemouse{ &camera };
 #endif
 #ifdef WITH_NAVLIB
-    SpacemouseNavlib spacemouse{&camera};
+    SpacemouseNavlib spacemouse{ &camera };
 #endif
     all::MouseTracker input;
 };
