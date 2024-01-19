@@ -2,8 +2,11 @@
 #ifndef ALLEGIANCE_SPACEMOUSE_H
 #define ALLEGIANCE_SPACEMOUSE_H
 
-#include <Qt3DCore>
 #include "stereo_camera.h"
+
+#include <QAction>
+#include <QBuffer>
+#include <QLoggingCategory>
 
 inline Q_LOGGING_CATEGORY(spcms, "allegiance.spcms", QtInfoMsg);
 

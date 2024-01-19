@@ -1,16 +1,5 @@
 project(${POSTFIX} VERSION ${PROJECT_VERSION})
 
-find_package(glm QUIET)
-
-if (NOT glm_FOUND)
-    FetchContent_Declare(
-        glm
-        GIT_REPOSITORY https://github.com/g-truc/glm.git
-        GIT_TAG        master
-    )
-    FetchContent_MakeAvailable(glm)
-endif()
-
 add_executable(${PROJECT_NAME} MACOSX_BUNDLE)
 set(serenity_sources)
 if (SERENITY_BUILD)
@@ -27,6 +16,10 @@ else ()
             "include/qt3d_shaders.h"
             "include/qt3d_materials.h"
             "include/qt3d_cursor.h"
+            "include/stereo_image_mesh.h"
+            "include/stereo_image_material.h"
+            "src/stereo_image_mesh.cpp"
+            "src/stereo_image_material.cpp"
     )
 endif()
 
@@ -40,12 +33,8 @@ target_sources(${PROJECT_NAME}
                 "include/camera_control.h"
                 "include/stereo_camera.h"
                 "include/vertical_label.h"
-                "include/stereo_image_material.h"
-                "include/stereo_image_mesh.h"
                 "include/spacemouse.h"
                 "include/spacemouse.cpp"
-                "src/stereo_image_mesh.cpp"
-                "src/stereo_image_material.cpp"
                 ${serenity_sources}
                 ${qt3d_sources}
 )
@@ -55,17 +44,11 @@ target_link_libraries(${PROJECT_NAME}
                 Qt6::Core
                 Qt6::Gui
                 Qt6::Widgets
-                Qt6::3DExtras
                 Qt6::Quick
                 glm::glm
 )
-
-
-if(WIN32 OR APPLE)
-    option(WITH_NAVLIB "Compile with support for 3DxWare Navlib" ON)
-    set(WITH_SPNAV OFF)
-else()
-    option(WITH_SPNAV  "Compile with libspnav for spacemouse support" ON)
+if(NOT SERENITY_BUILD)
+    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::3DExtras)
 endif()
 
 if (${WITH_NAVLIB})
@@ -122,7 +105,7 @@ if(SERENITY_BUILD)
     add_dependencies(${PROJECT_NAME} Shaders)
 
 endif()
-if(NOT FORCE_QT)
+if(SERENITY_BUILD)
     target_link_libraries(${PROJECT_NAME}
             PRIVATE
                     KDGpu::KDGpu

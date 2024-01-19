@@ -4,10 +4,19 @@ project(Allegiance VERSION 0.0.1)
 
 include(FetchContent)
 
-option(FORCE_QT "Force Use Qt3D" OFF)
+option(BUILD_QT3D_RENDERER "Build Qt3D renderer" ON)
+option(BUILD_SERENITY_RENDERER "Build Serenity renderer" ON)
+
+if(WIN32 OR APPLE)
+    option(WITH_NAVLIB "Compile with support for 3DxWare Navlib" ON)
+    set(WITH_SPNAV OFF)
+else()
+    option(WITH_SPNAV  "Compile with libspnav for spacemouse support" ON)
+endif()
+
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-if(NOT FORCE_QT)
+if(BUILD_SERENITY_RENDERER)
     find_package(Serenity)
 
     if(NOT Serenity_FOUND)
@@ -29,14 +38,31 @@ if(NOT FORCE_QT)
     endif()
 endif()
 
-find_package(Qt6 COMPONENTS Core Gui Widgets Quick 3DCore 3DExtras 3DRender 3DInput REQUIRED)
+find_package(glm)
+if (NOT glm_FOUND)
+    FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        master
+    )
+    FetchContent_MakeAvailable(glm)
+endif()
+
+set(QT_COMPONENTS Core Gui Widgets Quick)
+if(BUILD_QT3D_RENDERER)
+    list(APPEND QT_COMPONENTS 3DCore 3DExtras 3DRender 3DInput)
+endif()
+find_package(Qt6 COMPONENTS ${QT_COMPONENTS} REQUIRED)
+
 qt_standard_project_setup()
 
-set(POSTFIX "KDAB_SMC_OpenGL")
-set(SERENITY_BUILD 0)
-add_subdirectory("allegiance" ${CMAKE_CURRENT_BINARY_DIR}/allegiance_qt)
+if(BUILD_QT3D_RENDERER)
+    set(POSTFIX "KDAB_SMC_OpenGL")
+    set(SERENITY_BUILD 0)
+    add_subdirectory("allegiance" ${CMAKE_CURRENT_BINARY_DIR}/allegiance_qt)
+endif()
 
-if(NOT FORCE_QT)
+if(BUILD_SERENITY_RENDERER)
     set(POSTFIX "KDAB_SMC_Vulkan")
     set(SERENITY_BUILD 1)
     add_subdirectory("allegiance" ${CMAKE_CURRENT_BINARY_DIR}/allegiance_serenity)
