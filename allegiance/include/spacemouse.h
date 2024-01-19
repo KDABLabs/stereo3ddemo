@@ -15,12 +15,17 @@ class Spacemouse : public QObject
 {
     Q_OBJECT
 public:
-    Spacemouse(all::StereoCamera  *camera)
-        : QObject(camera),m_camera(camera)
+    Spacemouse(all::StereoCamera* camera, QObject* parent = nullptr)
+        : QObject(parent)
+        , m_camera(camera)
     {
-        m_orbital = qobject_cast<all::OrbitalStereoCamera*>(m_camera);
+        m_orbital = static_cast<all::OrbitalStereoCamera*>(m_camera);
+#if ALLEGIANCE_SERENITY
+        camera->OnViewChanged.connect([this] { onViewChanged(); });
+#else
         connect(camera, &all::StereoCamera::OnViewChanged,
                 this, &Spacemouse::onViewChanged);
+#endif
     }
 
     public Q_SLOTS:

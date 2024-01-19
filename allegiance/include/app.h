@@ -7,8 +7,8 @@
 #include <stereo_camera.h>
 
 #if ALLEGIANCE_SERENITY
-#include "serenity_impl.h"
-using Implementation = SerenityImpl;
+#include "serenity_impl_qt.h"
+using Implementation = SerenityImplQt;
 using Application = all::SerenityGuiApplication;
 #else
 #include "qt3d_impl.h"
@@ -174,11 +174,14 @@ public:
         QObject::connect(cc, &all::CameraControl::OnEyeDisparityChanged, [this](float v) {
             camera.SetInterocularDistance(v);
         });
+        QObject::connect(cc, &all::CameraControl::OnToggleCursor, [this](bool checked) {
+            impl->SetCursorEnabled(checked);
+        });
 #ifdef WITH_NAVLIB
         spacemouse.addAction(a);
 #endif
 
-        impl->CreateAspects(cc, &camera);
+        impl->CreateAspects(&camera);
         wnd.show();
     }
 

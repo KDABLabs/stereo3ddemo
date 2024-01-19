@@ -1,70 +1,28 @@
 #pragma once
 // #define GLM_FORCE_LEFT_HANDED
 #include <glm/glm.hpp>
+
+#if ALLEGIANCE_SERENITY
+#include <kdbindings/signal.h>
+#else
 #include <QObject>
-#include <QMatrix4x4>
+
+// inline Q_LOGGING_CATEGORY(lStereoCam, "allegiance.stereo_camera", QtInfoMsg);
+#endif
+
 #include <glm/ext/matrix_clip_space.hpp>
 #include <glm/ext/matrix_transform.hpp>
 
-// inline Q_LOGGING_CATEGORY(lStereoCam, "allegiance.stereo_camera", QtInfoMsg);
-
-
-inline QDebug operator<<(QDebug debug, const glm::mat4x4& matrix)
-{
-    // Set the format you want for the matrix elements
-    debug.nospace() << "glm::mat4x4(";
-
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            debug.nospace() << matrix[i][j];
-            if (i != 3 || j != 3) {
-                debug.nospace() << ", ";
-            }
-        }
-    }
-
-    debug.nospace() << ")";
-    return debug.space();
-}
-inline QDebug operator<<(QDebug debug, const glm::vec4& vec)
-{
-    debug << vec.x << ", " << vec.y << ", " << vec.z;
-    return debug;
-}
-
-inline QVector3D toQVector3D(const glm::vec3& glmVec) {
-    return QVector3D(glmVec.x, glmVec.y, glmVec.z);
-}
-
-inline glm::vec3 toGlmVec3(const QVector3D& qVec) {
-    return glm::vec3(qVec.x(), qVec.y(), qVec.z());
-}
-
-// Cast operators for glm::mat4x4 <-> QMatrix4x4
-inline QMatrix4x4 toQMatrix4x4(const glm::mat4x4& glmMat) {
-    QMatrix4x4 qMat;
-
-    for (int i = 0; i < 4; ++i)
-        for (int j = 0; j < 4; ++j)
-            qMat(i, j) = glmMat[j][i]; // Note the transposition
-
-    return qMat;
-}
-
-inline glm::mat4x4 toGlmMat4x4(const QMatrix4x4& qMat) {
-    glm::mat4x4 glmMat;
-
-    for (int i = 0; i < 4; ++i)
-        for (int j = 0; j < 4; ++j)
-            glmMat[j][i] = qMat(i, j); // Note the transposition
-
-    return glmMat;
-}
-
 namespace all {
+#if ALLEGIANCE_SERENITY
+class StereoCamera
+#else
 class StereoCamera : public QObject
+#endif
 {
+#if !ALLEGIANCE_SERENITY
     Q_OBJECT
+#endif
 public:
     StereoCamera()
     {
@@ -162,9 +120,14 @@ public:
         this->shear = shear;
         UpdateViewMatrix();
     }
+#if ALLEGIANCE_SERENITY
+    KDBindings::Signal<> OnViewChanged;
+    KDBindings::Signal<> OnProjectionChanged;
+#else
 Q_SIGNALS:
     void OnViewChanged();
     void OnProjectionChanged();
+#endif
 
     // protected:
 public:
@@ -190,12 +153,20 @@ public:
                 : glm::lookAt(position + right, position +right + forward, up);
         view_center = glm::lookAt(position, position + forward, up);
 
+#if ALLEGIANCE_SERENITY
+        OnViewChanged.emit();
+#else
         Q_EMIT OnViewChanged();
+#endif
     }
     void UpdateProjectionMatrix() noexcept
     {
         projection = glm::perspective(glm::radians(fov_y), aspect_ratio, near_plane, far_plane);
+#if ALLEGIANCE_SERENITY
+        OnProjectionChanged.emit();
+#else
         Q_EMIT OnProjectionChanged();
+#endif
     }
 
     /*
@@ -235,7 +206,9 @@ private:
 
 class OrbitalStereoCamera : public StereoCamera
 {
+#if !ALLEGIANCE_SERENITY
     Q_OBJECT
+#endif
 public:
     OrbitalStereoCamera()
     {

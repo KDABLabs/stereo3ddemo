@@ -4,15 +4,20 @@ add_executable(
     ${PROJECT_NAME} MACOSX_BUNDLE
 )
 
-if(SERENITY_BUILD)
+if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
     set(ALLEGIANCE_SOURCES
         include/serenity/serenity.h
         include/serenity_impl.h
+        include/serenity_impl_qt.h
         include/serenity_stereo_graph.h
         src/serenity_stereo_graph.cpp
         include/serenity/cursor.h
+        include/picking_application_layer.h
+        src/picking_application_layer.cpp
+        include/window_extent_watcher.h
+        src/window_extent_watcher.cpp
     )
-else()
+elseif(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     set(ALLEGIANCE_SOURCES
         include/qt3d_impl.h
         include/qt3d_shaders.h
@@ -29,7 +34,7 @@ list(
     APPEND
     ALLEGIANCE_SOURCES
     ../shared/resources.qrc
-    src/entry_main.cpp
+    src/entry_main_qt.cpp
     include/app.h
     include/window.h
     include/sliders.h
@@ -50,9 +55,9 @@ target_link_libraries(
             Qt6::Quick
             glm::glm
 )
-if(SERENITY_BUILD)
+if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
     target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu::KDGpu Serenity::Core Serenity::Gui Serenity::Logic)
-else()
+elseif(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::3DExtras)
 endif()
 
@@ -102,8 +107,8 @@ install(
     COMPONENT applications
 )
 
-if(SERENITY_BUILD)
-    add_subdirectory("serenity")
+if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
+    add_subdirectory(serenity)
     add_dependencies(${PROJECT_NAME} Shaders)
 endif()
 
@@ -124,9 +129,13 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 target_compile_definitions(
-    ${PROJECT_NAME} PRIVATE ALLEGIANCE_SERENITY=${SERENITY_BUILD} QT_NO_KEYWORDS
-                            ALLEGIANCE_BUILD_STR="v${PROJECT_VERSION} - ${GIT_COMMIT_DATE}"
+    ${PROJECT_NAME} PRIVATE QT_NO_KEYWORDS ALLEGIANCE_BUILD_STR="v${PROJECT_VERSION} - ${GIT_COMMIT_DATE}"
 )
+if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ALLEGIANCE_SERENITY=1)
+elseif(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ALLEGIANCE_SERENITY=0)
+endif()
 
 install(
     TARGETS ${PROJECT_NAME}
@@ -134,7 +143,7 @@ install(
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT applications
 )
 
-if(NOT SERENITY_BUILD)
+if(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     qt_generate_deploy_app_script(TARGET ${PROJECT_NAME} OUTPUT_SCRIPT deploy_script)
 
     #    qt_generate_deploy_qml_app_script(

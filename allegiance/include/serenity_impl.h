@@ -1,18 +1,12 @@
 #pragma once
+
 #include "serenity/cursor.h"
-#include "camera_control.h"
 #include "stereo_camera.h"
 #include "serenity_stereo_graph.h"
-
-#include <QVulkanInstance>
-#include <QFileDialog>
-#include <QDirIterator>
-#include <QMouseEvent>
-
+#include "picking_application_layer.h"
+#include "window_extent_watcher.h"
 
 #include <glm/gtx/compatibility.hpp>
-
-#include <filesystem>
 
 using namespace Serenity;
 
@@ -30,70 +24,29 @@ public:
     }
 };
 
-class PickingApplicationLayer : public ApplicationLayer
+class SerenityWindow
 {
 public:
-    PickingApplicationLayer(StereoProxyCamera* camera, QWindow* wnd, SpatialAspect* spatialAspect, SrtTransform* ctransform)
-        : m_camera(camera), m_wnd(wnd), spatialAspect(spatialAspect), m_ctransform(ctransform)
-    {
-    }
+    virtual ~SerenityWindow() = default;
 
-    void onAfterRootEntityChanged(Entity* oldRoot, Entity* newRoot) override
-    {
-        m_pickedEntities.clear();
-    }
+    virtual uint32_t GetWidth() const = 0;
+    virtual uint32_t GetHeight() const = 0;
 
-    void update() override
-    {
-        if (!enabled) {
-            return;
-        }
+    virtual glm::vec2 GetCursorPos() const = 0;
 
-        const glm::vec4 viewportRect = { 0.0f, 0.0f, m_wnd->width(), m_wnd->height() };
-
-        // Perform ray cast
-        const auto cursorPos = m_wnd->mapFromGlobal(QCursor::pos());
-        const auto hits = spatialAspect->screenCast(glm::vec2(cursorPos.x(), cursorPos.y()), viewportRect, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix());
-
-        auto unv = glm::unProject(glm::vec3(cursorPos.x(), m_wnd->size().height() - cursorPos.y(), 1.0f), m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix(), viewportRect);
-
-        if (!hits.empty()) {
-            // Find closest intersection
-            const auto closest = std::ranges::min_element(hits, [](const SpatialAspect::Hit& a, const SpatialAspect::Hit& b) {
-                return a.distance < b.distance;
-            });
-            assert(closest != hits.end());
-            m_ctransform->translation = closest->worldIntersection;
-            m_ctransform->scale = glm::vec3(std::clamp(closest->distance * 10.f, 0.01f, 1.0f));
-        } else {
-            m_ctransform->translation = unv;
-            m_ctransform->scale = glm::vec3(10.0f);
-        }
-    }
-    void SetEnabled(bool en)
-    {
-        enabled = en;
-    }
-
-private:
-    SrtTransform* m_ctransform;
-    SpatialAspect* spatialAspect;
-    QWindow* m_wnd;
-    StereoProxyCamera* m_camera = nullptr;
-    std::vector<Entity*> m_pickedEntities;
-    bool enabled = true;
+    virtual KDGpu::Instance& GetInstance() = 0;
+    virtual KDGpu::Surface& GetSurface() = 0;
 };
 
 class SerenityImpl
 {
 public:
-    SerenityImpl() { }
-
-public:
-    QWindow* GetWindow()
+    explicit SerenityImpl(std::unique_ptr<SerenityWindow> window)
+        : m_window(std::move(window))
     {
-        return &qwin;
     }
+
+    virtual ~SerenityImpl() = default;
 
     void ShowModel()
     {
@@ -105,7 +58,6 @@ public:
         setMode(Mode::StereoImage);
     }
 
-public:
     std::unique_ptr<Entity> CreateScene(LayerManager& layers) noexcept
     {
         auto rootEntity = std::make_unique<Entity>();
@@ -235,7 +187,7 @@ public:
 
             const Material::UboDataBuilder materialDataBuilder = [this, texture](uint32_t set, uint32_t binding) {
                 const ViewportData data = {
-                    .viewportSize = { static_cast<float>(qwin.width()), static_cast<float>(qwin.height()) },
+                    .viewportSize = { static_cast<float>(m_window->GetWidth()), static_cast<float>(m_window->GetHeight()) },
                     .textureSize = { static_cast<float>(texture->width()), static_cast<float>(texture->height()) }
                 };
                 std::vector<uint8_t> rawData(sizeof(ViewportData));
@@ -298,37 +250,17 @@ public:
         return std::move(rootEntity);
     }
 
-    void CreateAspects(all::CameraControl* cc, all::OrbitalStereoCamera* camera)
+    void CreateAspects(all::OrbitalStereoCamera* camera)
     {
-        // Create Qt Vulkan Instance
-        vk_instance.setApiVersion(QVersionNumber(1, 2, 0));
-        if (!vk_instance.create()) {
-            qCritical() << "Failed to create QVulkanInstance";
-            throw std::runtime_error{ "Failed to create QVulkanInstance" };
-        }
-        qwin.setSurfaceType(QSurface::SurfaceType::VulkanSurface);
-        qwin.setVulkanInstance(&vk_instance);
-        qwin.create();
-
-        VkSurfaceKHR vkSurface = QVulkanInstance::surfaceForWindow(&qwin);
-
-        // Initialize KDGpu
-        m_graphicsApi = std::make_unique<KDGpu::VulkanGraphicsApi>();
-
-        // Create KDGpu Instance from VkInstance
-        m_instance = m_graphicsApi->createInstanceFromExistingVkInstance(
-                vk_instance.vkInstance());
-        m_surface = m_graphicsApi->createSurfaceFromExistingVkSurface(m_instance,
-                                                                      vkSurface);
         KDGpu::AdapterAndDevice defaultDevice =
-                m_instance.createDefaultDevice(m_surface);
+                m_window->GetInstance().createDefaultDevice(m_window->GetSurface());
         KDGpu::Device device = std::move(defaultDevice.device);
 
         m_layerManager = m_engine.createChild<LayerManager>();
         for (auto&& layerName : { "Alpha", "Opaque", "StereoImage" })
             m_layerManager->addLayer(layerName);
 
-        auto rootEntity = CreateScene(*m_layerManager);
+        std::unique_ptr<Entity> rootEntity = CreateScene(*m_layerManager);
 
         // Add Camera into the Scene
 
@@ -336,30 +268,25 @@ public:
         m_camera->SetMatrices(camera->GetViewLeft(), camera->GetViewRight(), camera->GetViewCenter());
         m_camera->lens()->setPerspectiveProjection(45.0f, camera->GetAspectRatio(), camera->GetNearPlane(), camera->GetFarPlane());
 
-        QObject::connect(camera, &all::OrbitalStereoCamera::OnViewChanged, [this, camera]() {
+        camera->OnViewChanged.connect([this, camera]() {
             m_camera->SetMatrices(camera->GetViewLeft(), camera->GetViewRight(), camera->GetViewCenter());
         });
-        QObject::connect(camera, &all::OrbitalStereoCamera::OnProjectionChanged, [this, camera]() {
+        camera->OnProjectionChanged.connect([this, camera]() {
             m_camera->lens()->setPerspectiveProjection(45.0f, camera->GetAspectRatio(), camera->GetNearPlane(), camera->GetFarPlane());
-        });
-        QObject::connect(cc, &all::CameraControl::OnToggleCursor, [this](bool checked) {
-            if (!checked)
-                m_cursor->GetTransform()->scale = glm::vec3(0.0f);
-            m_pickingLayer->SetEnabled(checked);
         });
 
         // Create Render Algo
         auto algo = std::make_unique<all::StereoRenderAlgorithm>();
 
         auto spatialAspect = m_engine.createAspect<SpatialAspect>();
-        m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, &qwin, spatialAspect, m_cursor->GetTransform());
+        m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window.get(), spatialAspect, m_cursor->GetTransform());
 
         m_renderAspect = m_engine.createAspect<RenderAspect>(std::move(device));
         auto logicAspect = m_engine.createAspect<LogicAspect>();
 
         RenderTargetRef windowRenderTargetRef{
-            RenderTargetRef::Type::Surface, m_surface.handle(),
-            std::make_shared<all::QWindowExtentWatcher>(&qwin),
+            RenderTargetRef::Type::Surface, m_window->GetSurface().handle(),
+            std::make_shared<all::SerenityWindowExtentWatcher>(m_window.get()),
             2, // Request 2 array layers
         };
         algo->renderTargetRefs = { std::move(windowRenderTargetRef) };
@@ -385,7 +312,13 @@ public:
         m_engine.running = true;
     }
 
-private:
+    void SetCursorEnabled(bool enabled)
+    {
+        m_cursor->GetTransform()->scale = glm::vec3(enabled ? 1.0f : 0.0f);
+        m_pickingLayer->SetEnabled(enabled);
+    }
+
+protected:
     enum class Mode {
         Scene,
         StereoImage
@@ -485,12 +418,7 @@ private:
         return phase;
     }
 
-    QVulkanInstance vk_instance;
-    QWindow qwin;
-
-    std::unique_ptr<KDGpu::VulkanGraphicsApi> m_graphicsApi;
-    KDGpu::Instance m_instance;
-    KDGpu::Surface m_surface;
+    std::unique_ptr<SerenityWindow> m_window;
 
     Mode m_mode{ Mode::Scene };
     AspectEngine m_engine;

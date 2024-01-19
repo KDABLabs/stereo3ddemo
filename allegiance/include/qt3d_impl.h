@@ -251,7 +251,7 @@ public:
     {
     }
 
-    void CreateAspects(all::CameraControl* cc, all::StereoCamera* camera)
+    void CreateAspects(all::StereoCamera* camera)
     {
         using namespace Qt3DCore;
         using namespace Qt3DRender;
@@ -302,6 +302,11 @@ public:
     {
         m_renderer->setMode(QStereoForwardRenderer::Mode::Scene);
         LoadModelDialog();
+    }
+
+    void SetCursorEnabled(bool /* enabled */)
+    {
+        // TODO
     }
 
     void LoadModelDialog()

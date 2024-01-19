@@ -1,6 +1,9 @@
 
 
 #include "spacemouse.h"
+
+#include "util_qt.h"
+
 #include <exception>
 
 #ifdef WITH_NAVLIB
