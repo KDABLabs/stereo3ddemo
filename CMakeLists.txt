@@ -11,7 +11,7 @@ if(WIN32 OR APPLE)
     option(WITH_NAVLIB "Compile with support for 3DxWare Navlib" ON)
     set(WITH_SPNAV OFF)
 else()
-    option(WITH_SPNAV  "Compile with libspnav for spacemouse support" ON)
+    option(WITH_SPNAV "Compile with libspnav for spacemouse support" ON)
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -22,9 +22,9 @@ if(BUILD_SERENITY_RENDERER)
     if(NOT Serenity_FOUND)
         message("Loading Serenity...")
         FetchContent_Declare(
-                Serenity
-                GIT_REPOSITORY "ssh://codereview.kdab.com:29418/kdab/serenity.git"
-                GIT_TAG origin/master
+            Serenity
+            GIT_REPOSITORY "ssh://codereview.kdab.com:29418/kdab/serenity.git"
+            GIT_TAG origin/master
         )
         set(SERENITY_BUILD_SHARED_LIBS OFF)
         set(SERENITY_BUILD_EXAMPLES OFF)
@@ -39,20 +39,31 @@ if(BUILD_SERENITY_RENDERER)
 endif()
 
 find_package(glm)
-if (NOT glm_FOUND)
+if(NOT glm_FOUND)
     FetchContent_Declare(
         glm
         GIT_REPOSITORY https://github.com/g-truc/glm.git
-        GIT_TAG        master
+        GIT_TAG master
     )
     FetchContent_MakeAvailable(glm)
 endif()
 
 set(QT_COMPONENTS Core Gui Widgets Quick)
 if(BUILD_QT3D_RENDERER)
-    list(APPEND QT_COMPONENTS 3DCore 3DExtras 3DRender 3DInput)
+    list(
+        APPEND
+        QT_COMPONENTS
+        3DCore
+        3DExtras
+        3DRender
+        3DInput
+    )
 endif()
-find_package(Qt6 COMPONENTS ${QT_COMPONENTS} REQUIRED)
+find_package(
+    Qt6
+    COMPONENTS ${QT_COMPONENTS}
+    REQUIRED
+)
 
 qt_standard_project_setup()
 
