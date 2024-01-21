@@ -36,6 +36,8 @@ public:
 
     virtual KDGpu::Instance& GetInstance() = 0;
     virtual KDGpu::Surface& GetSurface() = 0;
+
+    virtual KDGpu::Device CreateDevice() = 0;
 };
 
 class SerenityImpl
@@ -252,9 +254,7 @@ public:
 
     void CreateAspects(all::OrbitalStereoCamera* camera)
     {
-        KDGpu::AdapterAndDevice defaultDevice =
-                m_window->GetInstance().createDefaultDevice(m_window->GetSurface());
-        KDGpu::Device device = std::move(defaultDevice.device);
+        KDGpu::Device device = m_window->CreateDevice();
 
         m_layerManager = m_engine.createChild<LayerManager>();
         for (auto&& layerName : { "Alpha", "Opaque", "StereoImage" })
@@ -276,7 +276,11 @@ public:
         });
 
         // Create Render Algo
+#if defined(RENDER_MODE_LEFT_ONLY)
+        auto algo = std::make_unique<StereoForwardAlgorithm>();
+#else
         auto algo = std::make_unique<all::StereoRenderAlgorithm>();
+#endif
 
         auto spatialAspect = m_engine.createAspect<SpatialAspect>();
         m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window.get(), spatialAspect, m_cursor->GetTransform());
@@ -284,12 +288,25 @@ public:
         m_renderAspect = m_engine.createAspect<RenderAspect>(std::move(device));
         auto logicAspect = m_engine.createAspect<LogicAspect>();
 
+#if defined(RENDER_MODE_LEFT_ONLY)
+        RenderTargetRef windowRenderTargetRef{
+            RenderTargetRef::Type::Surface,
+            m_window->GetSurface().handle(),
+            std::make_shared<all::SerenityWindowExtentWatcher>(m_window.get()),
+        };
+        RenderTargetRef offscreenRenderTargetRef{
+            RenderTargetRef::Type::Texture, {}, std::make_shared<all::SerenityWindowExtentWatcher>(m_window.get()),
+            2, // Request 2 array layers
+        };
+        algo->renderTargetRefs = { std::move(offscreenRenderTargetRef), std::move(windowRenderTargetRef) };
+#else
         RenderTargetRef windowRenderTargetRef{
             RenderTargetRef::Type::Surface, m_window->GetSurface().handle(),
             std::make_shared<all::SerenityWindowExtentWatcher>(m_window.get()),
             2, // Request 2 array layers
         };
         algo->renderTargetRefs = { std::move(windowRenderTargetRef) };
+#endif
 
         // The RenderAlgo works in a 2 render passes process:
         // 1) Offscreen MultiView Rendering (stereo render views) of the Scene
@@ -299,9 +316,14 @@ public:
 
         algo->camera = m_camera;
         algo->offscreenMultiViewRenderTargetRefIndex = 0;
-        algo->presentRenderTargetRefIndex = 0;
         algo->msaaSamples = RenderAlgorithm::SamplesCount::Samples_4;
+#if defined(RENDER_MODE_LEFT_ONLY)
+        algo->presentRenderTargetRefIndex = 1;
+        algo->renderMode = StereoForwardAlgorithm::StereoRenderMode::LeftOnly;
+#else
+        algo->presentRenderTargetRefIndex = 0;
         algo->renderMode = StereoForwardAlgorithm::StereoRenderMode::Stereo;
+#endif
 
         m_renderAspect->setRenderAlgorithm(std::move(algo));
 
@@ -334,7 +356,7 @@ protected:
 
     void updateRenderPhases()
     {
-        auto* algo = static_cast<all::StereoRenderAlgorithm*>(m_renderAspect->renderAlgorithm());
+        auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
         switch (m_mode) {
         case Mode::Scene:
             algo->renderPhases = { createOpaquePhase(), createTransparentPhase() };

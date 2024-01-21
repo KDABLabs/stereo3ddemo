@@ -1,5 +1,4 @@
 #pragma once
-#include "serenity.h"
 
 namespace all {
 class Cursor

@@ -60,6 +60,12 @@ public:
         return m_surface;
     }
 
+    KDGpu::Device CreateDevice() override
+    {
+        KDGpu::AdapterAndDevice defaultDevice = m_instance.createDefaultDevice(m_surface);
+        return std::move(defaultDevice.device);
+    }
+
     QWindow* GetWindow()
     {
         return &m_window;

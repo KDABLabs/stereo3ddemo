@@ -7,6 +7,7 @@
 #include <stereo_camera.h>
 
 #if ALLEGIANCE_SERENITY
+#include "serenity/serenity_qt.h"
 #include "serenity_impl_qt.h"
 using Implementation = SerenityImplQt;
 using Application = all::SerenityGuiApplication;
