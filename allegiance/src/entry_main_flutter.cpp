@@ -5,14 +5,67 @@
 #include <Serenity/gui/forward_renderer/forward_algorithm.h>
 #include <Serenity/gui/render/renderer.h>
 
+#include <KDFoundation/event_receiver.h>
+
 #include <KDGpu/surface_options.h>
+
 #include <KDGui/window.h>
+#include <KDGui/gui_events.h>
 
 #include <KDGpuKDGui/view.h>
 
 using namespace Serenity;
 using namespace KDGui;
 using namespace KDGpu;
+
+class CameraController : public KDFoundation::Object
+{
+public:
+    explicit CameraController(all::OrbitalStereoCamera* camera)
+        : m_camera{ camera }
+    {
+    }
+
+    void event(KDFoundation::EventReceiver* target, KDFoundation::Event* ev) override
+    {
+        switch (ev->type()) {
+        case KDFoundation::Event::Type::MouseMove: {
+            auto* mouseEvent = static_cast<KDGui::MouseMoveEvent*>(ev);
+            OnMouseMove(mouseEvent);
+            break;
+        }
+        case KDFoundation::Event::Type::MouseWheel: {
+            auto* wheelEvent = static_cast<KDGui::MouseWheelEvent*>(ev);
+            OnMouseWheel(wheelEvent);
+        }
+        default:
+            break;
+        }
+        EventReceiver::event(target, ev);
+    }
+
+    void OnMouseMove(KDGui::MouseMoveEvent* event)
+    {
+        const auto mousePressed = event->buttons().testFlag(KDGui::MouseButton::LeftButton);
+        if (mousePressed) {
+            const auto pos = glm::vec2{ event->xPos(), event->yPos() };
+            const auto offset = pos - m_lastMousePos;
+            m_camera->SetPhi(m_camera->GetPhi() + offset.x * 0.01f);
+            m_camera->SetTheta(m_camera->GetTheta() - offset.y * 0.01f);
+            m_lastMousePos = pos;
+        }
+    }
+
+    void OnMouseWheel(KDGui::MouseWheelEvent* event)
+    {
+        const auto yDelta = static_cast<float>(event->yDelta());
+        m_camera->SetRadius(m_camera->GetRadius() - yDelta * 0.01f);
+    }
+
+private:
+    all::OrbitalStereoCamera* m_camera{ nullptr };
+    glm::vec2 m_lastMousePos;
+};
 
 class SerenityWindowFlutter : public SerenityWindow
 {
@@ -168,9 +221,16 @@ int main(int argc, const char* argv[])
     int ret = 0;
     {
         SerenityImplFlutter impl{ &app };
+
         all::OrbitalStereoCamera camera;
         impl.CreateAspects(&camera);
+
+        auto* window = impl.GetWindow();
+        auto* cameraController = window->createChild<CameraController>(&camera);
+        window->registerEventReceiver(cameraController);
+
         impl.CreateFlutterOverlay();
+
         ret = app.exec();
     }
 
