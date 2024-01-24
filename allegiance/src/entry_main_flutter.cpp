@@ -12,6 +12,8 @@
 #include <KDGui/window.h>
 #include <KDGui/gui_events.h>
 
+#include <KDUtils/bytearray.h>
+
 #include <KDGpuKDGui/view.h>
 
 using namespace Serenity;
@@ -201,6 +203,29 @@ public:
 
         auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
         algo->overlays = { m_flutterOverlay.get() };
+
+        m_flutterOverlay->registerMessageHandler("allegiance/set-mode",
+                                                 [this](const KDUtils::ByteArray& message) -> KDUtils::ByteArray {
+                                                     const auto mode = [&message]() -> std::optional<Mode> {
+                                                         if (message.size() == sizeof(int64_t)) {
+                                                             int64_t mode = *reinterpret_cast<const int64_t*>(message.data());
+                                                             switch (mode) {
+                                                             case 0:
+                                                                 return Mode::StereoImage;
+                                                             case 1:
+                                                                 return Mode::Scene;
+                                                             default:
+                                                                 break;
+                                                             }
+                                                         }
+                                                         return std::nullopt;
+                                                     }();
+                                                     if (mode) {
+                                                         // TODO: confirm that we're doing this in the rendering thread
+                                                         setMode(*mode);
+                                                     }
+                                                     return {};
+                                                 });
     }
 
     Window* GetWindow()
