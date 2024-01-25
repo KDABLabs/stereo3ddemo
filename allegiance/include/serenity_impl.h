@@ -223,10 +223,10 @@ public:
                 mesh->setVertexFormat(vertexFormat);
 
                 const std::array<Vertex, 4> vertexData = { {
-                        { { -1, -1 }, { 0, 0 } },
-                        { { -1, 1 }, { 0, 1 } },
-                        { { 1, -1 }, { 1, 0 } },
-                        { { 1, 1 }, { 1, 1 } },
+                        { { -1, -1 }, { 0, 1 } },
+                        { { -1, 1 }, { 0, 0 } },
+                        { { 1, -1 }, { 1, 1 } },
+                        { { 1, 1 }, { 1, 0 } },
                 } };
 
                 std::vector<Mesh::VertexBufferData> verts(1);
