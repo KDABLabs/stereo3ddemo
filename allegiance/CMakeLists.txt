@@ -94,6 +94,9 @@ set(files_to_copy
     cottage_diffuse.png
     terrain.obj
     terrain.png
+    motorbike.fbx
+    motorbike.mtl
+    motorbike.obj
     fbx/showroom2303.fbx
     13_3840x2160_sbs.jpg
     cursor_billboard.png

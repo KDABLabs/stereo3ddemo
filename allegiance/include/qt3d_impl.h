@@ -16,18 +16,20 @@
 #include <Qt3DExtras/QPhongMaterial>
 #include <util_qt.h>
 
-inline void traverseEntities(Qt3DCore::QEntity *entity, QVector3D &minExtents, QVector3D &maxExtents) {
-    if (!entity) return;
-    Qt3DRender::QMesh *mesh = entity->findChild<Qt3DRender::QMesh *>();
-    Qt3DCore::QTransform *transform = entity->findChild<Qt3DCore::QTransform *>();
+inline void traverseEntities(Qt3DCore::QEntity *entity, QVector3D &minExtents, QVector3D &maxExtents)
+{
+    if (!entity)
+        return;
+    Qt3DRender::QMesh* mesh = entity->findChild<Qt3DRender::QMesh*>();
+    Qt3DCore::QTransform* transform = entity->findChild<Qt3DCore::QTransform*>();
 
     if (mesh && transform) {
         // Iterate over attributes to find the position attribute
-        const QList<Qt3DCore::QAttribute *> attributes = mesh->geometry()->attributes();
-        for (Qt3DCore::QAttribute *attribute : attributes) {
+        const QList<Qt3DCore::QAttribute*> attributes = mesh->geometry()->attributes();
+        for (Qt3DCore::QAttribute* attribute : attributes) {
             if (attribute->name() == Qt3DCore::QAttribute::defaultPositionAttributeName()) {
-                const QByteArray &dataArray = attribute->buffer()->data();
-                const float *data = reinterpret_cast<const float *>(dataArray.constData());
+                const QByteArray& dataArray = attribute->buffer()->data();
+                const float* data = reinterpret_cast<const float*>(dataArray.constData());
 
                 // Transform the bounding volume by the entity's transform
                 for (int i = 0; i < attribute->count(); ++i) {
@@ -52,6 +54,39 @@ inline void traverseEntities(Qt3DCore::QEntity *entity, QVector3D &minExtents, Q
         traverseEntities(childEntity, minExtents, maxExtents);
     }
 }
+
+class FrameAction : public Qt3DLogic::QFrameAction
+{
+    Q_OBJECT
+public:
+    explicit FrameAction(Qt3DCore::QNode* parent = nullptr)
+        : Qt3DLogic::QFrameAction(parent)
+    {
+        connect(this, &Qt3DLogic::QFrameAction::triggered, this, &FrameAction::countAndTrigger);
+    }
+
+public Q_SLOTS:
+    void countAndTrigger(float dt)
+    {
+        if (! callbacks.size()) return;
+
+        auto it = callbacks.begin();
+        while (it != callbacks.end()) {
+            it->first--;
+
+            if (it->first < 1) {
+                it->second();
+                it = callbacks.erase(it); // erase returns the iterator to the next valid position
+            } else {
+                ++it; // move to the next element
+            }
+        }
+
+    }
+public:
+    QVector<QPair<int, std::function<void()>>> callbacks;
+};
+
 class QStereoProxyCamera : Qt3DCore::QEntity
 {
 public:
@@ -288,9 +323,6 @@ public:
     }
 
 public:
-    void CreateScene(Qt3DCore::QEntity* root)
-    {
-    }
 
     void CreateAspects(all::StereoCamera* camera)
     {
@@ -327,7 +359,6 @@ public:
         m_raycaster->setOrigin(QVector3D(0.0f, 0.01f, 0.0f));     // Set your own position
         connect(m_raycaster, &QRayCaster::hitsChanged,
             [](const Qt3DRender::QRayCaster::Hits& hits) {
-                qDebug() << "hits " << hits.size();
                 if (hits.empty()) return ;
             });
 
@@ -340,10 +371,7 @@ public:
             this->m_raycaster->trigger(toQVector3D(pos), toQVector3D(dir), 1000);
 
             auto hits = this->m_raycaster->pick(toQVector3D(pos), toQVector3D(dir), 100);
-            qDebug() << "triggered ray cast" << toQVector3D(pos) << toQVector3D(dir) << " - " << hits.size() << " hits ";
-            for( auto hit : hits) {
-                qDebug() << hit.worldIntersection() << " - " << hit.distance();
-            }
+
             if (hits.isEmpty()) {
                 return glm::vec3{-1};
             }
@@ -356,22 +384,41 @@ public:
 
             return toGlmVec3(nearestHitIterator->worldIntersection());
         };
+        CreateScene(m_rootEntity.get());
+    }
 
+    void CreateScene(Qt3DCore::QEntity* root)
+    {
         m_sceneEntity = new Qt3DCore::QEntity{m_rootEntity.get()};
         m_sceneEntity->setObjectName("SceneEntity");
         m_userEntity = new Qt3DCore::QEntity{m_sceneEntity};
         m_userEntity->setObjectName("UserEntity");
+
         m_cursor = new CursorEntity(m_rootEntity.get(), m_camera->GetLeftCamera(), &m_view);
         new Picker(m_sceneEntity, m_cursor);
+        LoadModel();
+
         m_view.setRootEntity(m_rootEntity.get());
 
-        CreateScene(m_rootEntity.get());
-        LoadModel();
+        // look at this dirty workaround
+        //  adding a light every three frames, to make sure we don't crash
+        auto mFrameAction = new FrameAction{ m_rootEntity.get() };
+        std::vector<QPair<QVector3D, QVector3D>> lightPositions{
+            { { 0, -1, 0 }, { 0, 1, 0 } },
+            { { 1, 0, 0 }, { -1, 0, 0 } },
+            { { 0, 0, -1 }, { 0, 0, 1 } }
+        };
+        int actionFrame{ 3 };
+        for (auto positionPair : lightPositions) {
+            mFrameAction->callbacks.append({ actionFrame, [this, positionPair]() {
+                                                AddDirectionalLight(m_rootEntity.get(), positionPair.first);
+                                                AddDirectionalLight(m_rootEntity.get(), positionPair.second);
+                                            } });
+            actionFrame += 3;
+        }
 
         LoadImage();
     }
-
-    QWindow* GetWindow() { return &m_view; }
 
     void ShowImage()
     {
@@ -389,9 +436,20 @@ public:
         // TODO
     }
 
+    static void AddDirectionalLight(Qt3DCore::QNode *node, QVector3D position) {
+        auto le = new Qt3DCore::QEntity{ node };
+        auto l = new Qt3DRender::QDirectionalLight{ le };
+        l->setIntensity(0.3);
+        auto lt = new Qt3DCore::QTransform{ le };
+        lt->setTranslation(position);
+        l->setWorldDirection(QVector3D{} - lt->translation());
+        le->addComponent(lt);
+        le->addComponent(l);
+    }
+
     void LoadModelDialog()
     {
-        auto fn = QFileDialog::getOpenFileName(this->m_widget.get(), "Open Model", "", "Model Files (*.obj *.fbx *.gltf *.glb)");
+        auto fn = QFileDialog::getOpenFileName(this->m_widget.get(), "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
         if(!fn.isEmpty())
             LoadModel(QUrl{"file:" + fn});
     }
@@ -445,46 +503,142 @@ public:
         scene->setObjectName("Model Scene");
         scene->setSource(path);
 
-        QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
-            if (s != Qt3DRender::QSceneLoader::Status::Ready)
-                return;
+        delete m_userEntity;
+        m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
 
-            auto names = scene->entityNames();
-            for (auto&& name : names) {
-                auto* e = scene->entity(name);
+        QUrl textureUrl;
+        QString filePath = path.toLocalFile();
+        QString baseName = QFileInfo(filePath).baseName();
+        for (auto i : {"_diffuse.png", ".png"}) {
+            QString newFileName = baseName + i;
+            QString texturePath = QFileInfo(filePath).path() + "/" + newFileName;
+            QFile file(texturePath);
+            if (file.exists()) {
+                textureUrl = QUrl::fromLocalFile(texturePath);
+                break;
+            }
+        }
+        constexpr QColor ambientColor{30, 30, 30, 255};
 
-                if (name.contains("skybox", Qt::CaseInsensitive)) {
-                    e->setParent(m_sceneEntity);
-                    m_skyBox = e;
-                }
+        auto createDiffuseMapMaterial = [ambientColor](const QUrl &textureUrl) {
+            auto* texture = new Qt3DRender::QTexture2D();
+            auto* textureImage = new Qt3DRender::QTextureImage();
+            textureImage->setSource(textureUrl);
+            texture->addTextureImage(textureImage);
 
-                auto m = e->componentsOfType<Qt3DRender::QMaterial>();
-                if (m.empty())
-                    continue;
+            auto* material = new Qt3DExtras::QDiffuseMapMaterial();
+            material->setDiffuse(texture);
+            material->setShininess(0);
+            material->setAmbient(ambientColor);
+            return material;
+        };
 
-                int underscore = name.lastIndexOf(u"_"_qs);
-                if (underscore == -1)
-                    continue;
+        if (filePath.endsWith(".obj")) {  // load with a mesh loader, because otherwise there is trouble attaching textures
+            auto scene = new Qt3DCore::QEntity{m_userEntity};
+            auto mesh = new Qt3DRender::QMesh{scene};
+            mesh->setSource(path);
+            scene->addComponent(mesh);
 
-                QString materialName = name.mid(underscore + 1);
-
-                if (auto it = m_materials.find(materialName); it != m_materials.end()) {
-                    e->removeComponent(m[0]);
-                    e->addComponent(it->second);
-                    continue;
-                }
+            if (textureUrl.isEmpty()) {
+                auto material = new Qt3DExtras::QPhongMaterial;
+                material->setAmbient(ambientColor);
+                material->setShininess(0.02);
+                scene->addComponent(material);
+            } else {
+                auto material = createDiffuseMapMaterial(textureUrl);
+                scene->addComponent(material);
             }
 
-            auto ext = calculateSceneExtent(m_userEntity);
-            auto &e = all::Controller::getInstance().modelExtent;
-            e = { ext.min.x(), ext.min.y(), ext.min.z(), ext.max.x(), ext.max.y(), ext.max.z()};
-        });
+        } else {
+            bool isFbx = filePath.endsWith(".fbx");
+            auto* scene_loader = new Qt3DRender::QSceneLoader();
+            scene_loader->setObjectName("Model Scene");
+            scene_loader->setSource(path);
+            m_userEntity->addComponent(scene_loader);
 
+            connect(scene_loader, &Qt3DRender::QSceneLoader::statusChanged, [scene_loader, textureUrl, isFbx, createDiffuseMapMaterial, this](Qt3DRender::QSceneLoader::Status s) {
+                if (s != Qt3DRender::QSceneLoader::Status::Ready)
+                    return;
+                if (isFbx) {
+                    constexpr float scale = 0.007;
+                    auto l = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
+                    if (l.size() > 0) {
+                        l[0]->setScale(scale);
+                    } else {
+                        auto t = new Qt3DCore::QTransform;
+                        t->setScale(scale);
+                        m_userEntity->addComponent(t);
+                    }
+                }
+
+                auto names = scene_loader->entityNames();
+                for (auto&& name : names) {
+                    auto* entity = scene_loader->entity(name);
+
+                    auto* e = scene_loader->entity(name);
+                    auto m = e->componentsOfType<Qt3DRender::QMaterial>();
+                    if (m.empty())
+                        continue;
+
+                    if (!textureUrl.isEmpty()) {
+                        e->removeComponent(m[0]);
+                        e->addComponent(createDiffuseMapMaterial(textureUrl));
+                        continue;
+                    }
+                    auto underscore = name.lastIndexOf(u"_"_qs);
+                    if (underscore == -1)
+                        continue;
+
+                    QString materialName = name.mid(underscore + 1);
+
+                    if (auto it = m_materials.find(materialName); it != m_materials.end()) {
+                        e->removeComponent(m[0]);
+                        e->addComponent(it->second);
+                        continue;
+                    }
+                }
+            });
+
+            QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
+                if (s != Qt3DRender::QSceneLoader::Status::Ready)
+                    return;
+
+                auto names = scene->entityNames();
+                for (auto&& name : names) {
+                    auto* e = scene->entity(name);
+
+                    if (name.contains("skybox", Qt::CaseInsensitive)) {
+                        e->setParent(m_sceneEntity);
+                        m_skyBox = e;
+                    }
+
+                    auto m = e->componentsOfType<Qt3DRender::QMaterial>();
+                    if (m.empty())
+                        continue;
+
+                    int underscore = name.lastIndexOf(u"_"_qs);
+                    if (underscore == -1)
+                        continue;
+
+                    QString materialName = name.mid(underscore + 1);
+
+                    if (auto it = m_materials.find(materialName); it != m_materials.end()) {
+                        e->removeComponent(m[0]);
+                        e->addComponent(it->second);
+                        continue;
+                    }
+                }
+
+                auto ext = calculateSceneExtent(m_userEntity);
+                auto& e = all::Controller::getInstance().modelExtent;
+                e = { ext.min.x(), ext.min.y(), ext.min.z(), ext.max.x(), ext.max.y(), ext.max.z() };
+            });
+        }
 
         m_userEntity->addComponent(scene);
 
 
-#define MMat(name) m_materials[u## #name## _qs] = new all::GlossyMaterial(all::name## ST, all::name## SU, m_rootEntity.get())
+#define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::name##ST, all::name##SU, m_rootEntity.get())
         MMat(CarPaint);
         MMat(DarkGlass);
         MMat(DarkGloss);
@@ -497,12 +651,11 @@ public:
         m_materials["Skybox"] = new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
         // CreateMaterial("Dummy", all::fresnel_vs, all::fresnel_ps, all::DarkGlossSU, all::DarkGlossST);
     }
-    
+
      QVector2D calculateSceneDimensions(Qt3DCore::QEntity *scene) const{
 
         QVector3D minBounds, maxBounds;
         _calculateSceneDimensions(scene, minBounds, maxBounds);
-        qDebug() << minBounds << " max " << maxBounds;
         QVector2D res{qMin(qMin(minBounds.x(), minBounds.y()), minBounds.z()),
             qMax(qMax(maxBounds.x(), maxBounds.y()), maxBounds.z())};
         return res;
@@ -518,6 +671,7 @@ public:
         return e;
     }
 
+    QWindow* GetWindow() { return &m_view; }
 protected:
 
     void _calculateSceneDimensions(Qt3DCore::QNode* node, QVector3D& minBounds, QVector3D& maxBounds) const {
@@ -536,10 +690,7 @@ protected:
             if (geometryRenderers.size() > 0) {
                 Qt3DRender::QGeometryRenderer* renderer = geometryRenderers.first();
 
-//                qDebug() << renderer->vertexCount() << " " << renderer->instanceCount()
-//                         << "children size" << renderer->children().size();
                 Qt3DCore::QGeometry* geometry = renderer->geometry();
-                //qDebug() << "extent " << geometry->maxExtent() << " " << geometry->minExtent() << " " << geometry->boundingVolumePositionAttribute() << " ";
                 if (!geometry) {
                     for (auto c : renderer->children()) {
                         auto a = qobject_cast<Qt3DCore::QGeometryView*>(c);
@@ -559,8 +710,6 @@ protected:
                 const Qt3DCore::QAttribute* positionAttribute = geometry->attributes().at(positionAttributeIndex);
                 size_t offset=-1, byteStride;
                 for (auto a : geometry->attributes()) {
-                    /*qDebug() << "Attribute " << a->name() << " byteOffset" << a->byteOffset() << " buffer" << a->buffer()
-                             << " - " << a->buffer()->data().size() << " - byte stride" << a->byteStride();*/
                     if (a->name() == "vertexPosition") {
                         offset = a->byteOffset();
                         byteStride = a->byteStride();
@@ -578,7 +727,6 @@ protected:
                         for (int i = 0; i < dataCount; i++) {
                             const QVector3D* position = reinterpret_cast<const QVector3D*>(rawData.data() + byteStride * i + offset);
 
-                            //qDebug() << *position;
                             minBounds.setX(qMin(minBounds.x(), position->x()));
                             minBounds.setY(qMin(minBounds.y(), position->y()));
                             minBounds.setZ(qMin(minBounds.z(), position->z()));
@@ -591,8 +739,6 @@ protected:
             }
         }
     }
-
-
 private:
     Qt3DExtras::Qt3DWindow m_view;
     std::unique_ptr<Qt3DCore::QEntity> m_rootEntity;
