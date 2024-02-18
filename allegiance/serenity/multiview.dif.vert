@@ -4,7 +4,7 @@
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec3 vertexNormal;
-layout(location = 2) in vec2 vertexTexCoord;
+layout(location = 2) in vec3 vertexTexCoord;
 
 layout(location = 0) out vec3 worldNormal;
 layout(location = 1) out vec3 worldPosition;
@@ -31,7 +31,7 @@ layout(set = 1, binding = 0) uniform SerenityCamera {
 
 void main()
 {
-    texCoords = vertexTexCoord;
+    texCoords = vertexTexCoord.xy;
     vec4 wPos = (entity.model * vec4(vertexPosition, 1.0));
     worldPosition = wPos.xyz;
     worldNormal = (entity.model * vec4(vertexNormal, 0.0)).xyz;

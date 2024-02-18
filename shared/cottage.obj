@@ -1,6 +1,6 @@
 # Blender v2.80 (sub 75) OBJ File: 'Cottage_FREE.blend'
 # www.blender.org
-mtllib Cottage_FREE.mtl
+mtllib cottage.mtl
 o Cottage_Free
 v -5.413955 0.003557 6.744514
 v -5.413955 0.003557 4.442821

@@ -195,9 +195,11 @@ public:
             impl->SetCursorEnabled(checked);
         });
         QObject::connect(&qml.scene, &SceneController::OnModelChanged, [this](QUrl model) {
-        #if !ALLEGIANCE_SERENITY
+#if ALLEGIANCE_SERENITY
+            impl->LoadModel(model.toLocalFile().toStdString());
+#else
             impl->LoadModel(model);
-        #endif
+#endif
         });
 #ifdef WITH_NAVLIB
         spacemouse.addActions({a, b}, "Application", "AppModi");

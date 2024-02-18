@@ -1,6 +1,7 @@
 #pragma once
 
 #include "serenity/cursor.h"
+#include "serenity/mesh_loader.h"
 #include "stereo_camera.h"
 #include "serenity_stereo_graph.h"
 #include "picking_application_layer.h"
@@ -50,6 +51,18 @@ public:
 
     virtual ~SerenityImpl() = default;
 
+    void LoadModel(std::filesystem::path file)
+    {
+        setMode(Mode::Scene);
+        auto entity = all::MeshLoader::load(file);
+        if (auto root = m_engine.rootEntity()) {
+            root->takeEntity(m_model);
+            entity->layerMask = m_layerManager->layerMask({ "Opaque" });
+            m_model = entity.get();
+            root->addChildEntity(std::move(entity));
+        }
+    }
+
     void ShowModel()
     {
         setMode(Mode::Scene);
@@ -64,10 +77,6 @@ public:
     {
         auto rootEntity = std::make_unique<Entity>();
         rootEntity->setObjectName("Root Entity");
-
-        auto shader = rootEntity->createChild<SpirVShaderProgram>();
-        shader->vertexShader = "scene/multiview-scene.vert.spv";
-        shader->fragmentShader = "scene/multiview-scene.frag.spv";
 
         // Lights
         auto directionalLight = rootEntity->createComponent<Light>();
@@ -84,82 +93,12 @@ public:
         pointLight->color = glm::vec4(0.7, 0.5, 0.5, 1.0f);
         pointLight->intensity = 1.0f;
 
-        struct PhongData {
-            float ambient[4];
-            float diffuse[4];
-            float specular[4];
-            float shininess;
-            int useTexture = true;
-            float _pad[2];
-        };
-        static_assert(sizeof(PhongData) == (4 * 4 * sizeof(float)));
-
-        const Material::UboDataBuilder materialDataBuilder[] = {
-            [](uint32_t set, uint32_t binding) {
-                const PhongData data{
-                    { 0.4f, 0.4f, 0.4f, 1.0f },
-                    { 0.6f, 0.6f, 0.6f, 1.0f },
-                    { 0.1f, 0.1f, 0.1f, 1.0f },
-                    0.0f,
-                    true,
-                    { 0.0f, 0.0f }
-                };
-                std::vector<uint8_t> rawData(sizeof(PhongData));
-                std::memcpy(rawData.data(), &data, sizeof(PhongData));
-                return rawData;
-            },
-            [](uint32_t set, uint32_t binding) {
-                const PhongData data{
-                    { 0.2f, 0.2f, 0.2f, 1.0f },
-                    { 1.0f, 1.0f, 1.0f, 1.0f },
-                    { 1.0f, 1.0f, 1.0f, 1.0f },
-                    5.0f,
-                    false,
-                    { 0.0f, 0.0f }
-                };
-                std::vector<uint8_t> rawData(sizeof(PhongData));
-                std::memcpy(rawData.data(), &data, sizeof(PhongData));
-                return rawData;
-            },
-        };
-
         // Create scene graph for the 3D scene
         {
-            Entity* e = rootEntity->createChildEntity<Entity>();
-
-            Material* material = e->createChild<Material>();
-            material->shaderProgram = shader;
-
-            StaticUniformBuffer* phongUbo = e->createChild<StaticUniformBuffer>();
-            phongUbo->size = sizeof(PhongData);
-
-            material->setUniformBuffer(3, 0, phongUbo);
-
-            // This is how we feed Material properties
-            material->setUniformBufferDataBuilder(materialDataBuilder[0]);
-
-            SrtTransform* transform = e->createComponent<SrtTransform>();
-
-            auto* mesh = e->createChild<Mesh>();
-            mesh->setObjectName("Model Mesh");
-            MeshLoader meshloader;
-            meshloader.load("scene/terrain.obj", mesh);
-
-            auto texture = e->createChild<Texture2D>();
-            texture->setObjectName("Model Texture");
-            texture->setPath("scene/terrain.png");
-            material->setTexture(4, 0, texture);
-
-            m_model = e->createComponent<MeshRenderer>();
-            m_model->mesh = mesh;
-            m_model->material = material;
-
-            TriangleBoundingVolume* bv = e->createComponent<TriangleBoundingVolume>();
-            bv->meshRenderer = m_model;
-            bv->cacheTriangles = true;
-            bv->cullBackFaces = false;
-
-            e->layerMask = layers.layerMask({ "Opaque" });
+            auto entity = all::MeshLoader::load("scene/cottage.obj");
+            entity->layerMask = layers.layerMask({ "Opaque" });
+            m_model = entity.get();
+            rootEntity->addChildEntity(std::move(entity));
         }
 
         // Create scene graph for the stereo image
@@ -446,8 +385,7 @@ protected:
     AspectEngine m_engine;
     RenderAspect* m_renderAspect{ nullptr };
     LayerManager* m_layerManager{ nullptr };
-    Entity* m_scene;
-    MeshRenderer* m_model;
+    Entity* m_model{ nullptr };
 
     // Camera
     StereoProxyCamera* m_camera;

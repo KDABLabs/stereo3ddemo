@@ -13,6 +13,7 @@ endif()
 if(ALLEGIANCE_UI STREQUAL "Qt")
     set(ALLEGIANCE_SOURCES
         ../shared/resources.qrc
+        ../shared/resources.qrc
         src/entry_main_qt.cpp
         include/app.h
         include/window.h
@@ -31,19 +32,34 @@ elseif(ALLEGIANCE_UI STREQUAL "Flutter")
     set(ALLEGIANCE_SOURCES src/entry_main_flutter.cpp)
 endif()
 
-if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
+if(ALLEGIANCE_RENDERER STREQUAL "Serenity")    
+    find_package(assimp QUIET)
+    if(NOT assimp_FOUND)
+        FetchContent_Declare(
+            assimp
+            GIT_REPOSITORY https://github.com/assimp/assimp.git
+            GIT_TAG master
+        )
+        FetchContent_MakeAvailable(assimp)
+    endif()
+
+
     list(
         APPEND
         ALLEGIANCE_SOURCES
+
         include/serenity_impl.h
         include/serenity_stereo_graph.h
         src/serenity_stereo_graph.cpp
         include/serenity/cursor.h
+        include/serenity/mesh_loader.h
+        include/serenity/serenity_qt.h
         include/picking_application_layer.h
         src/picking_application_layer.cpp
         include/window_extent_watcher.h
         src/window_extent_watcher.cpp
-    )
+        src/serenity/mesh_loader.cpp
+      )
 elseif(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     list(
         APPEND
@@ -78,7 +94,7 @@ if(ALLEGIANCE_UI STREQUAL "Qt")
     )
 endif()
 if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
-    target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu::KDGpu Serenity::Core Serenity::Gui Serenity::Logic)
+    target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu::KDGpu Serenity::Core Serenity::Gui Serenity::Logic assimp::assimp)
 elseif(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::3DExtras)
 endif()
@@ -101,6 +117,7 @@ endif()
 
 set(files_to_copy
     cottage.obj
+    cottage.mtl
     cottage_diffuse.png
     terrain.obj
     terrain.png
@@ -153,16 +170,16 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE ALLEGIANCE_BUILD_STR="v${PROJ
 if(ALLEGIANCE_UI STREQUAL "Qt")
     target_compile_definitions(${PROJECT_NAME} PRIVATE QT_NO_KEYWORDS)
     qt_add_qml_module(${PROJECT_NAME}
-            URI Schneider
-            NO_RESOURCE_TARGET_PATH
-            RESOURCES ./resources/checked.svg ./resources/unchecked.svg
-            QML_FILES
-            resources/camera_control.qml
-            resources/MainMenu.qml
-            resources/PageBase.qml
-            resources/SliderValue.qml
-            resources/CheckBoxX.qml
-            resources/ButtonX.qml )
+        URI Schneider
+        NO_RESOURCE_TARGET_PATH
+        RESOURCES ./resources/checked.svg ./resources/unchecked.svg
+        QML_FILES
+        resources/camera_control.qml
+        resources/MainMenu.qml
+        resources/PageBase.qml
+        resources/SliderValue.qml
+        resources/CheckBoxX.qml
+        resources/ButtonX.qml )
 elseif(ALLEGIANCE_UI STREQUAL "Flutter")
     target_compile_definitions(${PROJECT_NAME} PRIVATE FLUTTER_UI_ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/flutter")
 endif()

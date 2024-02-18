@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/">
+    <file>checked.svg</file>
+    <file>unchecked.svg</file>
+    <file>ButtonX.qml</file>
+    <file>camera_control.qml</file>
+    <file>CheckBoxX.qml</file>
+    <file>MainMenu.qml</file>
+    <file>PageBase.qml</file>
+    <file>SliderValue.qml</file>
+  </qresource>
+</RCC>

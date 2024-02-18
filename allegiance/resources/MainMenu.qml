@@ -128,9 +128,7 @@ PageBase {
       currentFolder: "./scene"
       nameFilters: "Object files (*.obj), (*.fbx), (*.gltf)"
       onAccepted: {
-        console.log("Accepted");
-        console.log(fileDialog.selectedUrl);
-        Scene.model = fileDialog.selectedUrl;
+        Scene.model = fileDialog.selectedFile;
       }
       onRejected: {
         console.log("Rejected");
