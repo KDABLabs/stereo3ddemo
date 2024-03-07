@@ -140,18 +140,18 @@ public:
 
             SrtTransform* transform = e->createComponent<SrtTransform>();
 
-            m_mesh = std::make_unique<Mesh>();
-            m_mesh->setObjectName("Model Mesh");
+            auto* mesh = e->createChild<Mesh>();
+            mesh->setObjectName("Model Mesh");
             MeshLoader meshloader;
-            meshloader.load("scene/terrain.obj", m_mesh.get());
+            meshloader.load("scene/terrain.obj", mesh);
 
-            m_texture = std::make_unique<Texture2D>();
-            m_texture->setObjectName("Model Texture");
-            m_texture->setPath("scene/terrain.png");
-            material->setTexture(4, 0, m_texture.get());
+            auto texture = e->createChild<Texture2D>();
+            texture->setObjectName("Model Texture");
+            texture->setPath("scene/terrain.png");
+            material->setTexture(4, 0, texture);
 
             m_model = e->createComponent<MeshRenderer>();
-            m_model->mesh = m_mesh.get();
+            m_model->mesh = mesh;
             m_model->material = material;
 
             TriangleBoundingVolume* bv = e->createComponent<TriangleBoundingVolume>();
@@ -446,9 +446,6 @@ protected:
     AspectEngine m_engine;
     RenderAspect* m_renderAspect{ nullptr };
     LayerManager* m_layerManager{ nullptr };
-
-    std::unique_ptr<Mesh> m_mesh;
-    std::unique_ptr<Texture2D> m_texture;
     Entity* m_scene;
     MeshRenderer* m_model;
 
