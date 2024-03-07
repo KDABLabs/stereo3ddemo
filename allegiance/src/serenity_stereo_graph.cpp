@@ -12,46 +12,14 @@ KDGpu::Handle<KDGpu::GpuSemaphore_t> all::StereoRenderAlgorithm::submitCommandBu
     // Record Memory Transform / Bind Group Updates
     updateUBOs(&commandRecorder, frameInFlightIndex);
 
-    // Call Mapper functor for Mappable buffers
-    handleMappableBuffers(&commandRecorder, frameInFlightIndex);
-
     // Perform Buffer copies
-    recordBufferCopies(&commandRecorder, frameInFlightIndex);
-
-    // Flush Staging Buffer Pool
-    renderer()->stagingBufferPool()->flush();
-
-    // Barriers to ensure we don't start drawing until all buffers transfers have completed
-
-    // VBO/IBO Transfers
-    commandRecorder.memoryBarrier(MemoryBarrierOptions{
-            .srcStages = PipelineStageFlagBit::TransferBit,
-            .dstStages = PipelineStageFlagBit::VertexShaderBit | PipelineStageFlagBit::VertexInputBit,
-            .memoryBarriers = {
-                    {
-                            .srcMask = AccessFlagBit::TransferWriteBit,
-                            .dstMask = AccessFlagBit::VertexAttributeReadBit | AccessFlagBit::IndexReadBit,
-                    },
-            },
-    });
-
-    // UBO Transfers
-    commandRecorder.memoryBarrier(MemoryBarrierOptions{
-            .srcStages = PipelineStageFlagBit::TransferBit,
-            .dstStages = PipelineStageFlagBit::AllGraphicsBit | PipelineStageFlagBit::ComputeShaderBit,
-            .memoryBarriers = {
-                    {
-                            .srcMask = AccessFlagBit::TransferWriteBit,
-                            .dstMask = AccessFlagBit::ShaderStorageReadBit | AccessFlagBit::UniformReadBit,
-                    },
-            },
-    });
+    RenderAlgorithm::recordBufferCopiesAndIssueMemoryBarrier(&commandRecorder, frameInFlightIndex);
 
     const glm::vec4 clearCol = clearColor();
 
     // 1) Render Scene Content offscreen using multiview
     {
-        const RenderTargetResource* renderTargetResource = renderTargetResourceForRefIndex(offscreenMultiViewRenderTargetRefIndex());
+        const Render::RenderTargetResource* renderTargetResource = renderTargetResourceForRefIndex(offscreenMultiViewRenderTargetRefIndex());
         const RenderTarget* rt = renderTargetResource->renderTarget();
 
         RenderPassCommandRecorderOptions renderPassOptions{
