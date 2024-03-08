@@ -202,6 +202,7 @@ public:
 
             auto cb = new Qt3DRender::QClearBuffers(rts);
             cb->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
+            cb->setClearColor(QColor{ "#48536A" });
             //            cb->setClearColor(attachment == Qt3DRender::QRenderTargetOutput::AttachmentPoint::Left ? QColor(Qt::blue) : QColor(Qt::red));
             auto s = new QSortPolicy{cb};
             s->setSortTypes(QList<QSortPolicy::SortType>{QSortPolicy::BackToFront});
@@ -318,7 +319,7 @@ public:
         QSurfaceFormat format = QSurfaceFormat::defaultFormat();
         if (qgetenv("DISABLE_STEREO") == "")
             format.setStereo(true);
-        format.setSamples(1);
+        format.setSamples(4);
         QSurfaceFormat::setDefaultFormat(format);
     }
 

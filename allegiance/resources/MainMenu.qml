@@ -126,7 +126,7 @@ PageBase {
       id: fileDialog
       title: "Load Model"
       currentFolder: "./scene"
-      nameFilters: "Object files (*.obj), (*.fbx), (*.gltf)"
+      nameFilters: ["Object files (*.obj *.fbx *.gltf)", "All Files (*)"]
       onAccepted: {
         Scene.model = fileDialog.selectedFile;
       }

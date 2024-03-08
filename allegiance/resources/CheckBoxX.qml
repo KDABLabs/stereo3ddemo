@@ -25,7 +25,9 @@ Item {
   Image {
     id: checkImage
     anchors.left: parent.left
-    anchors.verticalCenter: parent.verticalCenter
+    anchors.verticalCenter: checkbox.verticalCenter
+    height: parent.height / 3
+    fillMode: Image.PreserveAspectFit
   }
 
   Text {

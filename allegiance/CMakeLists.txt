@@ -13,7 +13,6 @@ endif()
 if(ALLEGIANCE_UI STREQUAL "Qt")
     set(ALLEGIANCE_SOURCES
         ../shared/resources.qrc
-        ../shared/resources.qrc
         src/entry_main_qt.cpp
         include/app.h
         include/window.h
@@ -40,9 +39,14 @@ if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
             GIT_REPOSITORY https://github.com/assimp/assimp.git
             GIT_TAG master
         )
-        FetchContent_MakeAvailable(assimp)
-    endif()
 
+        FetchContent_MakeAvailable(assimp)
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Assimp with shared libraries" FORCE)
+        set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Build Assimp tools" FORCE)
+        set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "Build Assimp samples" FORCE)
+        set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "Build Assimp tests" FORCE)
+
+    endif()
 
     list(
         APPEND
@@ -198,6 +202,7 @@ install(
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT applications
 )
+
 
 if(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     qt_finalize_target(${PROJECT_NAME})
