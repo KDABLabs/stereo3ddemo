@@ -16,6 +16,11 @@
 SpacemouseNavlib::SpacemouseNavlib(all::StereoCamera* camera)
     : Spacemouse(camera), m_model(*this)
 {
+    try {
+        m_model.EnableNavigation(true);
+    } catch (const std::system_error& e) {
+        qDebug() << "Could not enable Spacemouse, are the drivers installed? :" << e.what();
+    }
     auto * c = &all::Controller::getInstance();
     connect(c, &all::Controller::modelExtentChanged,
         [this](const all::extent_t e) {
@@ -134,7 +139,7 @@ CNavigationModel::CNavigationModel(SpacemouseNavlib& lib, bool multiThreaded, bo
 
     nav3d::Profile = "Allegiance";
     // Enable input from / output to the Navigation3D controller.
-    nav3d::Enable = true;
+    nav3d::Enable = false;
     nav3d::FrameTiming = TimingSource::SpaceMouse;
 }
 long CNavigationModel::GetPointerPosition(navlib::point_t& position) const

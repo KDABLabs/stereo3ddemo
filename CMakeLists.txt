@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(Allegiance VERSION 0.2.0)
 
+add_definitions(-DALLEGIANCE_PROJECT_VERSION="${CMAKE_PROJECT_VERSION}")
+
 include(FetchContent)
 
 option(BUILD_QT_UI "Build Qt UI" ON)

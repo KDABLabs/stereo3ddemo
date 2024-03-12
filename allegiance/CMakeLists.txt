@@ -1,13 +1,18 @@
 project(${POSTFIX} VERSION ${PROJECT_VERSION})
 
+
 add_executable(
     ${PROJECT_NAME} MACOSX_BUNDLE
 )
 
-if (MSVC AND WIN32 AND NOT MSVC_VERSION VERSION_LESS 142)
-    target_link_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
-    target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:/ZI>)
+if (WIN32)
+    set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE $<CONFIG:Release>)
 
+    if (MSVC AND NOT MSVC_VERSION VERSION_LESS 142)
+        target_link_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:/INCREMENTAL>)
+        target_compile_options(${PROJECT_NAME} PRIVATE $<$<CONFIG:Debug>:/ZI>)
+
+    endif()
 endif()
 
 if(ALLEGIANCE_UI STREQUAL "Qt")

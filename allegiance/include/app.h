@@ -97,8 +97,8 @@ public:
         : app(argc, argv), impl(std::in_place), wnd(impl->GetWindow(), { 1920, 1080 })
     {
         // Basic setup of the application
-        QCoreApplication::setApplicationName(QStringLiteral("Schneider Demo - ") + ALLEGIANCE_BUILD_STR);
-        QCoreApplication::setApplicationVersion(QStringLiteral("0.1.0"));
+        QApplication::setApplicationName(QStringLiteral("Schneider Demo - ") + ALLEGIANCE_BUILD_STR);
+        QApplication::setApplicationVersion(QStringLiteral(ALLEGIANCE_PROJECT_VERSION));
         app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
         app.setWindowIcon(QIcon{ QStringLiteral(":/tlr.ico") });
         app.setPalette(qml.style.palette());
@@ -202,7 +202,11 @@ public:
 #endif
         });
 #ifdef WITH_NAVLIB
-        spacemouse.addActions({a, b}, "Application", "AppModi");
+        try {
+            spacemouse.addActions({ a, b }, "Application", "AppModi");
+        } catch (const std::system_error& e) {
+            qDebug() << "Could not add actions to spacemouse" << e.what();
+        }
         // connect spacemouse.onMouseChanged
 #endif
 
