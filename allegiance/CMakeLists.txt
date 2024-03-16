@@ -40,12 +40,8 @@ if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
             GIT_TAG master
         )
 
+        set(BUILD_SHARED_LIBS OFF)
         FetchContent_MakeAvailable(assimp)
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build Assimp with shared libraries" FORCE)
-        set(ASSIMP_BUILD_ASSIMP_TOOLS OFF CACHE BOOL "Build Assimp tools" FORCE)
-        set(ASSIMP_BUILD_SAMPLES OFF CACHE BOOL "Build Assimp samples" FORCE)
-        set(ASSIMP_BUILD_TESTS OFF CACHE BOOL "Build Assimp tests" FORCE)
-
     endif()
 
     list(

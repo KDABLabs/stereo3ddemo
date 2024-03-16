@@ -58,7 +58,6 @@ layout(std140, set = 3, binding = 0) uniform SerenityPhongMaterial {
     int hasDiffuseTexture;
 } material;
 
-layout(set = 4, binding = 0) uniform sampler2D texSampler;
 
 void adsModel(const in vec3 worldPos,
               const in vec3 worldNormal,
