@@ -253,6 +253,12 @@ int main(int argc, const char* argv[])
         auto* window = impl.GetWindow();
         auto* cameraController = window->createChild<CameraController>(&camera);
         window->registerEventReceiver(cameraController);
+        auto updateCameraAspectRatio = [window, &camera] {
+            const auto aspectRatio = static_cast<float>(window->width.get()) / static_cast<float>(window->height.get());
+            camera.SetAspectRatio(aspectRatio);
+        };
+        window->width.valueChanged().connect(updateCameraAspectRatio);
+        window->height.valueChanged().connect(updateCameraAspectRatio);
 
         impl.CreateFlutterOverlay();
 
