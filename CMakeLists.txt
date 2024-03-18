@@ -37,6 +37,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 if(BUILD_SERENITY_RENDERER)
     find_package(Serenity)
+    if(BUILD_FLUTTER_UI)
+        find_package(nlohmann_json REQUIRED)
+    endif()
 
     if(NOT Serenity_FOUND)
         find_package(spdlog)
