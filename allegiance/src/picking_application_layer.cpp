@@ -20,7 +20,7 @@ void PickingApplicationLayer::update()
         return;
     }
 
-    const glm::vec4 viewportRect = { 0.0f, 0.0f, m_window->GetWidth(), m_window->GetHeight() };
+    const auto viewportRect = m_window->GetViewportRect();
 
     // Perform ray cast
     const auto cursorPos = m_window->GetCursorPos();

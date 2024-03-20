@@ -35,12 +35,21 @@ public:
 
     uint32_t GetWidth() const override
     {
-        return std::ceil(m_window.width() * m_window.screen()->devicePixelRatio());
+        auto c = GetCapabilities();
+        return c.currentExtent.width;
     }
 
     uint32_t GetHeight() const override
     {
-        return std::ceil(m_window.height() * m_window.screen()->devicePixelRatio());
+        auto c = GetCapabilities();
+        return c.currentExtent.height;
+    }
+
+    glm::vec4 GetViewportRect() const override
+    {
+        auto v = m_window.frameGeometry();
+        glm::vec4 r = { v.x(), v.y(), v.width(), v.height() };
+        return r * (float) m_window.screen()->devicePixelRatio();
     }
 
     glm::vec2 GetCursorPos() const override
@@ -63,6 +72,7 @@ public:
     KDGpu::Device CreateDevice() override
     {
         KDGpu::AdapterAndDevice defaultDevice = m_instance.createDefaultDevice(m_surface);
+        m_deviceHandle = defaultDevice.device.handle();
         return std::move(defaultDevice.device);
     }
 
@@ -71,12 +81,26 @@ public:
         return &m_window;
     }
 
+    VkSurfaceCapabilitiesKHR GetCapabilities() const
+    {
+        VkSurfaceCapabilitiesKHR capabilities;
+        auto vulkResMan = dynamic_cast<KDGpu::VulkanResourceManager*>(m_graphicsApi->resourceManager());
+        KDGpu::VulkanSurface surface = *vulkResMan->getSurface(m_surface.handle());
+        auto dev = vulkResMan->getDevice(m_deviceHandle);
+        auto adapter = dev->adapterHandle;
+        auto ad = vulkResMan->getAdapter(adapter);
+
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(ad->physicalDevice, surface.surface, &capabilities);
+        return capabilities;
+    }
+
 private:
     QVulkanInstance m_vulkanInstance;
     QWindow m_window;
     std::unique_ptr<KDGpu::VulkanGraphicsApi> m_graphicsApi;
     KDGpu::Instance m_instance;
     KDGpu::Surface m_surface;
+    KDGpu::Handle<KDGpu::Device_t> m_deviceHandle;
 };
 
 class SerenityImplQt : public SerenityImpl
