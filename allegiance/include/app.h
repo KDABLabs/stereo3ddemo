@@ -9,6 +9,7 @@
 #include <stereo_camera.h>
 #include <ui/style.h>
 #include <ui/camera_controller.h>
+#include <spacemouse.h>
 
 #if ALLEGIANCE_SERENITY
 #include "serenity/serenity_qt.h"
@@ -21,7 +22,6 @@ using Implementation = Qt3DImpl;
 using Application = QApplication;
 #endif
 
-#include "spacemouse.h"
 
 class WindowDestructionWatcher : public QObject
 {
@@ -102,7 +102,6 @@ public:
         app.setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
         app.setWindowIcon(QIcon{ QStringLiteral(":/tlr.ico") });
         app.setPalette(qml.style.palette());
-
         camera.SetShear(ALLEGIANCE_SERENITY);
 
         auto* cc = wnd.GetCameraControl();
@@ -207,7 +206,6 @@ public:
         } catch (const std::system_error& e) {
             qDebug() << "Could not add actions to spacemouse" << e.what();
         }
-        // connect spacemouse.onMouseChanged
 #endif
 
         impl->CreateAspects(&camera);
@@ -220,9 +218,6 @@ public:
     {
         return app.exec();
     }
-
-private:
-    void MakeScene() { }
 
 private:
     Application app;
