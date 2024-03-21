@@ -500,12 +500,6 @@ public:
         delete m_userEntity;
         m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
         m_userEntity->setObjectName("UserEntity");
-        auto* scene = new Qt3DRender::QSceneLoader();
-        scene->setObjectName("Model Scene");
-        scene->setSource(path);
-
-        delete m_userEntity;
-        m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
 
         QUrl textureUrl;
         QString filePath = path.toLocalFile();
@@ -543,13 +537,20 @@ public:
             if (textureUrl.isEmpty()) {
                 auto material = new Qt3DExtras::QPhongMaterial;
                 material->setAmbient(ambientColor);
-                material->setShininess(0.02);
+                material->setShininess(0.2);
                 scene->addComponent(material);
             } else {
                 auto material = createDiffuseMapMaterial(textureUrl);
                 scene->addComponent(material);
             }
 
+            connect(mesh, &QMesh::geometryChanged, [](Qt3DCore::QGeometry* g) {
+                        connect(g, &Qt3DCore::QGeometry::maxExtentChanged, [g]() {
+                                    auto& e = all::Controller::getInstance().modelExtent;
+                                    e = { g->minExtent().x(), g->minExtent().y(), g->minExtent().z(),
+                                        g->maxExtent().x(), g->maxExtent().y(), g->maxExtent().z() };
+                                });
+                    });
         } else {
             bool isFbx = filePath.endsWith(".fbx");
             auto* scene_loader = new Qt3DRender::QSceneLoader();
@@ -574,9 +575,14 @@ public:
 
                 auto names = scene_loader->entityNames();
                 for (auto&& name : names) {
-                    auto* entity = scene_loader->entity(name);
-
                     auto* e = scene_loader->entity(name);
+
+                    if (name.contains("skybox", Qt::CaseInsensitive)) {
+                        e->setParent(m_sceneEntity);
+                        m_skyBox = e;
+                        // skybox does not get rendered without this line
+                        e->componentsOfType<Qt3DCore::QTransform>()[0]->setScale(1);
+                    }
                     auto m = e->componentsOfType<Qt3DRender::QMaterial>();
                     if (m.empty())
                         continue;
@@ -586,43 +592,12 @@ public:
                         e->addComponent(createDiffuseMapMaterial(textureUrl));
                         continue;
                     }
+
                     auto underscore = name.lastIndexOf(u"_"_qs);
                     if (underscore == -1)
                         continue;
 
                     QString materialName = name.mid(underscore + 1);
-
-                    if (auto it = m_materials.find(materialName); it != m_materials.end()) {
-                        e->removeComponent(m[0]);
-                        e->addComponent(it->second);
-                        continue;
-                    }
-                }
-            });
-
-            QObject::connect(scene, &Qt3DRender::QSceneLoader::statusChanged, [scene, this](Qt3DRender::QSceneLoader::Status s) {
-                if (s != Qt3DRender::QSceneLoader::Status::Ready)
-                    return;
-
-                auto names = scene->entityNames();
-                for (auto&& name : names) {
-                    auto* e = scene->entity(name);
-
-                    if (name.contains("skybox", Qt::CaseInsensitive)) {
-                        e->setParent(m_sceneEntity);
-                        m_skyBox = e;
-                    }
-
-                    auto m = e->componentsOfType<Qt3DRender::QMaterial>();
-                    if (m.empty())
-                        continue;
-
-                    int underscore = name.lastIndexOf(u"_"_qs);
-                    if (underscore == -1)
-                        continue;
-
-                    QString materialName = name.mid(underscore + 1);
-
                     if (auto it = m_materials.find(materialName); it != m_materials.end()) {
                         e->removeComponent(m[0]);
                         e->addComponent(it->second);
@@ -636,9 +611,6 @@ public:
             });
         }
 
-        m_userEntity->addComponent(scene);
-
-
 #define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::name##ST, all::name##SU, m_rootEntity.get())
         MMat(CarPaint);
         MMat(DarkGlass);
@@ -650,7 +622,6 @@ public:
         MMat(ShadowPlane);
 #undef MMat
         m_materials["Skybox"] = new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
-        // CreateMaterial("Dummy", all::fresnel_vs, all::fresnel_ps, all::DarkGlossSU, all::DarkGlossST);
     }
 
      QVector2D calculateSceneDimensions(Qt3DCore::QEntity *scene) const{
