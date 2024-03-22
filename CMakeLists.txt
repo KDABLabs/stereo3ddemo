@@ -7,7 +7,7 @@ add_definitions(-DALLEGIANCE_PROJECT_VERSION="${CMAKE_PROJECT_VERSION}")
 include(FetchContent)
 
 option(BUILD_QT_UI "Build Qt UI" ON)
-option(BUILD_FLUTTER_UI "Build Flutter UI" ON)
+option(BUILD_FLUTTER_UI "Build Flutter UI" OFF)
 
 option(BUILD_QT3D_RENDERER "Build Qt3D renderer" ON)
 option(BUILD_SERENITY_RENDERER "Build Serenity renderer" ON)
