@@ -429,7 +429,7 @@ public:
     void ShowModel()
     {
         m_renderer->setMode(QStereoForwardRenderer::Mode::Scene);
-        LoadModelDialog();
+        LoadModel();
     }
 
     void SetCursorEnabled(bool /* enabled */)
@@ -446,13 +446,6 @@ public:
         l->setWorldDirection(QVector3D{} - lt->translation());
         le->addComponent(lt);
         le->addComponent(l);
-    }
-
-    void LoadModelDialog()
-    {
-        auto fn = QFileDialog::getOpenFileName(this->m_widget.get(), "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
-        if(!fn.isEmpty())
-            LoadModel(QUrl{"file:" + fn});
     }
 
     void LoadImage(const QUrl& path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"))

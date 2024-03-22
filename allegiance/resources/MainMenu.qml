@@ -7,6 +7,7 @@ import Schneider
 PageBase {
   id: page
   title: "Menu"
+
   ColumnLayout {
     anchors.left: parent.left
     anchors.right: parent.right
@@ -16,7 +17,7 @@ PageBase {
       Layout.alignment: Qt.AlignTop
       text: "Load Model"
       onClicked: {
-        fileDialog.open();
+        Scene.OpenLoadModelDialog()
       }
     }
 
@@ -119,19 +120,6 @@ PageBase {
             }
           }
         }
-      }
-    }
-
-    FileDialog {
-      id: fileDialog
-      title: "Load Model"
-      currentFolder: "./scene"
-      nameFilters: ["Object files (*.obj *.fbx *.gltf)", "All Files (*)"]
-      onAccepted: {
-        Scene.model = fileDialog.selectedFile;
-      }
-      onRejected: {
-        console.log("Rejected");
       }
     }
   }

@@ -4,7 +4,6 @@
 class SceneController : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QUrl model READ Model WRITE LoadModel NOTIFY OnModelChanged)
 public:
     SceneController(QObject* parent = nullptr)
         : QObject(parent)
@@ -12,20 +11,8 @@ public:
     }
 
 public:
-    void LoadModel(QUrl model) noexcept
-    {
-        m_model = model;
-        OnModelChanged(model);
-    }
-    QUrl Model() const noexcept
-    {
-        return m_model;
-    }
 Q_SIGNALS:
-    void OnModelChanged(QUrl model);
-
-private:
-    QUrl m_model;
+    void OpenLoadModelDialog();
 };
 
 class CameraController : public QObject

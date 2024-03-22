@@ -104,75 +104,11 @@ public:
         : QWidget(parent)
     {
         QQuickStyle::setStyle("Fusion");
-        // QPushButton* load_image = new QPushButton(QIcon{ u":/stereo3.png"_qs }, u""_qs, this);
-        // QPushButton* load_model = new QPushButton(QIcon{ u":/3D.png"_qs }, u""_qs, this);
-        // QPushButton* toggle_cursor = new QPushButton(QIcon{ u":/3Dcursor.png"_qs }, u""_qs, this);
-        // QPushButton* close = new QPushButton(QIcon{ u":/close.png"_qs }, u""_qs, this);
-        // ValueButton* eye_disparity = new ValueButton(QIcon{ u":/b.png"_qs }, LabelPosition::Bottom, { 0.0f, 1.0f }, 0.06f, this);
-        // ValueButton* focus_distance = new ValueButton(QIcon{ u":/a.png"_qs }, LabelPosition::Right, { 0.5f, 100.0f }, 5.0f, this);
-
-        // connect(load_image, &QPushButton::clicked, this, &CameraControl::OnLoadImage);
-        // connect(load_model, &QPushButton::clicked, this, &CameraControl::OnLoadModel);
-        // connect(toggle_cursor, &QPushButton::clicked, this, &CameraControl::OnToggleCursor);
-        // connect(close, &QPushButton::clicked, this, &CameraControl::OnClose);
-        // connect(eye_disparity, &ValueButton::OnValueChanged, this, &CameraControl::OnEyeDisparityChanged);
-        // connect(focus_distance, &ValueButton::OnValueChanged, this, &CameraControl::OnFocusPlaneChanged);
 
         layout = new QVBoxLayout(this);
         layout->setAlignment(Qt::AlignTop);
         layout->setContentsMargins(20, 20, 20, 20);
 
-        // auto make_button = [](QPushButton* b) {
-        //     b->setFixedSize({ 128, 128 });
-        //     b->setIconSize({ 128, 128 });
-        //     b->setFlat(true);
-        //     b->setStyleSheet(uR"(QPushButton {
-        //         border: 2px solid #8f8f91;
-        //         border-radius: 20px;
-        //         min-width: 128px;
-        //         min-height: 128px;
-        //     }
-        //     QPushButton:hover:!pressed {
-        //         border: 4px solid #ff0000;
-        //     }
-        //     QPushButton:pressed {
-        //         border: 4px solid #ffff00;
-        //     }
-        //     QPushButton:checked {
-        //         border: 4px solid #ffff00;
-        //     }
-        //)"_qs);
-        // };
-
-        // QVBoxLayout* function_layout = new QVBoxLayout;
-        // function_layout->setSpacing(50);
-
-        // make_button(load_image);
-        // make_button(load_model);
-        // make_button(toggle_cursor);
-
-        // toggle_cursor->setCheckable(true);
-        // toggle_cursor->setChecked(true);
-
-        // function_layout->addWidget(load_image);
-        // function_layout->addWidget(load_model);
-        // function_layout->addWidget(toggle_cursor);
-
-        // QVBoxLayout* camera_layout = new QVBoxLayout;
-
-        // make_button(eye_disparity);
-        // make_button(focus_distance);
-
-        // camera_layout->addWidget(eye_disparity);
-        // camera_layout->addWidget(focus_distance);
-
-        //// layout->addLayout(function_layout);
-        //// layout->insertSpacing(1, 50);
-        //// layout->addLayout(camera_layout);
-
-        // make_button(close);
-        //// layout->addStretch();
-        //// layout->addWidget(close);
         engine = new QQmlEngine(this);
         qw = new QQuickWidget(engine, this);
         qw->setSource(QUrl(u"qrc:/resources/camera_control.qml"_qs));
@@ -196,9 +132,6 @@ public:
         // l = new QLabel;
         // l->setPixmap(p);
         // l->setScaledContents(true);
-
-        // layout->addSpacing(10);
-        // layout->addWidget(l);
     }
     void Reload()
     {

@@ -9,6 +9,7 @@
 #include <stereo_camera.h>
 #include <ui/style.h>
 #include <ui/camera_controller.h>
+#include <QFileDialog>
 #include <spacemouse.h>
 
 #if ALLEGIANCE_SERENITY
@@ -193,13 +194,17 @@ public:
         QObject::connect(&qml.cursor, &CursorController::OnCursorVisibilityChanged, [this](bool checked) {
             impl->SetCursorEnabled(checked);
         });
-        QObject::connect(&qml.scene, &SceneController::OnModelChanged, [this](QUrl model) {
+        QObject::connect(&qml.scene, &SceneController::OpenLoadModelDialog, [this]() {
+            auto fn = QFileDialog::getOpenFileName(&wnd, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
+            if (!fn.isEmpty())
 #if ALLEGIANCE_SERENITY
-            impl->LoadModel(model.toLocalFile().toStdString());
+                impl->LoadModel(fn.toStdString());
 #else
-            impl->LoadModel(model);
+                impl->LoadModel("file:" + fn);
 #endif
+
         });
+
 #ifdef WITH_NAVLIB
         try {
             spacemouse.addActions({ a, b }, "Application", "AppModi");
