@@ -319,7 +319,7 @@ public:
         QSurfaceFormat format = QSurfaceFormat::defaultFormat();
         if (qgetenv("DISABLE_STEREO") == "")
             format.setStereo(true);
-        format.setSamples(4);
+        format.setSamples(8);
         QSurfaceFormat::setDefaultFormat(format);
     }
 

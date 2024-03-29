@@ -38,7 +38,7 @@ void main()
 )";
 
 constexpr std::string_view fresnel_vs = R"(
-#version 150 core
+#version 420 core
 
 uniform vec3 normalScaling;
 uniform float postVertexColor;
@@ -52,7 +52,8 @@ in vec3 vertexNormal;
 in vec2 vertexTexCoord;
 
 out vec4 postColor;
-out vec3 normalSem;
+out vec4 fragVertexColor;
+smooth out vec3 normalSem;
 out vec2 texCoord;
 
 
@@ -69,16 +70,18 @@ void main()
     normalSem = semNormal();
     texCoord = vertexTexCoord;
     postColor = mix(vec4(1.0), vertexColor, postVertexColor) * postGain;
+    fragVertexColor = vertexColor;
     gl_Position = mvp * vec4(vertexPosition, 1.0);
 }
 
 )";
 
 constexpr std::string_view fresnel_ps = R"(
-#version 150 core
+#version 420 core
 
 in vec4 postColor;
-in vec3 normalSem;
+in vec4 fragVertexColor;
+smooth in vec3 normalSem;
 in vec2 texCoord;
 out vec4 fragColor;
 
@@ -117,12 +120,19 @@ void main()
     vec3 normalSem_ = normalize(normalSem + vec3(normalMap, 0.0));
     float fresnel = semFresnel(normalSem_);
 
+    if (fragVertexColor.r < 0.4)
+        fresnel = 0 * fresnel;
+    if (fresnel >= 0.3) {
+        fresnel = 0.2;
+    }
 
     vec3 diffuse = texture(diffuseMap, tc).xyz * mix(difInner, difOuter, fresnel) * difGain;
     vec3 semColor = texture(semMap, semS(normalSem_)).xyz * mix(semInner, semOuter, fresnel) * semGain;
 
     fragColor = postColor * vec4(diffuse + semColor, 1.0);
-    fragColor.rgb = pow(fragColor.rgb, vec3(gammax));
+    //fragColor.rgb = pow(fragColor.rgb, vec3(gammax));
+
+    //fragColor = vec4(fresnel, fresnel, fresnel, 1);
 }
 )";
 
