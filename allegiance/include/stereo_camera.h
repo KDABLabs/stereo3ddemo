@@ -207,52 +207,45 @@ class OrbitalStereoCamera : public StereoCamera
     Q_OBJECT
 #endif
 public:
-    OrbitalStereoCamera()
+    void Zoom(float d)
     {
-        UpdateViewMatrix();
+        SetPosition(GetPosition() + GetForwardVector() * d);
     }
 
-public:
-    void SetRadius(float radius) noexcept
+    // return true, if Up Vector got flipped
+    bool Rotate(float dx, float dy)
     {
-        this->radius = radius;
-        UpdateViewMatrix();
+        auto up = GetUpVector();
+        glm::mat4 translateToPivot = glm::translate(glm::mat4(1.0f), target);
+        glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), -dx, glm::vec3(0.0f, 1.0f, 0.0f));
+        rotation = rotation * glm::rotate(glm::mat4(1.0f), dy, glm::cross(GetUpVector(), GetForwardVector()));
+        glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), -target);
+        glm::mat4 finalTransform = translateToPivot * rotation * translateBack;
+        glm::vec3 newPosition = glm::vec3(finalTransform * glm::vec4(GetPosition(), 1.0f));
+        SetPosition(newPosition);
+        SetForwardVector(target - newPosition);
+        return glm::dot(up, GetUpVector()) < 0;
     }
-    float GetRadius() const noexcept { return radius; }
 
-    void SetPhi(float phi) noexcept
+    void Translate(float dx, float dy)
     {
-        this->phi = phi;
-        UpdateViewMatrix();
-    }
-    float GetPhi() const noexcept { return phi; }
+        glm::vec3 forward = glm::normalize(GetForwardVector());
+        glm::vec3 lateralTranslation = dx * glm::normalize(glm::cross(forward, GetUpVector()));
+        glm::vec3 verticalTranslation = -dy * GetUpVector();
+        glm::vec3 newPosition = GetPosition() + lateralTranslation + verticalTranslation;
 
-    void SetTheta(float theta) noexcept
-    {
-        this->theta = std::clamp(theta, 0.001f, glm::pi<float>() - 0.001f);
-        UpdateViewMatrix();
+        SetPosition(newPosition);
     }
-    float GetTheta() const noexcept { return theta; }
 
     void SetTarget(const glm::vec3& target) noexcept
     {
         this->target = target;
-        UpdateViewMatrix();
     }
     glm::vec3 GetTarget() const noexcept { return target; }
 
 private:
-    void UpdateViewMatrix() noexcept
-    {
-        auto pos = target + glm::vec3(radius * sin(theta) * cos(phi), radius * cos(theta), radius * sin(theta) * sin(phi));
-        SetPosition(pos);
-        SetForwardVector( target - pos);
-    }
 
 private:
-    float radius = 20.0f;
-    float phi = 0.0f;
-    float theta = 0.001f;
     glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
 };
 } // namespace all

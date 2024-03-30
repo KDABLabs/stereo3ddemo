@@ -115,7 +115,7 @@ public:
                          });
         QObject::connect(&watcher, &WindowDestructionWatcher::OnScroll,
                          [this](::QWheelEvent* e) {
-                             camera.SetRadius(camera.GetRadius() - e->angleDelta().y() * 0.01f);
+                             camera.Zoom(e->angleDelta().y() * 0.01f);
                          });
 
         auto b = new QAction(QIcon{":stereo3_contrast.png"}, "Show Image", cc);
@@ -136,6 +136,7 @@ public:
                          });
         QObject::connect(&watcher, &WindowDestructionWatcher::OnMouseEvent,
                          [this](::QMouseEvent* e) {
+                             static bool flipped = false;
                              switch (e->type()) {
                              case QEvent::MouseButtonPress:
                                  if (e->buttons() & Qt::MouseButton::LeftButton) {
@@ -156,9 +157,6 @@ public:
                                  }
                                  break;
                              case QEvent::MouseMove: {
-                                 if (!input.is_pressed)
-                                     break;
-
                                  auto pos = e->pos();
 
                                  if (input.skip_first) {
@@ -167,11 +165,19 @@ public:
                                      break;
                                  }
 
-                                 auto dx = pos.x() - input.last_pos.x();
-                                 auto dy = pos.y() - input.last_pos.y();
+                                 float dx = (0.f + pos.x() - input.last_pos.x()) /  100;
+                                 float dy = (0.f + pos.y() - input.last_pos.y()) / 100;
 
-                                 camera.SetPhi(camera.GetPhi() + dx * 0.01f);
-                                 camera.SetTheta(camera.GetTheta() - dy * 0.01f);
+                                 switch (e->buttons()) {
+                                 case Qt::LeftButton:
+                                     if (flipped) dy = - dy;
+                                     flipped = flipped ^ camera.Rotate(dx, dy);
+                                     break;
+                                 case Qt::MiddleButton:
+                                     camera.Translate(dx, dy);
+                                     break;
+                                 }
+
                                  input.last_pos = pos;
                              } break;
                              default:
