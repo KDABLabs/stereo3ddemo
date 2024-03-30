@@ -58,7 +58,7 @@ public:
                          });
         QObject::connect(&watcher, &WindowDestructionWatcher::OnScroll,
                          [this](::QWheelEvent* e) {
-                             camera.Zoom(e->angleDelta().y() * 0.01f);
+                             camera.Zoom(e->angleDelta().y() / qml.scene.GetMouseSensitivity());
                          });
 
         auto b = new QAction(QIcon{ ":stereo3_contrast.png" }, "Show Image", cc);
@@ -107,8 +107,8 @@ public:
                                      break;
                                  }
 
-                                 float dx = (0.f + pos.x() - input.last_pos.x()) / 100;
-                                 float dy = (0.f + pos.y() - input.last_pos.y()) / 100;
+                                 float dx = (0.f + pos.x() - input.last_pos.x()) / qml.scene.GetMouseSensitivity();
+                                 float dy = (0.f + pos.y() - input.last_pos.y()) / qml.scene.GetMouseSensitivity();
 
                                  switch (e->buttons()) {
                                  case Qt::LeftButton:

@@ -5,15 +5,26 @@
 class SceneController : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(float mouseSensitivity READ GetMouseSensitivity WRITE SetMouseSensitivity NOTIFY OnMouseSensitivityChanged)
 public:
-    SceneController(QObject* parent = nullptr)
-        : QObject(parent)
+    float GetMouseSensitivity()
     {
+        return m_mouseSensitivity;
     }
-
+    void SetMouseSensitivity(float sensitivity)
+    {
+        if (sensitivity == m_mouseSensitivity)
+            return;
+        m_mouseSensitivity = sensitivity;
+        Q_EMIT OnMouseSensitivityChanged();
+    }
 public:
 Q_SIGNALS:
     void OpenLoadModelDialog();
+    void OnMouseSensitivityChanged();
+
+protected:
+    float m_mouseSensitivity = 100;
 };
 
 class CameraController : public QObject

@@ -122,5 +122,55 @@ PageBase {
         }
       }
     }
+
+    GroupBox {
+        id: navigation
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        label: Label {
+            text: "Navigation"
+            font: Style.fontButton
+        }
+
+        ColumnLayout {
+            anchors.margins: 10
+            anchors.left: parent.left
+            anchors.right: parent.right
+            spacing: 10
+
+            SliderValue {
+                id: mousesensitivity
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                from: 20
+                to: 300
+                value: Scene.mouseSensitivity
+                title: "Mouse Sensitivity"
+
+                onMoved: current => Scene.mouseSensitivity = current
+            }
+/*      Still needs to be implemented on Application Side
+            Item {
+                Layout.fillWidth: true
+                height: 30
+                anchors.margins: 10
+                Button {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    anchors.bottomMargin: 10
+                    text: "Reset Pivot Point"
+                }
+                Button {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.topMargin: 10
+                    anchors.bottomMargin: 10
+                    text: "Reset Camera Position"
+                }
+            }
+ */
+        }
+    }
   }
 }
