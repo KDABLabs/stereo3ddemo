@@ -109,6 +109,11 @@ public:
         return m_window->height();
     }
 
+    glm::vec4 GetViewportRect() const override
+    {
+        return { 0.0f, 0.0f, GetWidth(), GetHeight() };
+    }
+
     glm::vec2 GetCursorPos() const override
     {
         return { m_window->cursorPosition().x, m_window->cursorPosition().y };
