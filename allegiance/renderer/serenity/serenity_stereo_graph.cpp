@@ -1,5 +1,7 @@
 #include "serenity_stereo_graph.h"
 #include <Serenity/gui/render/renderer.h>
+#include <Serenity/gui/render/algorithm/building_blocks/bind_groups.h>
+
 using namespace Serenity;
 
 using namespace KDGpu;
@@ -81,6 +83,147 @@ KDGpu::Handle<KDGpu::GpuSemaphore_t> all::serenity::StereoRenderAlgorithm::submi
 
         // End render pass
         renderPass.end();
+    }
+
+    // 2) Render offscreen content side by side + overlays on Window
+    // TODO: Render overlays for stereo
+    if (this->renderMode.get() != StereoRenderMode::Stereo) {
+
+        const Render::RenderTargetResource* offscreenRenderTargetResource = renderTargetResourceForRefIndex(offscreenMultiViewRenderTargetRefIndex());
+        const RenderTarget* offscreenRt = offscreenRenderTargetResource->renderTarget();
+        // Transition offscreen color texture to Shader readable layout
+        // Note: we can't use OffscreenRenderTarget::transitionCurrentImageFromColorAttachmentToShaderReadOnly
+        // as we target different stages (ColorAttachmentOutput vs BottomOfPipe)
+        commandRecorder.textureMemoryBarrier(KDGpu::TextureMemoryBarrierOptions{
+                .srcStages = KDGpu::PipelineStageFlags(KDGpu::PipelineStageFlagBit::ColorAttachmentOutputBit),
+                .srcMask = KDGpu::AccessFlagBit::ColorAttachmentWriteBit,
+                .dstStages = KDGpu::PipelineStageFlags(KDGpu::PipelineStageFlagBit::FragmentShaderBit),
+                .dstMask = KDGpu::AccessFlagBit::ShaderReadBit,
+                .oldLayout = KDGpu::TextureLayout::ColorAttachmentOptimal,
+                .newLayout = KDGpu::TextureLayout::ShaderReadOnlyOptimal,
+                .texture = offscreenRt->image(offscreenRt->currentImageIndex()),
+                .range = {
+                        .aspectMask = KDGpu::TextureAspectFlagBits::ColorBit,
+                        .levelCount = 1,
+                },
+        });
+
+        const Render::RenderTargetResource* presentRenderTargetResource = renderTargetResourceForRefIndex(presentRenderTargetRefIndex());
+        const RenderTarget* presentRt = presentRenderTargetResource->renderTarget();
+
+        // Prepare work for Overlays (e.g layout transition)
+        prepareOverlaysForRecording(&commandRecorder, frameInFlightIndex);
+
+        RenderPassCommandRecorderOptions renderPassOptions{
+            .colorAttachments = {
+                    { .view = {},
+                      .resolveView = {},
+                      .clearValue = { clearCol[0], clearCol[1], clearCol[2], clearCol[3] },
+                      .finalLayout = TextureLayout::PresentSrc },
+            },
+            .depthStencilAttachment = {
+                    .view = presentRenderTargetResource->depthTextureView(),
+            },
+            .samples = SampleCountFlagBits(presentRenderTargetResource->samples()),
+        };
+
+        const bool useMSAA = presentRenderTargetResource->samples() > RenderAlgorithm::SamplesCount::Samples_1;
+        if (useMSAA) {
+            renderPassOptions.colorAttachments[0].view = presentRenderTargetResource->msaaTextureView();
+            renderPassOptions.colorAttachments[0].resolveView = presentRt->imageView(presentRt->currentImageIndex());
+        } else {
+            renderPassOptions.colorAttachments[0].view = presentRt->imageView(presentRt->currentImageIndex());
+        }
+
+        RenderPassCommandRecorder renderPass = commandRecorder.beginRenderPass(renderPassOptions);
+
+        const KDGpu::Extent2D extent = presentRt->identityExtent();
+        const float halfWidth = float(extent.width) / 2;
+        const KDGpu::Handle<GraphicsPipeline_t> compositorPipeline = (renderMode() == StereoRenderMode::Anaglyph) ? m_compositor.fsqPipelineAnaglyph : m_compositor.fsqPipeline;
+
+        // Bind Pipeline and texture bind group
+        renderPass.setPipeline(compositorPipeline);
+        for (const Render::BindGroupHandler* bindGroup : m_compositor.bindGroups())
+            bindGroup->bind(m_compositor.fsqTextureBindGroupLayout, &renderPass, frameInFlightIndex);
+
+        using namespace Render::BuildingBlocks;
+        switch (renderMode()) {
+
+        case StereoRenderMode::SideBySide: {
+            renderPass.setViewport(Viewport{
+                    .x = 0.0f,
+                    .y = 0.0f,
+                    .width = halfWidth,
+                    .height = float(extent.height),
+            });
+            const int leftEyeLayer = 0;
+            renderPass.pushConstant(m_compositor.fsqLayerIdxPushConstantRange, &leftEyeLayer);
+            renderPass.draw(DrawCommand{ .vertexCount = 6 });
+
+            renderPass.setViewport(Viewport{
+                    .x = halfWidth,
+                    .y = 0.0f,
+                    .width = halfWidth,
+                    .height = float(extent.height),
+            });
+            const int rightEyeLayer = 1;
+            renderPass.pushConstant(m_compositor.fsqLayerIdxPushConstantRange, &rightEyeLayer);
+            renderPass.draw(DrawCommand{ .vertexCount = 6 });
+            break;
+        }
+        case StereoRenderMode::LeftOnly: {
+            renderPass.setViewport(Viewport{
+                    .x = 0.0f,
+                    .y = 0.0f,
+                    .width = float(extent.width),
+                    .height = float(extent.height),
+            });
+            const int leftEyeLayer = 0;
+            renderPass.pushConstant(m_compositor.fsqLayerIdxPushConstantRange, &leftEyeLayer);
+            renderPass.draw(DrawCommand{ .vertexCount = 6 });
+            break;
+        }
+        case StereoRenderMode::RightOnly: {
+            renderPass.setViewport(Viewport{
+                    .x = 0.0f,
+                    .y = 0.0f,
+                    .width = float(extent.width),
+                    .height = float(extent.height),
+            });
+            const int rightEyeLayer = 1;
+            renderPass.pushConstant(m_compositor.fsqLayerIdxPushConstantRange, &rightEyeLayer);
+            renderPass.draw(DrawCommand{ .vertexCount = 6 });
+            break;
+        }
+        case StereoRenderMode::Anaglyph: {
+            renderPass.setViewport(Viewport{
+                    .x = 0.0f,
+                    .y = 0.0f,
+                    .width = float(extent.width),
+                    .height = float(extent.height),
+            });
+            renderPass.draw(DrawCommand{ .vertexCount = 6 });
+            break;
+        }
+        default:
+            break;
+        }
+
+        // Reset Viewport
+        renderPass.setViewport(Viewport{
+                .x = 0.0f,
+                .y = 0.0f,
+                .width = float(extent.width),
+                .height = float(extent.height),
+        });
+
+        // Overlay
+        recordRenderCommandsForOverlays(&renderPass, frameInFlightIndex);
+
+        // End render pass
+        renderPass.end();
+
+        finalizeOverlaysAfterRecording(&commandRecorder, frameInFlightIndex);
     }
 
     // End recording

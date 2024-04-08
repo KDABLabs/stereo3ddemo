@@ -87,7 +87,7 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
 #if defined(RENDER_MODE_LEFT_ONLY)
     auto algo = std::make_unique<StereoForwardAlgorithm>();
 #else
-    auto algo = std::make_unique<StereoRenderAlgorithm>();
+    auto algo = std::make_unique<all::serenity::StereoRenderAlgorithm>();
 #endif
 
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
