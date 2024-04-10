@@ -34,7 +34,7 @@ void PickingApplicationLayer::update()
             return a.distance < b.distance;
         });
         assert(closest != hits.end());
-        m_ctransform->translation = closest->worldIntersection;
+        m_ctransform->translation = closest->position;
         m_ctransform->scale = glm::vec3(std::clamp(closest->distance * 10.f, 0.01f, 1.0f));
     } else {
         m_ctransform->translation = unv;
