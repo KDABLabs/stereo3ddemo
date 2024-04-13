@@ -86,6 +86,18 @@ if(NOT glm_FOUND)
     FetchContent_MakeAvailable(glm)
 endif()
 
+find_package(assimp QUIET)
+if(NOT assimp_FOUND)
+    FetchContent_Declare(
+        assimp
+        GIT_REPOSITORY https://github.com/assimp/assimp.git
+        GIT_TAG master
+    )
+
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(assimp)
+endif()
+
 if(BUILD_QT_UI)
     set(QT_COMPONENTS Core Gui Widgets Quick QuickWidgets QuickControls2)
     if(BUILD_QT3D_RENDERER)

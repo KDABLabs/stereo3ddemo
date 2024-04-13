@@ -7,6 +7,7 @@
 #include "qt3d_cursor.h"
 #include "stereo_image_mesh.h"
 #include "stereo_image_material.h"
+#include "qt3d/mesh_loader.h"
 #include "spacemouse.h"
 #include <QFileDialog>
 #include <Qt3DCore/QEntity>
@@ -198,16 +199,27 @@ public:
         };
 
         auto makeBranch = [makeRenderTargetSelector](Qt3DRender::QFrameGraphNode* parent, Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
-            auto rts = makeRenderTargetSelector(parent, attachment);
+            auto renderTargetSelector = makeRenderTargetSelector(parent, attachment);
 
-            auto cb = new Qt3DRender::QClearBuffers(rts);
-            cb->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
-            cb->setClearColor(QColor{ "#48536A" });
+            auto renderStateSet = new Qt3DRender::QRenderStateSet(renderTargetSelector);
+
+            auto cullFace = new QCullFace(renderStateSet);
+            cullFace->setMode(QCullFace::CullingMode::NoCulling);
+            renderStateSet->addRenderState(cullFace);
+
+            auto depthTest = new QDepthTest(renderStateSet);
+            depthTest->setDepthFunction(QDepthTest::Less);
+            renderStateSet->addRenderState(depthTest);
+
+            auto clearBuffers = new Qt3DRender::QClearBuffers(renderStateSet);
+            clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
+            clearBuffers->setClearColor(QColor{ "#48536A" });
             //            cb->setClearColor(attachment == Qt3DRender::QRenderTargetOutput::AttachmentPoint::Left ? QColor(Qt::blue) : QColor(Qt::red));
-            auto s = new QSortPolicy{cb};
-            s->setSortTypes(QList<QSortPolicy::SortType>{QSortPolicy::BackToFront});
 
-            return new Qt3DRender::QCameraSelector(s);
+            auto sortPolicy = new QSortPolicy{ clearBuffers };
+            sortPolicy->setSortTypes(QList<QSortPolicy::SortType>{ QSortPolicy::BackToFront });
+
+            return new Qt3DRender::QCameraSelector(sortPolicy);
         };
 
         m_leftCamera = makeBranch(stereoImageLayerFilter, Qt3DRender::QRenderTargetOutput::Left);
@@ -489,119 +501,29 @@ public:
 
     void LoadModel(QUrl path = QUrl::fromLocalFile("scene/fbx/showroom2303.fbx"))
     {
-        delete m_skyBox; m_skyBox = nullptr;
+        delete m_skyBox;
+        m_skyBox = nullptr;
         delete m_userEntity;
         m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
         m_userEntity->setObjectName("UserEntity");
 
-        QUrl textureUrl;
         QString filePath = path.toLocalFile();
-        QString baseName = QFileInfo(filePath).baseName();
-        for (auto i : {"_diffuse.png", ".png"}) {
-            QString newFileName = baseName + i;
-            QString texturePath = QFileInfo(filePath).path() + "/" + newFileName;
-            QFile file(texturePath);
-            if (file.exists()) {
-                textureUrl = QUrl::fromLocalFile(texturePath);
-                break;
-            }
-        }
-        constexpr QColor ambientColor{30, 30, 30, 255};
 
-        auto createDiffuseMapMaterial = [ambientColor](const QUrl &textureUrl) {
-            auto* texture = new Qt3DRender::QTexture2D();
-            auto* textureImage = new Qt3DRender::QTextureImage();
-            textureImage->setSource(textureUrl);
-            texture->addTextureImage(textureImage);
+        bool isFbx = filePath.endsWith(".fbx");
 
-            auto* material = new Qt3DExtras::QDiffuseMapMaterial();
-            material->setDiffuse(texture);
-            material->setShininess(0);
-            material->setAmbient(ambientColor);
-            return material;
-        };
+        auto* sceneRoot = all::MeshLoader::load(path.toLocalFile());
+        sceneRoot->setParent(m_userEntity);
 
-        if (filePath.endsWith(".obj")) {  // load with a mesh loader, because otherwise there is trouble attaching textures
-            auto scene = new Qt3DCore::QEntity{m_userEntity};
-            auto mesh = new Qt3DRender::QMesh{scene};
-            mesh->setSource(path);
-            scene->addComponent(mesh);
-
-            if (textureUrl.isEmpty()) {
-                auto material = new Qt3DExtras::QPhongMaterial;
-                material->setAmbient(ambientColor);
-                material->setShininess(0.2);
-                scene->addComponent(material);
+        if (isFbx) {
+            constexpr float scale = 0.007;
+            auto l = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
+            if (l.size() > 0) {
+                l[0]->setScale(scale);
             } else {
-                auto material = createDiffuseMapMaterial(textureUrl);
-                scene->addComponent(material);
+                auto t = new Qt3DCore::QTransform;
+                t->setScale(scale);
+                m_userEntity->addComponent(t);
             }
-
-            connect(mesh, &QMesh::geometryChanged, [](Qt3DCore::QGeometry* g) {
-                        connect(g, &Qt3DCore::QGeometry::maxExtentChanged, [g]() {
-                                    auto& e = all::Controller::getInstance().modelExtent;
-                                    e = { g->minExtent().x(), g->minExtent().y(), g->minExtent().z(),
-                                        g->maxExtent().x(), g->maxExtent().y(), g->maxExtent().z() };
-                                });
-                    });
-        } else {
-            bool isFbx = filePath.endsWith(".fbx");
-            auto* scene_loader = new Qt3DRender::QSceneLoader();
-            scene_loader->setObjectName("Model Scene");
-            scene_loader->setSource(path);
-            m_userEntity->addComponent(scene_loader);
-
-            connect(scene_loader, &Qt3DRender::QSceneLoader::statusChanged, [scene_loader, textureUrl, isFbx, createDiffuseMapMaterial, this](Qt3DRender::QSceneLoader::Status s) {
-                if (s != Qt3DRender::QSceneLoader::Status::Ready)
-                    return;
-                if (isFbx) {
-                    constexpr float scale = 0.007;
-                    auto l = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
-                    if (l.size() > 0) {
-                        l[0]->setScale(scale);
-                    } else {
-                        auto t = new Qt3DCore::QTransform;
-                        t->setScale(scale);
-                        m_userEntity->addComponent(t);
-                    }
-                }
-
-                auto names = scene_loader->entityNames();
-                for (auto&& name : names) {
-                    auto* e = scene_loader->entity(name);
-
-                    if (name.contains("skybox", Qt::CaseInsensitive)) {
-                        e->setParent(m_sceneEntity);
-                        m_skyBox = e;
-                        // skybox does not get rendered without this line
-                        e->componentsOfType<Qt3DCore::QTransform>()[0]->setScale(1);
-                    }
-                    auto m = e->componentsOfType<Qt3DRender::QMaterial>();
-                    if (m.empty())
-                        continue;
-
-                    if (!textureUrl.isEmpty()) {
-                        e->removeComponent(m[0]);
-                        e->addComponent(createDiffuseMapMaterial(textureUrl));
-                        continue;
-                    }
-
-                    auto underscore = name.lastIndexOf(u"_"_qs);
-                    if (underscore == -1)
-                        continue;
-
-                    QString materialName = name.mid(underscore + 1);
-                    if (auto it = m_materials.find(materialName); it != m_materials.end()) {
-                        e->removeComponent(m[0]);
-                        e->addComponent(it->second);
-                        continue;
-                    }
-                }
-
-                auto ext = calculateSceneExtent(m_userEntity);
-                auto& e = all::Controller::getInstance().modelExtent;
-                e = { ext.min.x(), ext.min.y(), ext.min.z(), ext.max.x(), ext.max.y(), ext.max.z() };
-            });
         }
 
 #define MMat(name) m_materials[u## #name##_qs] = new all::GlossyMaterial(all::name##ST, all::name##SU, m_rootEntity.get())
@@ -615,6 +537,31 @@ public:
         MMat(ShadowPlane);
 #undef MMat
         m_materials["Skybox"] = new all::SkyboxMaterial(all::SkyboxST, {}, m_rootEntity.get());
+
+        const auto sceneEntities = sceneRoot->findChildren<Qt3DCore::QEntity*>();
+        for (auto* e : sceneEntities) {
+            Qt3DRender::QMaterial* material = [e] {
+                auto components = e->componentsOfType<Qt3DRender::QMaterial>();
+                return !components.isEmpty() ? components.first() : nullptr;
+            }();
+            if (!material)
+                continue;
+            const auto materialName = material->property("name").toString();
+
+            if (materialName.contains("skybox", Qt::CaseInsensitive)) {
+                e->setParent(m_sceneEntity);
+                m_skyBox = e;
+            }
+
+            if (auto it = m_materials.find(materialName); it != m_materials.end()) {
+                e->removeComponent(material);
+                e->addComponent(it->second);
+            }
+        }
+
+        auto ext = calculateSceneExtent(m_userEntity);
+        auto& e = all::Controller::getInstance().modelExtent;
+        e = { ext.min.x(), ext.min.y(), ext.min.z(), ext.max.x(), ext.max.y(), ext.max.z() };
     }
 
      QVector2D calculateSceneDimensions(Qt3DCore::QEntity *scene) const{

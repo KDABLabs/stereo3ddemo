@@ -1,6 +1,5 @@
 project(${POSTFIX} VERSION ${PROJECT_VERSION})
 
-
 add_executable(
     ${PROJECT_NAME} MACOSX_BUNDLE
 )
@@ -37,18 +36,6 @@ elseif(ALLEGIANCE_UI STREQUAL "Flutter")
 endif()
 
 if(ALLEGIANCE_RENDERER STREQUAL "Serenity")    
-    find_package(assimp QUIET)
-    if(NOT assimp_FOUND)
-        FetchContent_Declare(
-            assimp
-            GIT_REPOSITORY https://github.com/assimp/assimp.git
-            GIT_TAG master
-        )
-
-        set(BUILD_SHARED_LIBS OFF)
-        FetchContent_MakeAvailable(assimp)
-    endif()
-
     list(
         APPEND
         ALLEGIANCE_SOURCES
@@ -77,6 +64,10 @@ elseif(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
         include/stereo_image_material.h
         src/stereo_image_mesh.cpp
         src/stereo_image_material.cpp
+        include/qt3d/scene_mesh.h
+        include/qt3d/mesh_loader.h
+        src/qt3d/scene_mesh.cpp
+        src/qt3d/mesh_loader.cpp
     )
 endif()
 
@@ -99,10 +90,11 @@ if(ALLEGIANCE_UI STREQUAL "Qt")
     )
 endif()
 if(ALLEGIANCE_RENDERER STREQUAL "Serenity")
-    target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu::KDGpu Serenity::Core Serenity::Gui Serenity::Logic assimp::assimp)
+    target_link_libraries(${PROJECT_NAME} PRIVATE KDGpu::KDGpu Serenity::Core Serenity::Gui Serenity::Logic)
 elseif(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::3DExtras)
 endif()
+target_link_libraries(${PROJECT_NAME} PRIVATE assimp::assimp)
 
 if(${WITH_NAVLIB})
     set(TDxWare_SDK_DIR "${CMAKE_SOURCE_DIR}/3rdparty/3DxWare_SDK_v4-0-3_r19962/")
