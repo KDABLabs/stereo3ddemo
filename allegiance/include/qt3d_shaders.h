@@ -61,8 +61,7 @@ vec3 semNormal()
 {
     vec3 n = (modelView * vec4(vertexNormal, 0.0)).xyz; // ignore position
     n *= normalScaling;
-    normalize(n);
-    return n;
+    return normalize(n);
 }
 
 void main()
