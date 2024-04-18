@@ -202,6 +202,35 @@ void main()
 }
 )";
 
+constexpr std::string_view stereoImage_vs_rhi = R"(
+#version 450
+
+layout(location = 0) in vec2 vertexPosition;
+layout(location = 1) in vec2 vertexTexCoord;
+
+layout(location = 0) out vec2 texCoord;
+
+void main()
+{
+    texCoord = vertexTexCoord;
+    gl_Position = vec4(vertexPosition, 0.0, 1.0);
+}
+)";
+
+constexpr std::string_view stereoImage_frag_rhi = R"(
+#version 450
+
+layout(binding = 3) uniform sampler2D stereoImageMap;
+
+layout(location = 0) in vec2 texCoord;
+layout(location = 0) out vec4 fragColor;
+
+void main()
+{
+    fragColor = texture(stereoImageMap, texCoord);
+}
+)";
+
 struct shader_uniforms {
     QVector3D normalScaling{ 1, 1, 1 };
     QVector3D semInner{ 0, 0, 0 };

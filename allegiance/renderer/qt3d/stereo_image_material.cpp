@@ -15,23 +15,47 @@ StereoImageMaterial::StereoImageMaterial(const QUrl& source, Qt3DCore::QNode* pa
     : QMaterial(parent)
     , m_texture(new QTextureLoader(this))
 {
-    auto* shader = new QShaderProgram(this);
-    shader->setVertexShaderCode(all::qt3d::stereoImage_vs.data());
-    shader->setFragmentShaderCode(all::qt3d::stereoImage_ps.data());
 
-    auto* renderPass = new QRenderPass(this);
-    renderPass->setShaderProgram(shader);
+    auto* effect = new QEffect();
 
-    auto* technique = new QTechnique(this);
-    technique->addRenderPass(renderPass);
+    // GL 3.2
+    {
+        auto* shader = new QShaderProgram();
+        shader->setVertexShaderCode(all::qt3d::stereoImage_vs.data());
+        shader->setFragmentShaderCode(all::qt3d::stereoImage_ps.data());
 
-    technique->graphicsApiFilter()->setApi(QGraphicsApiFilter::OpenGL);
-    technique->graphicsApiFilter()->setMajorVersion(3);
-    technique->graphicsApiFilter()->setMinorVersion(2);
-    technique->graphicsApiFilter()->setProfile(QGraphicsApiFilter::CoreProfile);
+        auto* renderPass = new QRenderPass();
+        renderPass->setShaderProgram(shader);
 
-    auto* effect = new QEffect(this);
-    effect->addTechnique(technique);
+        auto* technique = new QTechnique();
+        technique->addRenderPass(renderPass);
+
+        technique->graphicsApiFilter()->setApi(QGraphicsApiFilter::OpenGL);
+        technique->graphicsApiFilter()->setMajorVersion(3);
+        technique->graphicsApiFilter()->setMinorVersion(2);
+        technique->graphicsApiFilter()->setProfile(QGraphicsApiFilter::CoreProfile);
+
+        effect->addTechnique(technique);
+    }
+    // RHI
+    {
+        auto* shader = new QShaderProgram();
+        shader->setVertexShaderCode(all::qt3d::stereoImage_vs_rhi.data());
+        shader->setFragmentShaderCode(all::qt3d::stereoImage_frag_rhi.data());
+
+        auto* renderPass = new QRenderPass();
+        renderPass->setShaderProgram(shader);
+
+        auto* technique = new QTechnique();
+        technique->addRenderPass(renderPass);
+
+        technique->graphicsApiFilter()->setApi(QGraphicsApiFilter::RHI);
+        technique->graphicsApiFilter()->setMajorVersion(1);
+        technique->graphicsApiFilter()->setMinorVersion(0);
+
+        effect->addTechnique(technique);
+    }
+
     setEffect(effect);
 
     m_texture->setSource(source);
