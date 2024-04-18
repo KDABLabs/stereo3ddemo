@@ -114,8 +114,7 @@ vec2 semS(vec3 normalSem_)
  
 void main()
 {
-    vec2 tc = vec2(texCoord.x, 1.0 - texCoord.y);
-    vec2 normalMap = (texture(normalMap, tc).xy * 2.0 - vec2(1.0)) * normalMapGain;
+    vec2 normalMap = (texture(normalMap, texCoord).xy * 2.0 - vec2(1.0)) * normalMapGain;
     vec3 normalSem_ = normalize(normalSem + vec3(normalMap, 0.0));
     float fresnel = semFresnel(normalSem_);
 
@@ -125,7 +124,7 @@ void main()
         fresnel = 0.2;
     }
 
-    vec3 diffuse = texture(diffuseMap, tc).xyz * mix(difInner, difOuter, fresnel) * difGain;
+    vec3 diffuse = texture(diffuseMap, texCoord).xyz * mix(difInner, difOuter, fresnel) * difGain;
     vec3 semColor = texture(semMap, semS(normalSem_)).xyz * mix(semInner, semOuter, fresnel) * semGain;
 
     fragColor = postColor * vec4(diffuse + semColor, 1.0);
@@ -169,8 +168,7 @@ uniform float gammax;
 
 void main()
 {
-    vec2 tc = vec2(texCoord.x, 1.0 - texCoord.y);
-    fragColor = texture(diffuseMap, tc) * postColor;
+    fragColor = texture(diffuseMap, texCoord) * postColor;
     fragColor.rgb = pow(fragColor.rgb, vec3(gammax));
 }
 )";
