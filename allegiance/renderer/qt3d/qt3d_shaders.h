@@ -38,7 +38,7 @@ void main()
 )";
 
 constexpr std::string_view fresnel_vs = R"(
-#version 420 core
+#version 150 core
 
 uniform vec3 normalScaling;
 uniform float postVertexColor;
@@ -76,7 +76,7 @@ void main()
 )";
 
 constexpr std::string_view fresnel_ps = R"(
-#version 420 core
+#version 150 core
 
 in vec4 postColor;
 in vec4 fragVertexColor;
@@ -111,7 +111,130 @@ vec2 semS(vec3 normalSem_)
     s = s * 0.5 + vec2(0.5);
     return s;
 }
- 
+
+void main()
+{
+    vec2 tc = vec2(texCoord.x, 1.0 - texCoord.y);
+    vec2 normalMap = (texture(normalMap, tc).xy * 2.0 - vec2(1.0)) * normalMapGain;
+    vec3 normalSem_ = normalize(normalSem + vec3(normalMap, 0.0));
+    float fresnel = semFresnel(normalSem_);
+
+    if (fragVertexColor.r < 0.4)
+        fresnel = 0 * fresnel;
+    if (fresnel >= 0.3) {
+        fresnel = 0.2;
+    }
+
+    vec3 diffuse = texture(diffuseMap, tc).xyz * mix(difInner, difOuter, fresnel) * difGain;
+    vec3 semColor = texture(semMap, semS(normalSem_)).xyz * mix(semInner, semOuter, fresnel) * semGain;
+
+    fragColor = postColor * vec4(diffuse + semColor, 1.0);
+    //fragColor.rgb = pow(fragColor.rgb, vec3(gammax));
+
+    //fragColor = vec4(fresnel, fresnel, fresnel, 1);
+}
+)";
+
+constexpr std::string_view fresnel_vs_rhi = R"(
+#version 450
+
+layout(std140, binding = 1) uniform qt3d_command_uniforms {
+  mat4 modelMatrix;
+  mat4 inverseModelMatrix;
+  mat4 modelViewMatrix;
+  mat3 modelNormalMatrix;
+  mat4 inverseModelViewMatrix;
+  mat4 modelViewProjection;
+  mat4 inverseModelViewProjectionMatrix;
+};
+
+layout(std140, binding = 2) uniform qt3d_custom_uniforms {
+  vec3 normalScaling;
+  float postVertexColor;
+  vec3 semInner;
+  float postGain;
+  vec3 semOuter;
+  float semGain;
+  vec3 difInner;
+  float difGain;
+  vec3 difOuter;
+  float gammax;
+  vec3 _pad;
+  float normalMapGain;
+};
+
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec4 vertexColor;
+layout(location = 2) in vec3 vertexNormal;
+layout(location = 3) in vec2 vertexTexCoord;
+
+layout(location = 0) out vec4 postColor;
+layout(location = 1) out vec4 fragVertexColor;
+layout(location = 2) smooth out vec3 normalSem;
+layout(location = 3) out vec2 texCoord;
+
+
+vec3 semNormal()
+{
+    vec3 n = (modelViewMatrix * vec4(vertexNormal, 0.0)).xyz; // ignore position
+    n *= normalScaling;
+    normalize(n);
+    return n;
+}
+
+void main()
+{
+    normalSem = semNormal();
+    texCoord = vertexTexCoord;
+    postColor = mix(vec4(1.0), vertexColor, postVertexColor) * postGain;
+    fragVertexColor = vertexColor;
+    gl_Position = modelViewProjection * vec4(vertexPosition, 1.0);
+}
+
+)";
+
+
+constexpr std::string_view fresnel_frag_rhi = R"(
+#version 450
+
+layout(location = 0) in vec4 postColor;
+layout(location = 1) in vec4 fragVertexColor;
+layout(location = 2) smooth in vec3 normalSem;
+layout(location = 3) in vec2 texCoord;
+
+layout(location = 0) out vec4 fragColor;
+
+layout(binding = 3) uniform sampler2D semMap;
+layout(binding = 4) uniform sampler2D diffuseMap;
+layout(binding = 5) uniform sampler2D normalMap;
+
+layout(std140, binding = 2) uniform qt3d_custom_uniforms {
+  vec3 normalScaling;
+  float postVertexColor;
+  vec3 semInner;
+  float postGain;
+  vec3 semOuter;
+  float semGain;
+  vec3 difInner;
+  float difGain;
+  vec3 difOuter;
+  float gammax;
+  vec3 _pad;
+  float normalMapGain;
+};
+
+float semFresnel(vec3 normalSem_)
+{
+    float fresnel = 1.0 - dot(normalSem_, vec3(0.0, 0.0, 1.0));
+    return fresnel * fresnel;
+}
+vec2 semS(vec3 normalSem_)
+{
+    vec2 s = normalSem_.xy;
+    s = s * 0.5 + vec2(0.5);
+    return s;
+}
+
 void main()
 {
     vec2 normalMap = (texture(normalMap, texCoord).xy * 2.0 - vec2(1.0)) * normalMapGain;

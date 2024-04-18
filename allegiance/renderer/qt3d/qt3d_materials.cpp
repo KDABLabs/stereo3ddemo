@@ -34,22 +34,43 @@ all::qt3d::GlossyMaterial::GlossyMaterial(const all::qt3d::shader_textures& text
     make_uniform(u"postGain"_qs, 1.0f);
     make_uniform(u"gammax"_qs, 1.2);
 
-    auto* shader = new Qt3DRender::QShaderProgram(this);
-    shader->setVertexShaderCode(all::qt3d::fresnel_vs.data());
-    shader->setFragmentShaderCode(all::qt3d::fresnel_ps.data());
-
-    auto* rp = new Qt3DRender::QRenderPass(this);
-    rp->setShaderProgram(shader);
-
-    auto* t = new Qt3DRender::QTechnique(this);
-    t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::OpenGL);
-    t->graphicsApiFilter()->setProfile(Qt3DRender::QGraphicsApiFilter::CoreProfile);
-    t->graphicsApiFilter()->setMajorVersion(3);
-    t->graphicsApiFilter()->setMinorVersion(2);
-    t->addRenderPass(rp);
-
     auto* effect = new Qt3DRender::QEffect(this);
-    effect->addTechnique(t);
+
+    // GL 3.2
+    {
+        auto* shader = new Qt3DRender::QShaderProgram();
+        shader->setVertexShaderCode(all::qt3d::fresnel_vs.data());
+        shader->setFragmentShaderCode(all::qt3d::fresnel_ps.data());
+
+        auto* rp = new Qt3DRender::QRenderPass();
+        rp->setShaderProgram(shader);
+
+        auto* t = new Qt3DRender::QTechnique();
+        t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::OpenGL);
+        t->graphicsApiFilter()->setProfile(Qt3DRender::QGraphicsApiFilter::CoreProfile);
+        t->graphicsApiFilter()->setMajorVersion(3);
+        t->graphicsApiFilter()->setMinorVersion(2);
+        t->addRenderPass(rp);
+
+        effect->addTechnique(t);
+    }
+    // RHI
+    {
+        auto* shader = new Qt3DRender::QShaderProgram();
+        shader->setVertexShaderCode(all::qt3d::fresnel_vs_rhi.data());
+        shader->setFragmentShaderCode(all::qt3d::fresnel_frag_rhi.data());
+
+        auto* rp = new Qt3DRender::QRenderPass();
+        rp->setShaderProgram(shader);
+
+        auto* t = new Qt3DRender::QTechnique();
+        t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::RHI);
+        t->graphicsApiFilter()->setMajorVersion(1);
+        t->graphicsApiFilter()->setMinorVersion(0);
+        t->addRenderPass(rp);
+
+        effect->addTechnique(t);
+    }
     setEffect(effect);
 
     ///////////////////////////////////////////////////////////////////////
