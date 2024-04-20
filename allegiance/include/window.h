@@ -30,6 +30,8 @@ public:
     // Issue: unstable focus on camera control widget resizing
     void OnKeyPress(QKeyEvent* e)
     {
+        if (e->key() == Qt::Key_F11)
+            setWindowState(isFullScreen() ? Qt::WindowNoState : Qt::WindowFullScreen);
         if ((e->key() == Qt::Key_Return) && (e->modifiers() & Qt::AltModifier))
             setWindowState(Qt::WindowFullScreen);
         if (e->key() == Qt::Key_Escape)
