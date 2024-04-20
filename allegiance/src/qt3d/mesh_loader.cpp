@@ -33,21 +33,25 @@ Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QStrin
     aiColor3D specular = { 0.18f, 0.18f, 0.18f };
     materialInfo->Get(AI_MATKEY_COLOR_SPECULAR, specular);
 
-    float shininess = 8.0f;
+    float shininess = 0.2f;
     materialInfo->Get(AI_MATKEY_SHININESS, shininess);
+    if (shininess > 1) {
+        shininess /= 255;
+    }
+
+    aiColor3D ambient = { 0.6f, 0.6f, 0.6f };
+    materialInfo->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
 
     aiString texFilename;
     const bool hasDiffuseTexture = materialInfo->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE) > 0;
     if (hasDiffuseTexture && materialInfo->GetTexture(aiTextureType_DIFFUSE, 0, &texFilename) == aiReturn_SUCCESS) {
-        auto* material = new Qt3DExtras::QDiffuseMapMaterial;
+        auto* material = new Qt3DExtras::QTextureMaterial;
 
         const auto texturePath = QFileInfo(modelPath).absoluteDir().absoluteFilePath(texFilename.C_Str());
         auto* diffuseTexture = new Qt3DRender::QTextureLoader(material);
         diffuseTexture->setSource(QUrl::fromLocalFile(texturePath));
-        material->setDiffuse(diffuseTexture);
 
-        material->setSpecular(toQColor(specular));
-        material->setShininess(shininess);
+        material->setTexture(diffuseTexture);
         return material;
     } else {
         auto* material = new Qt3DExtras::QPhongMaterial;
