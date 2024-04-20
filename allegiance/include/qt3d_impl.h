@@ -469,6 +469,7 @@ public:
 
     void LoadImage(const QUrl& path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"))
     {
+        QImageReader::setAllocationLimit(0);
         // Create entities for the stereo image
         auto* stereoImageMaterial = new StereoImageMaterial(path);
 

@@ -47,7 +47,16 @@ Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QStrin
     if (hasDiffuseTexture && materialInfo->GetTexture(aiTextureType_DIFFUSE, 0, &texFilename) == aiReturn_SUCCESS) {
         auto* material = new Qt3DExtras::QTextureMaterial;
 
-        const auto texturePath = QFileInfo(modelPath).absoluteDir().absoluteFilePath(texFilename.C_Str());
+        QString filename = texFilename.C_Str();
+        if (filename.size() > 0) {
+            if (filename.at(0) == '\"')
+                filename = filename.removeFirst();
+            if (filename.last(1) == '\"')
+                filename.chop(1);
+            qDebug() << filename;
+
+        }
+        const auto texturePath = QFileInfo(modelPath).absoluteDir().absoluteFilePath(filename);
         auto* diffuseTexture = new Qt3DRender::QTextureLoader(material);
         diffuseTexture->setSource(QUrl::fromLocalFile(texturePath));
 
