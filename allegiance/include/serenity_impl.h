@@ -80,6 +80,8 @@ public:
         auto rootEntity = std::make_unique<Entity>();
         rootEntity->setObjectName("Root Entity");
 
+        m_camera;
+
         // Lights
         auto directionalLight = rootEntity->createComponent<Light>();
         directionalLight->type = Light::Type::Directional;
@@ -204,7 +206,8 @@ public:
         std::unique_ptr<Entity> rootEntity = CreateScene(*m_layerManager);
 
         // Add Camera into the Scene
-
+        camera->SetPosition({0, 5, -25});
+        camera->Rotate(0, 0);
         m_camera = rootEntity->createChildEntity<StereoProxyCamera>();
         m_camera->SetMatrices(camera->GetViewLeft(), camera->GetViewRight(), camera->GetViewCenter());
         m_camera->lens()->setPerspectiveProjection(45.0f, camera->GetAspectRatio(), camera->GetNearPlane(), camera->GetFarPlane());
