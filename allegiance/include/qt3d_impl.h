@@ -352,8 +352,9 @@ public:
         m_camera = new QStereoProxyCamera(m_rootEntity.get());
         m_renderer->setCamera(m_camera);
 
-        camera->SetPosition({0.2, 5, -10});
-        camera->SetForwardVector({0, -.5, 1});
+        m_stereoCamera = camera;
+        ResetCamera();
+
 
         m_camera->SetMatrices(toMatrix(camera->GetViewLeft()), toMatrix(camera->GetViewRight()));
         m_camera->SetProjection(toMatrix(camera->GetProjection()), camera->ShearCoefficient());
@@ -449,6 +450,12 @@ public:
         // TODO
     }
 
+    void ResetCamera()
+    {
+        m_stereoCamera->SetPosition({0.2, 5, -10});
+        m_stereoCamera->SetForwardVector({0, -.5, 1});
+    }
+
     static void AddDirectionalLight(Qt3DCore::QNode *node, QVector3D position) {
         auto le = new Qt3DCore::QEntity{ node };
         auto l = new Qt3DRender::QDirectionalLight{ le };
@@ -501,6 +508,7 @@ public:
 
     void LoadModel(QUrl path = QUrl::fromLocalFile("scene/fbx/showroom2303.fbx"))
     {
+        ResetCamera();
         delete m_skyBox;
         m_skyBox = nullptr;
         delete m_userEntity;
@@ -562,6 +570,34 @@ public:
         auto ext = calculateSceneExtent(m_userEntity);
         auto& e = all::Controller::getInstance().modelExtent;
         e = { ext.min.x(), ext.min.y(), ext.min.z(), ext.max.x(), ext.max.y(), ext.max.z() };
+
+        // scale model
+        auto k = ext.max - ext.min;
+        auto s = QVector3D{ 8, 8, 8 } / k;
+        auto centerpoint = ext.min + k / 2;
+
+        auto modelViewProjection = m_stereoCamera->GetViewCenter() * m_stereoCamera->GetProjection();
+        auto size = ext.max - ext.min;
+        glm::vec4 dimensions(size.x(), size.y(), size.z(), 1.0f);
+        glm::vec4 dimensionsClip = m_stereoCamera->GetProjection() * m_stereoCamera->GetViewCenter() * dimensions;
+        dimensionsClip /= dimensionsClip.w;
+        float scaleFactor = 1 / std::max(std::abs(dimensionsClip.x), std::abs(dimensionsClip.y));
+
+        auto ts = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
+        if (ts.size() > 0) {
+            ts[0]->setScale(ts[0]->scale() * scaleFactor);
+        } else {
+            auto t = new Qt3DCore::QTransform;
+            t->setScale(scaleFactor);
+            m_userEntity->addComponent(t);
+        }
+
+        // set rotation point
+        auto cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
+        if (cam) {
+            cam->SetTarget(toGlmVec3((ext.min + k / 2) * scaleFactor));
+            cam->Rotate(0, 0);
+        }
     }
 
      QVector2D calculateSceneDimensions(Qt3DCore::QEntity *scene) const{
@@ -617,6 +653,12 @@ protected:
                     if (!geometry)
                     return;
                 }
+
+                auto l = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
+                double scale = 1;
+                if (l.size() > 0) {
+                    scale = l[0]->scale();
+                }
                 // You need to specify the correct attribute index for position data
                 const int positionAttributeIndex = 0;  // Adjust this index based on your format
                 const Qt3DCore::QAttribute* positionAttribute = geometry->attributes().at(positionAttributeIndex);
@@ -646,6 +688,12 @@ protected:
                             maxBounds.setY(qMax(maxBounds.y(), position->y()));
                             maxBounds.setZ(qMax(maxBounds.z(), position->z()));
                         }
+                        minBounds.setX(minBounds.x() * scale);
+                        minBounds.setY(minBounds.y() * scale);
+                        minBounds.setZ(minBounds.z() * scale);
+                        maxBounds.setX(maxBounds.x() * scale);
+                        maxBounds.setY(maxBounds.y() * scale);
+                        maxBounds.setZ(maxBounds.z() * scale);
                     }
                 }
             }
@@ -662,6 +710,7 @@ private:
     std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
     QStereoForwardRenderer* m_renderer;
     QStereoProxyCamera* m_camera;
+    all::StereoCamera* m_stereoCamera;
 
     std::unique_ptr<QWidget> m_widget;
 
