@@ -137,6 +137,8 @@ foreach(file ${files_to_copy})
     )
 endforeach()
 
+file(COPY "${CMAKE_SOURCE_DIR}/shared/gltf" DESTINATION "${SCENE_DIR}/")
+
 install(
     DIRECTORY ${SCENE_DIR}
     DESTINATION ${CMAKE_INSTALL_BINDIR}

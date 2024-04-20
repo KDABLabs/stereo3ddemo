@@ -507,7 +507,7 @@ public:
         updateImageMeshes();
     }
 
-    void LoadModel(QUrl path = QUrl::fromLocalFile("scene/fbx/showroom2303.fbx"))
+    void LoadModel(QUrl path = QUrl::fromLocalFile("scene/gltf/showroom2303.gltf"))
     {
         ResetCamera();
         delete m_skyBox;
