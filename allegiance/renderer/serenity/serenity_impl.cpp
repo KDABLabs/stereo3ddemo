@@ -3,6 +3,7 @@
 #include "window_extent_watcher.h"
 #include "serenity_stereo_graph.h"
 #include "picking_application_layer.h"
+#include "shared/cursor.h"
 
 using namespace Serenity;
 
@@ -14,6 +15,13 @@ void all::serenity::SerenityImpl::LoadModel(std::filesystem::path file)
         root->takeEntity(m_model);
         entity->layerMask = m_layerManager->layerMask({ "Opaque" });
         m_model = entity.get();
+        auto *bv = m_model->createComponent<TriangleBoundingVolume>();
+
+        bv->meshRenderer = entity->component<MeshRenderer>();
+        auto bb = bv->worldAxisAlignedBoundingBox.get();
+        m_navParams->max_extent = bb.max;
+        m_navParams->min_extent = bb.min;
+
         root->addChildEntity(std::move(entity));
     }
 }
@@ -44,6 +52,7 @@ void all::serenity::SerenityImpl::ProjectionChanged()
 
 void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, void* cursorController)
 {
+    m_navParams = std::move(nav_params);
     KDGpu::Device device = m_window->CreateDevice();
 
     m_layerManager = m_engine.createChild<Serenity::LayerManager>();
@@ -139,6 +148,13 @@ std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::CreateScene(Seren
         auto entity = MeshLoader::load("assets/cottage.obj");
         entity->layerMask = layers.layerMask({ "Opaque" });
         m_model = entity.get();
+        auto *bv = m_model->createComponent<TriangleBoundingVolume>();
+
+        bv->meshRenderer = entity->component<MeshRenderer>();
+        auto bb = bv->worldAxisAlignedBoundingBox.get();
+        m_navParams->max_extent = bb.max;
+        m_navParams->min_extent = bb.min;
+
         rootEntity->addChildEntity(std::move(entity));
     }
 

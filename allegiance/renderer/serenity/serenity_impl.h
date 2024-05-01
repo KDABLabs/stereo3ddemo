@@ -71,6 +71,7 @@ protected:
     Serenity::LayerManager* m_layerManager{ nullptr };
     Serenity::Entity* m_model{ nullptr };
     all::StereoCamera& camera;
+    std::shared_ptr<all::ModelNavParameters> m_navParams;
 
     // Camera
     all::serenity::StereoProxyCamera* m_camera;
