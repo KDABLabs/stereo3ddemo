@@ -1,5 +1,8 @@
 #include "qt3d_cursor.h"
+#include "shared/stereo_camera.h"
+#include "util_qt.h"
 
+#include <glm/ext/matrix_projection.hpp>
 #include <Qt3DExtras/QCuboidMesh>
 #include <Qt3DExtras/QSphereMesh>
 #include <Qt3DExtras/Qt3DWindow>
@@ -10,8 +13,25 @@
 #include <Qt3DCore/QTransform>
 #include <Qt3DRender/QCameraLens>
 #include <Qt3DRender/QPickEvent>
+#include <Qt3DRender/QRayCaster>
+#include <ranges>
 
 using namespace all::qt3d;
+using namespace Qt3DRender;
+
+// Function to convert screen coordinates to world coordinates
+static glm::vec3 screenToWorld(const QPoint& cursorPos, const QSize& frameSize, const QMatrix4x4& viewMatrix, const QMatrix4x4& projectionMatrix) {
+    // Convert cursor position to NDC
+    float x = (2.0f * cursorPos.x()) / frameSize.width() - 1.0f;
+    float y = 1.0f - (2.0f * cursorPos.y()) / frameSize.height();
+
+    // Direction vector in view space
+    glm::vec4 rayView(x, y, -1.0f, 1.0f);
+
+    // Convert view space to world space
+    glm::vec4 rayWorld = glm::inverse(toGlmMat4x4(viewMatrix) * toGlmMat4x4(projectionMatrix))*(rayView);
+    return glm::normalize(glm::vec3(rayWorld));
+}
 
 CursorBillboard::CursorBillboard(QNode* parent)
     : Qt3DCore::QEntity(parent)
@@ -84,7 +104,7 @@ CursorCross::CursorCross(QNode* parent)
     c3Entity->addComponent(material);
 }
 
-all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController* cursorController)
+all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController* cursorController, all::StereoCamera* pCamera)
     : QEntity(parent)
 {
 
@@ -109,6 +129,33 @@ all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* ca
             this, &CursorEntity::setType);
 
     setType(cursorController->Cursor());
+
+    m_raycaster = new Qt3DRender::QScreenRayCaster{scene};
+    m_raycaster->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
+    connect(m_raycaster, &QRayCaster::hitsChanged,
+            [this, pCamera](const Qt3DRender::QRayCaster::Hits& hits) {
+                auto filteredHits = hits | std::ranges::views::filter([this](const QRayCasterHit& hit) {
+                                        return hit.entity() != m_sphere && hit.entity() != m_billboard;
+                                    });
+                auto nearestHitIterator = std::ranges::min_element(filteredHits, {}, &QRayCasterHit::distance);
+                if (nearestHitIterator == filteredHits.end()) {
+                    auto frame = m_window->frameGeometry();
+                    auto cursorPos = m_window->mapFromGlobal(m_window->cursor().pos());
+                    auto unv = glm::unProject(glm::vec3(cursorPos.x(), frame.height() - cursorPos.y(), 1.0f),
+                                              pCamera->GetViewCenter(),
+                                              pCamera->GetProjection(),
+                                              glm::vec4{frame.x(), frame.y(), frame.width(), frame.height()});
+                    auto pos= glm::inverse(pCamera->GetViewCenter()) * glm::vec4(0, 0, 0, 1);
+                    setPosition(toQVector3D(glm::vec3(pos) + 0.1f * (unv - glm::vec3(pos))));
+                    return;
+                }
+                setPosition(nearestHitIterator->worldIntersection());
+            });
+
+    m_raycaster->setEnabled(true);
+    scene->addComponent(m_raycaster);
+    m_raycaster->setEnabled(true);
+    scene->addComponent(m_raycaster);
 }
 
 void all::qt3d::CursorEntity::setType(CursorController::CursorType type)
@@ -172,6 +219,10 @@ void all::qt3d::CursorEntity::updateSize()
     QQuaternion rotationToFaceTarget = QQuaternion::rotationTo(QVector3D(0, 1, 0), direction);
 
     m_billboard->setRotation(rotationToFaceTarget);
+}
+void CursorEntity::onMouseMoveEvent(QVector3D pos, QPoint cursorPosition)
+{
+        this->m_raycaster->trigger(cursorPosition);
 }
 
 all::qt3d::Picker::Picker(Qt3DCore::QEntity* parent, CursorEntity* cursor)

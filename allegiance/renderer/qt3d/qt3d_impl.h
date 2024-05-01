@@ -41,6 +41,8 @@ public:
     }
 
     QWindow* GetWindow() { return &m_view; }
+
+    void UpdateMouse();
     void ShowImage();
     void ShowModel();
 

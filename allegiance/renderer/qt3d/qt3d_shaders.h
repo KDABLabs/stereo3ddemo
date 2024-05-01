@@ -274,7 +274,7 @@ void main()
 {
     texCoord = vertexTexCoord;
     postColor = vec4(postGain,postGain,postGain,1.0);
-    gl_Position = vec4(projectionMatrix * mat4(mat3(viewMatrix)) * modelMatrix * vec4(vertexPosition, 1.0));
+    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(vertexPosition, 1.0);
 }
 )";
 

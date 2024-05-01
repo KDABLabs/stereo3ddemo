@@ -16,5 +16,7 @@ public:
     {
         return static_cast<SerenityWindowQt*>(m_window.get())->GetWindow();
     }
+
+    void UpdateMouse() {}
 };
 } // namespace all::serenity

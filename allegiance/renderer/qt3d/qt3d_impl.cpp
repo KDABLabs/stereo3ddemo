@@ -149,7 +149,7 @@ void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root, CursorController*
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
 
-    m_cursor = new CursorEntity(m_rootEntity.get(), m_camera->GetLeftCamera(), &m_view, cursorController);
+    m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->GetLeftCamera(), &m_view, cursorController, m_stereoCamera);
     m_picker = new Picker(m_sceneEntity, m_cursor);
     LoadModel();
 
@@ -429,4 +429,8 @@ void all::qt3d::Qt3DImpl::OnModelExtentChanged(const QVector3D& min, const QVect
 
     m_nav_params->min_extent = toGlmVec3(min);
     m_nav_params->max_extent = toGlmVec3(max);
+}
+void all::qt3d::Qt3DImpl::UpdateMouse()
+{
+    m_cursor->onMouseMoveEvent(toQVector3D(m_stereoCamera->GetPosition()), m_view.mapFromGlobal(m_view.cursor().pos()));
 }

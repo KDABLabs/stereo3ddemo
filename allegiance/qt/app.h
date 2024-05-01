@@ -121,6 +121,7 @@ public:
                                      break;
                                  }
                                  input.last_pos = pos;
+                                 impl->UpdateMouse();
                              } break;
                              default:
                                  break;
