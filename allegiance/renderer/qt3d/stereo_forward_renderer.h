@@ -5,6 +5,7 @@ namespace Qt3DRender {
 class QCameraSelector;
 class QLayer;
 class QNoDraw;
+class QLayerFilter;
 } // namespace Qt3DRender
 
 namespace all::qt3d {
@@ -60,5 +61,8 @@ private:
     Qt3DRender::QNoDraw* m_sceneNoDraw;
     Qt3DRender::QNoDraw* m_stereoImageNoDraw;
     QStereoProxyCamera* m_camera;
+
+    Qt3DRender::QLayerFilter* m_leftLayerFilter;
+    Qt3DRender::QLayerFilter* m_rightLayerFilter;
 };
 } // namespace all::qt3d

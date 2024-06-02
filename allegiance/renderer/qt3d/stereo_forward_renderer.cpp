@@ -24,75 +24,77 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     , m_rightLayer(new Qt3DRender::QLayer(this))
     , m_stereoImageLayer(new Qt3DRender::QLayer(this))
 {
-    auto vp = new Qt3DRender::QViewport(this);
-    auto ssel = new Qt3DRender::QRenderSurfaceSelector(vp);
+    auto vp = new Qt3DRender::QViewport();
 
     // Frame graph sub branch for the 3D scene
+    auto* clearBuffers = new Qt3DRender::QClearBuffers();
+    clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
+    clearBuffers->setClearColor(QColor{ "#48536A" });
 
-    m_sceneNoDraw = new Qt3DRender::QNoDraw(ssel);
-    m_sceneNoDraw->setObjectName("Scene");
-    m_sceneNoDraw->setEnabled(false);
+    auto renderStateSet = new Qt3DRender::QRenderStateSet();
 
-    auto* stereoImageLayerFilter = new Qt3DRender::QLayerFilter(m_sceneNoDraw);
-    stereoImageLayerFilter->addLayer(m_stereoImageLayer);
-    stereoImageLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::FilterMode::DiscardAnyMatchingLayers);
+    auto cullFace = new Qt3DRender::QCullFace(renderStateSet);
+    cullFace->setMode(Qt3DRender::QCullFace::CullingMode::NoCulling);
+    renderStateSet->addRenderState(cullFace);
 
-    auto makeRenderTargetSelector = [](Qt3DRender::QFrameGraphNode* parent, Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
-        auto* output = new Qt3DRender::QRenderTargetOutput;
-        output->setAttachmentPoint(attachment);
+    auto depthTest = new Qt3DRender::QDepthTest(renderStateSet);
+    depthTest->setDepthFunction(Qt3DRender::QDepthTest::Less);
+    renderStateSet->addRenderState(depthTest);
 
-        auto* renderTarget = new Qt3DRender::QRenderTarget;
-        renderTarget->addOutput(output);
+    m_leftLayerFilter = new Qt3DRender::QLayerFilter();
+    m_leftLayerFilter->setObjectName("LeftLayerFilter");
+    m_leftLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::DiscardAnyMatchingLayers);
+    m_leftLayerFilter->addLayer(m_stereoImageLayer);
+    m_leftLayerFilter->addLayer(m_leftLayer);
 
-        auto* selector = new Qt3DRender::QRenderTargetSelector(parent);
-        selector->setTarget(renderTarget);
+    m_rightLayerFilter = new Qt3DRender::QLayerFilter();
+    m_rightLayerFilter->setObjectName("RightLayerFilter");
+    m_rightLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::DiscardAnyMatchingLayers);
+    m_rightLayerFilter->addLayer(m_stereoImageLayer);
+    m_rightLayerFilter->addLayer(m_rightLayer);
 
-        return selector;
+    auto* sortPolicy = new Qt3DRender::QSortPolicy();
+    sortPolicy->setSortTypes(QList<Qt3DRender::QSortPolicy::SortType>{ Qt3DRender::QSortPolicy::BackToFront });
+
+    auto makeCameraSelectorForBranch = [&](Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
+        auto makeRenderTarget = [&]() {
+            auto* output = new Qt3DRender::QRenderTargetOutput;
+            output->setAttachmentPoint(attachment);
+            auto* renderTarget = new Qt3DRender::QRenderTarget;
+            renderTarget->addOutput(output);
+            return renderTarget;
+        };
+
+        auto* cameraSelector = new Qt3DRender::QCameraSelector();
+        Qt3DRender::QRenderTarget* rt = makeRenderTarget();
+        auto* rts = new Qt3DRender::QRenderTargetSelector();
+        rts->setTarget(rt);
+        rts->setParent(cameraSelector);
+
+        return cameraSelector;
     };
 
-    auto makeBranch = [makeRenderTargetSelector](Qt3DRender::QFrameGraphNode* parent, Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
-        auto renderTargetSelector = makeRenderTargetSelector(parent, attachment);
+    m_leftCamera = makeCameraSelectorForBranch(Qt3DRender::QRenderTargetOutput::Left);
+    m_leftCamera->setObjectName("LeftCamera");
+    m_rightCamera = makeCameraSelectorForBranch(Qt3DRender::QRenderTargetOutput::Right);
+    m_rightCamera->setObjectName("RightCamera");
 
-        auto renderStateSet = new Qt3DRender::QRenderStateSet(renderTargetSelector);
-
-        auto cullFace = new Qt3DRender::QCullFace(renderStateSet);
-        cullFace->setMode(Qt3DRender::QCullFace::CullingMode::NoCulling);
-        renderStateSet->addRenderState(cullFace);
-
-        auto depthTest = new Qt3DRender::QDepthTest(renderStateSet);
-        depthTest->setDepthFunction(Qt3DRender::QDepthTest::Less);
-        renderStateSet->addRenderState(depthTest);
-
-        auto clearBuffers = new Qt3DRender::QClearBuffers(renderStateSet);
-        clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
-        clearBuffers->setClearColor(QColor{ "#48536A" });
-        //            cb->setClearColor(attachment == Qt3DRender::QRenderTargetOutput::AttachmentPoint::Left ? QColor(Qt::blue) : QColor(Qt::red));
-
-        auto sortPolicy = new Qt3DRender::QSortPolicy{ clearBuffers };
-        sortPolicy->setSortTypes(QList<Qt3DRender::QSortPolicy::SortType>{ Qt3DRender::QSortPolicy::BackToFront });
-
-        return new Qt3DRender::QCameraSelector(sortPolicy);
-    };
-
-    m_leftCamera = makeBranch(stereoImageLayerFilter, Qt3DRender::QRenderTargetOutput::Left);
-    m_rightCamera = makeBranch(stereoImageLayerFilter, Qt3DRender::QRenderTargetOutput::Right);
-
-    // Frame graph sub branch for the stereo image
-
-    m_stereoImageNoDraw = new Qt3DRender::QNoDraw(ssel);
-    m_stereoImageNoDraw->setObjectName("Stereo Image");
-    m_stereoImageNoDraw->setEnabled(true);
-
-    auto* imageLeftRenderTarget = makeRenderTargetSelector(m_stereoImageNoDraw, Qt3DRender::QRenderTargetOutput::Left);
-    auto* leftLayerFilter = new Qt3DRender::QLayerFilter(imageLeftRenderTarget);
-    leftLayerFilter->addLayer(m_leftLayer);
-
-    auto* imageRightRenderTarget = makeRenderTargetSelector(m_stereoImageNoDraw, Qt3DRender::QRenderTargetOutput::Right);
-    auto* rightLayerFilter = new Qt3DRender::QLayerFilter(imageRightRenderTarget);
-    rightLayerFilter->addLayer(m_rightLayer);
+    // Hierarchy
+    vp->setParent(this);
+    clearBuffers->setParent(vp);
+    sortPolicy->setParent(clearBuffers);
+    renderStateSet->setParent(sortPolicy);
+    m_leftLayerFilter->setParent(renderStateSet);
+    m_leftCamera->setParent(m_leftLayerFilter);
+    m_rightLayerFilter->setParent(renderStateSet);
+    m_rightCamera->setParent(m_rightLayerFilter);
 
 #ifdef QT_DEBUG
     (void)new Qt3DRender::QDebugOverlay(m_rightCamera);
+// To dump out FrameGraph tree to console:
+// CMakeLists.txt:    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::3DExtras Qt6::3DRenderPrivate)
+// Add    #include <Qt3DRender/private/qframegraphnode_p.h>
+//        qDebug() << qPrintable(Qt3DRender::QFrameGraphNodePrivate::get(this)->dumpFrameGraph());
 #endif
 }
 
@@ -102,12 +104,12 @@ void all::qt3d::QStereoForwardRenderer::setMode(Mode mode)
         return;
     switch (mode) {
     case Mode::Scene:
-        m_sceneNoDraw->setEnabled(false);
-        m_stereoImageNoDraw->setEnabled(true);
+        m_leftLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::DiscardAnyMatchingLayers);
+        m_rightLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::DiscardAnyMatchingLayers);
         break;
     case Mode::StereoImage:
-        m_sceneNoDraw->setEnabled(true);
-        m_stereoImageNoDraw->setEnabled(false);
+        m_leftLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAllMatchingLayers);
+        m_rightLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAllMatchingLayers);
         break;
     }
     m_mode = mode;
