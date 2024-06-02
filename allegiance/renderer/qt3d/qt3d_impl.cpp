@@ -255,6 +255,10 @@ void all::qt3d::Qt3DImpl::LoadModel(std::filesystem::path path)
     bool isFbx = filePath.endsWith(".fbx");
 
     auto* sceneRoot = MeshLoader::load(filePath);
+    if (sceneRoot == nullptr) {
+        qDebug() << "Failed to load model:" << filePath;
+        return;
+    }
     sceneRoot->setParent(m_userEntity);
 
     if (isFbx) {
