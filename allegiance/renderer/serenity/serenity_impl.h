@@ -3,6 +3,8 @@
 #include "mesh_loader.h"
 #include "cursor.h"
 
+//#include <ui/camera_controller.h>
+
 namespace all {
 struct ModelNavParameters;
 struct StereoCamera;
@@ -23,7 +25,7 @@ public:
 public:
     void ViewChanged();
     void ProjectionChanged();
-    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
+    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, void* cursorController = nullptr);
 
     void LoadModel(std::filesystem::path file);
     void SetCursorEnabled(bool enabled);

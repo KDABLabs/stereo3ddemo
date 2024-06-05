@@ -5,6 +5,7 @@
 #include <QVector3D>
 #include <QVector2D>
 #include <QUrl>
+#include <ui/camera_controller.h>
 
 #include <filesystem>
 
@@ -32,7 +33,7 @@ public:
 public:
     void ViewChanged();
     void ProjectionChanged();
-    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
+    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, CursorController* cursorController);
 
     void LoadModel(std::filesystem::path path = "assets/gltf/showroom2303.gltf");
     void SetCursorEnabled(bool /* enabled */)
@@ -49,7 +50,7 @@ public:
 private:
     static void AddDirectionalLight(Qt3DCore::QNode* node, QVector3D position);
 
-    void CreateScene(Qt3DCore::QEntity* root);
+    void CreateScene(Qt3DCore::QEntity* root, CursorController* cursorController);
     void LoadImage(QUrl path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"));
 
     QVector2D calculateSceneDimensions(Qt3DCore::QEntity* scene) const;

@@ -1,5 +1,6 @@
 #include "qt3d_cursor.h"
 
+#include <Qt3DExtras/QCuboidMesh>
 #include <Qt3DExtras/QSphereMesh>
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QPlaneMesh>
@@ -31,6 +32,10 @@ CursorBillboard::CursorBillboard(QNode* parent)
     m_transform->setScale(12);
 }
 
+void CursorBillboard::setRotation(const QQuaternion &rotation) {
+    m_transform->setRotation(rotation);
+}
+
 CursorSphere::CursorSphere(QNode* parent)
     : Qt3DCore::QEntity(parent)
 {
@@ -44,7 +49,41 @@ CursorSphere::CursorSphere(QNode* parent)
     addComponent(material);
 }
 
-all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window)
+CursorCross::CursorCross(QNode* parent)
+    : Qt3DCore::QEntity(parent)
+{
+    auto* c1Entity = new Qt3DCore::QEntity(this);
+    auto* c2Entity = new Qt3DCore::QEntity(this);
+    auto* c3Entity = new Qt3DCore::QEntity(this);
+
+    auto* c1Mesh = new Qt3DExtras::QCuboidMesh();
+    c1Mesh->setXExtent(6);
+    c1Mesh->setYExtent(0.2f);
+    c1Mesh->setZExtent(0.2f);
+    c1Entity->addComponent(c1Mesh);
+
+    auto* c2Mesh = new Qt3DExtras::QCuboidMesh();
+    c2Mesh->setXExtent(0.2f);
+    c2Mesh->setYExtent(6);
+    c2Mesh->setZExtent(0.2f);
+    c2Entity->addComponent(c2Mesh);
+
+    auto* c3Mesh = new Qt3DExtras::QCuboidMesh();
+    c3Mesh->setXExtent(0.2f);
+    c3Mesh->setYExtent(0.2f);
+    c3Mesh->setZExtent(6);
+    c3Entity->addComponent(c3Mesh);
+
+    auto* material = new Qt3DExtras::QPhongMaterial();
+    material->setShininess(100.0);
+    material->setDiffuse(QColor("lightyellow"));
+    material->setAmbient(QColor("lightyellow"));
+    c1Entity->addComponent(material);
+    c2Entity->addComponent(material);
+    c3Entity->addComponent(material);
+}
+
+all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController *cursorController)
     : QEntity(parent)
 {
 
@@ -63,6 +102,28 @@ all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* ca
 
     m_billboard = new CursorBillboard{ this };
     m_sphere = new CursorSphere{ this };
+    m_cross = new CursorCross{ this };
+
+    connect(cursorController, &CursorController::OnCursorChanged, 
+            this, &CursorEntity::setType);
+
+    setType(cursorController->Cursor());
+}
+
+void all::qt3d::CursorEntity::setType(CursorController::CursorType type)
+{
+    switch (type) {
+        case CursorController::CursorType::Cross:
+            m_billboard->setEnabled(false);
+            m_sphere->setEnabled(false);
+            m_cross->setEnabled(true);
+            break;
+        case CursorController::CursorType::Default:
+            m_billboard->setEnabled(true);
+            m_sphere->setEnabled(true);
+            m_cross->setEnabled(false);
+            break;
+    }
 }
 
 void all::qt3d::CursorEntity::setPosition(const QVector3D& positionInScene)
@@ -109,7 +170,7 @@ void all::qt3d::CursorEntity::updateSize()
     auto direction = (m_cameraTransform->translation() - m_transform->translation()).normalized();
     QQuaternion rotationToFaceTarget = QQuaternion::rotationTo(QVector3D(0, 1, 0), direction);
 
-    m_transform->setRotation(rotationToFaceTarget);
+    m_billboard->setRotation(rotationToFaceTarget);
 }
 
 all::qt3d::Picker::Picker(Qt3DCore::QEntity* parent, CursorEntity* cursor)

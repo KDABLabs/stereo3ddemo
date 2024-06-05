@@ -3,6 +3,8 @@
 #include <Qt3DRender/QObjectPicker>
 #include <QMatrix4x4>
 
+#include <ui/camera_controller.h>
+
 namespace Qt3DRender {
 class QMaterial;
 class QCameraLens;
@@ -21,6 +23,8 @@ class CursorBillboard : public Qt3DCore::QEntity
 public:
     CursorBillboard(Qt3DCore::QNode* parent);
 
+    void setRotation(const QQuaternion &rotation);
+
 protected:
     Qt3DCore::QTransform* m_transform;
     Qt3DExtras::QPlaneMesh* m_plane;
@@ -33,15 +37,23 @@ public:
     CursorSphere(QNode* parent = nullptr);
 };
 
+class CursorCross : public Qt3DCore::QEntity
+{
+public:
+    CursorCross(QNode* parent = nullptr);
+};
+
 class CursorEntity : public Qt3DCore::QEntity
 {
 public:
-    CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window);
+    CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController *cursorController);
 
 public:
     void setPosition(const QVector3D& positionInScene);
 
     void setCamera(const QEntity* camera);
+
+    void setType(CursorController::CursorType type);
 
 public:
     void onProjectionMatrixChanged(const QMatrix4x4& matrix)
@@ -59,6 +71,7 @@ public:
 
 protected:
     CursorSphere* m_sphere;
+    CursorCross* m_cross;
     CursorBillboard* m_billboard;
 
     Qt3DCore::QTransform* m_transform;

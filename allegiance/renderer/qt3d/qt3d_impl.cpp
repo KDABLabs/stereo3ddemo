@@ -89,7 +89,7 @@ void all::qt3d::Qt3DImpl::ProjectionChanged()
     m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), m_stereoCamera->ShearCoefficient());
 }
 
-void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
+void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, CursorController* cursorController)
 {
     using namespace Qt3DCore;
     using namespace Qt3DRender;
@@ -139,17 +139,17 @@ void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters>
 
             return toGlmVec3(nearestHitIterator->worldIntersection());
         };
-    CreateScene(m_rootEntity.get());
+    CreateScene(m_rootEntity.get(), cursorController);
 }
 
-void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
+void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root, CursorController* cursorController)
 {
     m_sceneEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
     m_sceneEntity->setObjectName("SceneEntity");
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
 
-    m_cursor = new CursorEntity(m_rootEntity.get(), m_camera->GetLeftCamera(), &m_view);
+    m_cursor = new CursorEntity(m_rootEntity.get(), m_camera->GetLeftCamera(), &m_view, cursorController);
     m_picker = new Picker(m_sceneEntity, m_cursor);
     LoadModel();
 

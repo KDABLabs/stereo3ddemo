@@ -31,7 +31,7 @@ add_library(
 target_compile_definitions(${PROJECT_NAME} PUBLIC ALLEGIANCE_QT3D)
 target_include_directories(
     ${PROJECT_NAME}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/allegiance/qt
 )
 
 target_sources(

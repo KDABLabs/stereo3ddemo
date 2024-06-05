@@ -42,7 +42,7 @@ void all::serenity::SerenityImpl::ProjectionChanged()
         camera.GetFarPlane());
 }
 
-void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
+void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, void* cursorController)
 {
     KDGpu::Device device = m_window->CreateDevice();
 

@@ -167,7 +167,7 @@ public:
         //         }
         // #endif
 
-        impl->CreateAspects(nav_params);
+        impl->CreateAspects(nav_params, &qml.cursor);
         ResetCamera();
         wnd.show();
     }
