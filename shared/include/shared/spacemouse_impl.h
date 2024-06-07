@@ -10,4 +10,9 @@ using SpacemouseImpl = SpacemouseNavlib;
 namespace all {
 using SpacemouseImpl = SpacemouseSpnav;
 }
+#else
+#include <shared/spacemouse.h>
+namespace all {
+using SpacemouseImpl = Spacemouse;
+}
 #endif // WITH_NAVLIB

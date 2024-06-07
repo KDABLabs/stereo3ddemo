@@ -14,7 +14,7 @@ public:
     ~SpacemouseSpnav();
 
 public:
-    void SetUseUserPivot(bool user) noexcept
+    void SetUseUserPivot(bool) override
     {
     }
 

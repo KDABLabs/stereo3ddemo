@@ -3,7 +3,7 @@
 using namespace all;
 
 SpacemouseNavlib::SpacemouseNavlib(all::StereoCamera* camera, std::shared_ptr<all::ModelNavParameters> nav_params)
-    : Spacemouse(camera), m_model(std::move(nav_params), camera)
+    : Spacemouse(camera, nav_params), m_model(std::move(nav_params), camera)
 {
     try {
         m_model.EnableNavigation(true);

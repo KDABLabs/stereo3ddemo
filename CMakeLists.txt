@@ -5,6 +5,7 @@ project(Allegiance VERSION 0.2.3)
 add_definitions(-DALLEGIANCE_PROJECT_VERSION="${CMAKE_PROJECT_VERSION}")
 
 include(FetchContent)
+include(CMakeDependentOption)
 
 option(BUILD_QT_UI "Build Qt UI" ON)
 option(BUILD_FLUTTER_UI "Build Flutter UI" OFF)
@@ -30,7 +31,8 @@ if(WIN32 OR APPLE)
     option(WITH_NAVLIB "Compile with support for 3DxWare Navlib" ON)
     set(WITH_SPNAV OFF)
 else()
-    option(WITH_SPNAV "Compile with libspnav for spacemouse support" ON)
+    find_library(SPNAV_LIB spnav)
+    cmake_dependent_option(WITH_SPNAV "Compile with libspnav for spacemouse support" ON "SPNAV_LIB" OFF)
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

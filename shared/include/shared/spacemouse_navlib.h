@@ -9,7 +9,7 @@ public:
     SpacemouseNavlib(all::StereoCamera* camera, std::shared_ptr<all::ModelNavParameters> nav_params);
 
 public:
-    void SetUseUserPivot(bool user)
+    void SetUseUserPivot(bool user) override
     {
         m_model.Write("pivot.user", user);
     }

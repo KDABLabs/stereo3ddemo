@@ -4,8 +4,8 @@
 
 using namespace all;
 
-SpacemouseSpnav::SpacemouseSpnav(all::StereoCamera* camera, std::shared_ptr<all::ModelNavParameters>)
-    : Spacemouse(camera)
+SpacemouseSpnav::SpacemouseSpnav(all::StereoCamera* camera, std::shared_ptr<all::ModelNavParameters> p)
+    : Spacemouse(camera, p)
 {
     if (spnav_open() == -1) {
         //qCDebug(spcms) << "could not connect to spacenavd";
