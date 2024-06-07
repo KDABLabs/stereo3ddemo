@@ -193,7 +193,6 @@ void main()
 
 )";
 
-
 constexpr std::string_view fresnel_frag_rhi = R"(
 #version 450
 
@@ -531,4 +530,4 @@ constexpr shader_textures SkyboxST{
     .diffuseMap = u":/gltf/venice1-env-spec0_05-512.png"
 };
 
-} // namespace all
+} // namespace all::qt3d

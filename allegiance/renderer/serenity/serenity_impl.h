@@ -3,12 +3,12 @@
 #include "mesh_loader.h"
 #include "cursor.h"
 
-//#include <ui/camera_controller.h>
+// #include <ui/camera_controller.h>
 
 namespace all {
 struct ModelNavParameters;
 struct StereoCamera;
-}
+} // namespace all
 
 namespace all::serenity {
 class StereoProxyCamera;

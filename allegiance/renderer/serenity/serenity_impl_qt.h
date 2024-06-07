@@ -17,4 +17,4 @@ public:
         return static_cast<SerenityWindowQt*>(m_window.get())->GetWindow();
     }
 };
-} // namespace wis::serenity
+} // namespace all::serenity

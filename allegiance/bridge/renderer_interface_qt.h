@@ -6,7 +6,7 @@
 namespace all {
 using Renderer = qt3d::Qt3DImpl;
 using Application = QApplication;
-}
+} // namespace all
 #elif defined(ALLEGIANCE_SERENITY)
 #include <serenity_impl_qt.h>
 namespace all {

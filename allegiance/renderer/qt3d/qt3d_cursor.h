@@ -23,7 +23,7 @@ class CursorBillboard : public Qt3DCore::QEntity
 public:
     CursorBillboard(Qt3DCore::QNode* parent);
 
-    void setRotation(const QQuaternion &rotation);
+    void setRotation(const QQuaternion& rotation);
 
 protected:
     Qt3DCore::QTransform* m_transform;
@@ -46,7 +46,7 @@ public:
 class CursorEntity : public Qt3DCore::QEntity
 {
 public:
-    CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController *cursorController);
+    CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController* cursorController);
 
 public:
     void setPosition(const QVector3D& positionInScene);

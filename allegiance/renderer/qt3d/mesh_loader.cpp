@@ -65,7 +65,6 @@ Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QStrin
             if (filename.last(1) == '\"')
                 filename.chop(1);
             qDebug() << filename;
-
         }
         const auto texturePath = QFileInfo(modelPath).absoluteDir().absoluteFilePath(filename);
         auto* diffuseTexture = new Qt3DRender::QTextureLoader(material);

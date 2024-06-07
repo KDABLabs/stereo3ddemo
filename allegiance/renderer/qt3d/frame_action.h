@@ -34,4 +34,4 @@ public Q_SLOTS:
 public:
     QVector<QPair<int, std::function<void()>>> callbacks;
 };
-} // namespace all::qt
+} // namespace all::qt3d

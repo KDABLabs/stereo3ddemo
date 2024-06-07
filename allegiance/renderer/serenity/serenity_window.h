@@ -22,4 +22,4 @@ public:
 
     virtual KDGpu::Device CreateDevice() = 0;
 };
-} // namespace wis::serenity
+} // namespace all::serenity

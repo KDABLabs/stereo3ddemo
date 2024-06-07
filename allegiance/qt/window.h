@@ -66,4 +66,4 @@ private:
     CameraControl* camera_control;
     bool cursor = true;
 };
-} // namespace all
+} // namespace all::qt

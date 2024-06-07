@@ -36,10 +36,10 @@ void all::serenity::SerenityImpl::ViewChanged()
 
 void all::serenity::SerenityImpl::ProjectionChanged()
 {
-    m_camera->lens()->setPerspectiveProjection(camera.GetFov(), 
-        camera.GetAspectRatio(), 
-        camera.GetNearPlane(), 
-        camera.GetFarPlane());
+    m_camera->lens()->setPerspectiveProjection(camera.GetFov(),
+                                               camera.GetAspectRatio(),
+                                               camera.GetNearPlane(),
+                                               camera.GetFarPlane());
 }
 
 void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, void* cursorController)

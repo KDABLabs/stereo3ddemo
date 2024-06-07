@@ -1,7 +1,6 @@
 #pragma once
 #include <Serenity/gui/window_extent_watcher.h>
 
-
 namespace all::serenity {
 class SerenityWindow;
 

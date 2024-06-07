@@ -144,8 +144,7 @@ public:
         });
         QObject::connect(&qml.scene, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(&wnd, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
-            if (!fn.isEmpty())
-            {
+            if (!fn.isEmpty()) {
                 ResetCamera();
                 impl->LoadModel(fn.toStdString());
             }

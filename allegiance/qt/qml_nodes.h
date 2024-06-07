@@ -20,4 +20,4 @@ public:
     CursorController cursor;
     AppStyle style;
 };
-}
+} // namespace all::qt

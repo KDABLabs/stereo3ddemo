@@ -12,4 +12,4 @@ protected:
                                                               const std::vector<KDGpu::Handle<KDGpu::GpuSemaphore_t>>& presentationCompleteSemaphores,
                                                               KDGpu::Handle<KDGpu::Fence_t> frameFence) override;
 };
-} // namespace all
+} // namespace all::serenity

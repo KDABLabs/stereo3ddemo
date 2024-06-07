@@ -18,4 +18,4 @@ protected:
     TDx::SpaceMouse::CCommandSet m_menu{ "Default", "Ribbon" };
     CNavigationModel m_model;
 };
-}
+} // namespace all

@@ -8,14 +8,14 @@ SpacemouseSpnav::SpacemouseSpnav(all::StereoCamera* camera, std::shared_ptr<all:
     : Spacemouse(camera, p)
 {
     if (spnav_open() == -1) {
-        //qCDebug(spcms) << "could not connect to spacenavd";
+        // qCDebug(spcms) << "could not connect to spacenavd";
     } else {
         m_poller = std::thread{ [this]() {
             while (!stop) {
-                //qCDebug(spcms) << "polling";
+                // qCDebug(spcms) << "polling";
                 poll();
             }
-            //qCDebug(spcms) << "STOP!";
+            // qCDebug(spcms) << "STOP!";
         } };
         m_poller.detach();
     }
@@ -31,7 +31,7 @@ SpacemouseSpnav::~SpacemouseSpnav()
 
 void SpacemouseSpnav::poll()
 {
-    //qCDebug(spcms) << "poll";
+    // qCDebug(spcms) << "poll";
     spnav_event sev;
     if (spnav_wait_event(&sev)) {
         const glm::mat4x4 viewCenter = m_camera->GetCameraMatrix();
@@ -46,10 +46,10 @@ void SpacemouseSpnav::poll()
         // Apply the combined rotation to the original view matrix
         glm::mat4 rotatedViewMatrix = combinedRotation * viewCenter;
 
-        //qCDebug(spcms) << "spcms event" << viewCenter;
+        // qCDebug(spcms) << "spcms event" << viewCenter;
         switch (sev.type) {
         case SPNAV_EVENT_MOTION:
-            //qCDebug(spcms) << sev.motion.rx << sev.motion.ry << sev.motion.rz;
+            // qCDebug(spcms) << sev.motion.rx << sev.motion.ry << sev.motion.rz;
             rotatedViewMatrix[3] = { m_camera->GetPosition() + glm::vec3{ sev.motion.x, sev.motion.y, sev.motion.z } * m_translFactor, 1 };
             m_camera->SetCameraMatrix(rotatedViewMatrix);
 

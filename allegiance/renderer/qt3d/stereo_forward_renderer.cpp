@@ -1,7 +1,6 @@
 #include "stereo_forward_renderer.h"
 #include "stereo_proxy_camera.h"
 
-
 #include <Qt3DRender/QLayer>
 #include <Qt3DRender/QViewport>
 #include <Qt3DRender/QNoDraw>

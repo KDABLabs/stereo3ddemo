@@ -18,6 +18,7 @@ public:
         m_mouseSensitivity = sensitivity;
         Q_EMIT OnMouseSensitivityChanged();
     }
+
 public:
 Q_SIGNALS:
     void OpenLoadModelDialog();

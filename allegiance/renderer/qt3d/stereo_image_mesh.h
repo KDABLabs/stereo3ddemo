@@ -32,7 +32,6 @@ Q_SIGNALS:
     void imageSizeChanged(const QVector2D& imageSize);
 };
 
-
 class StereoImageGeometry : public Qt3DCore::QGeometry
 {
     Q_OBJECT
@@ -64,5 +63,4 @@ private:
     Qt3DCore::QAttribute* m_texCoordAttribute;
     Qt3DCore::QBuffer* m_vertexBuffer;
 };
-}
-
+} // namespace all::qt3d

@@ -8,7 +8,6 @@
 #include <Qt3DRender/QTechnique>
 #include <Qt3DRender/QGraphicsApiFilter>
 
-
 using namespace all::qt3d;
 
 all::qt3d::GlossyMaterial::GlossyMaterial(const all::qt3d::shader_textures& textures, const all::qt3d::shader_uniforms& uniforms, Qt3DCore::QNode* parent)
@@ -114,7 +113,6 @@ all::qt3d::GlossyMaterial::GlossyMaterial(const all::qt3d::shader_textures& text
     make_texture(u"normalMap"_qs, texture3);
 }
 
-
 SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const all::qt3d::shader_uniforms& uniforms, Qt3DCore::QNode* parent)
     : Qt3DRender::QMaterial(parent)
 {
@@ -126,7 +124,7 @@ SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const
     make_uniform(u"postGain"_qs, 1.0f);
     make_uniform(u"gammax"_qs, 1.2);
 
-auto* effect = new Qt3DRender::QEffect();
+    auto* effect = new Qt3DRender::QEffect();
 
     // GL 3.2
     {

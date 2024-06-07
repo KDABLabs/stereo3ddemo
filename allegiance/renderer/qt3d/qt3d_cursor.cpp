@@ -32,7 +32,8 @@ CursorBillboard::CursorBillboard(QNode* parent)
     m_transform->setScale(12);
 }
 
-void CursorBillboard::setRotation(const QQuaternion &rotation) {
+void CursorBillboard::setRotation(const QQuaternion& rotation)
+{
     m_transform->setRotation(rotation);
 }
 
@@ -83,7 +84,7 @@ CursorCross::CursorCross(QNode* parent)
     c3Entity->addComponent(material);
 }
 
-all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController *cursorController)
+all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController* cursorController)
     : QEntity(parent)
 {
 
@@ -104,7 +105,7 @@ all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* ca
     m_sphere = new CursorSphere{ this };
     m_cross = new CursorCross{ this };
 
-    connect(cursorController, &CursorController::OnCursorChanged, 
+    connect(cursorController, &CursorController::OnCursorChanged,
             this, &CursorEntity::setType);
 
     setType(cursorController->Cursor());
@@ -113,16 +114,16 @@ all::qt3d::CursorEntity::CursorEntity(QNode* parent, const Qt3DCore::QEntity* ca
 void all::qt3d::CursorEntity::setType(CursorController::CursorType type)
 {
     switch (type) {
-        case CursorController::CursorType::Cross:
-            m_billboard->setEnabled(false);
-            m_sphere->setEnabled(false);
-            m_cross->setEnabled(true);
-            break;
-        case CursorController::CursorType::Default:
-            m_billboard->setEnabled(true);
-            m_sphere->setEnabled(true);
-            m_cross->setEnabled(false);
-            break;
+    case CursorController::CursorType::Cross:
+        m_billboard->setEnabled(false);
+        m_sphere->setEnabled(false);
+        m_cross->setEnabled(true);
+        break;
+    case CursorController::CursorType::Default:
+        m_billboard->setEnabled(true);
+        m_sphere->setEnabled(true);
+        m_cross->setEnabled(false);
+        break;
     }
 }
 
@@ -197,6 +198,4 @@ all::qt3d::Picker::Picker(Qt3DCore::QEntity* parent, CursorEntity* cursor)
     QObject::connect(this, &Qt3DRender::QObjectPicker::released, this, [this]() {
         hidden = false;
     });
-
-
 }

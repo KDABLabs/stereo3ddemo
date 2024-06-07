@@ -14,4 +14,4 @@ public:
     static Qt3DCore::QEntity* load(const QString& path);
 };
 
-} // namespace all
+} // namespace all::qt3d

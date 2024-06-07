@@ -7,8 +7,6 @@ using namespace all::qt3d;
 constexpr auto VertexByteStride = (2 + 2) * sizeof(float);
 constexpr auto VertexCount = 4;
 
-
-
 StereoImageGeometry::StereoImageGeometry(StereoImageMesh::Side side, Qt3DCore::QNode* parent)
     : QGeometry(parent)
     , m_side(side)
@@ -136,4 +134,3 @@ void StereoImageMesh::setImageSize(const QVector2D& imageSize)
 {
     static_cast<StereoImageGeometry*>(geometry())->setImageSize(imageSize);
 }
-

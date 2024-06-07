@@ -5,7 +5,6 @@
 
 using namespace all;
 
-
 inline navlib::matrix_t toNavlibMatrix(const glm::mat4x4& mat)
 {
     return {
@@ -40,11 +39,10 @@ inline T DegreesToRadians(T degrees)
     return degrees * std::numbers::pi_v<T> / T(180.0);
 }
 
-
 long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 {
     auto m = toGlmMat(matrix);
-    //qCDebug(spcmsView) << "setting app camera matrix to " << m;
+    // qCDebug(spcmsView) << "setting app camera matrix to " << m;
     m_camera->SetCameraMatrix(m);
     return 0;
 }
@@ -52,7 +50,7 @@ long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 long CNavigationModel::GetCameraMatrix(navlib::matrix_t& matrix) const
 {
     auto m = m_camera->GetCameraMatrix();
-    //qCDebug(spcmsView) << "setting SpcMouse Camera Matrix to " << m;
+    // qCDebug(spcmsView) << "setting SpcMouse Camera Matrix to " << m;
     matrix = toNavlibMatrix(m);
     return 0;
 }
@@ -89,19 +87,19 @@ CNavigationModel::CNavigationModel(std::shared_ptr<all::ModelNavParameters> nav_
 }
 long CNavigationModel::GetPointerPosition(navlib::point_t& position) const
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
-    // return navlib::make_result_code(navlib::navlib_errc::no_data_available);
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
+    //  return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
 long CNavigationModel::SetPointerPosition(const navlib::point_t& position)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__ << position.x << position.y << position.z;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__ << position.x << position.y << position.z;
     return 0;
 }
 
 long CNavigationModel::GetViewExtents(navlib::box_t& extents) const
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     extents.max = { 10, 10, 1000 };
     extents.min = { -10, -10, 0.01 };
     return 0;
@@ -110,7 +108,7 @@ long CNavigationModel::GetViewExtents(navlib::box_t& extents) const
 long CNavigationModel::GetViewFOV(double& fov) const
 {
     fov = glm::radians(m_camera->GetFov());
-    //qCDebug(spcms) << "GetViewFoV " << fov;
+    // qCDebug(spcms) << "GetViewFoV " << fov;
     return 0;
 }
 
@@ -131,9 +129,9 @@ long CNavigationModel::GetViewFrustum(navlib::frustum_t& frustum) const
     frustum.nearVal = nearPlane;
     frustum.farVal = farPlane;
 
-    //qCDebug(spcmsView) << "vertical fov " << verticalFieldOfView << " near/far: " << nearPlane << "/" << farPlane
-    //                   << " left/right " << frustum.left << frustum.right
-    //                   << " top/bottom " << frustum.top << frustum.bottom;
+    // qCDebug(spcmsView) << "vertical fov " << verticalFieldOfView << " near/far: " << nearPlane << "/" << farPlane
+    //                    << " left/right " << frustum.left << frustum.right
+    //                    << " top/bottom " << frustum.top << frustum.bottom;
 
     return 0;
 }
@@ -141,34 +139,34 @@ long CNavigationModel::GetViewFrustum(navlib::frustum_t& frustum) const
 long CNavigationModel::GetIsViewPerspective(navlib::bool_t& perspective) const
 {
     perspective = true;
-    //qCDebug(spcms) << "get is perspective " << perspective;
+    // qCDebug(spcms) << "get is perspective " << perspective;
     return 0;
 }
 
 long CNavigationModel::SetViewExtents(const navlib::box_t& extents)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
 
 long CNavigationModel::SetViewFOV(double fov)
 {
-    //qCDebug(spcms) << "SetFOV";
+    // qCDebug(spcms) << "SetFOV";
     return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
 
 long CNavigationModel::SetViewFrustum(const navlib::frustum_t& frustum)
 {
-    //qCDebug(spcms) << "Set View Frustum";
+    // qCDebug(spcms) << "Set View Frustum";
     return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
 
 long CNavigationModel::GetModelExtents(navlib::box_t& extents) const
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     auto& min_ext = m_nav_params->min_extent;
     auto& max_ext = m_nav_params->max_extent;
     extents.min = { min_ext.x, min_ext.y, min_ext.z };
@@ -178,14 +176,14 @@ long CNavigationModel::GetModelExtents(navlib::box_t& extents) const
 
 long CNavigationModel::GetSelectionExtents(navlib::box_t& extents) const
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
 
 long CNavigationModel::GetSelectionTransform(navlib::matrix_t& transform) const
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
@@ -199,7 +197,7 @@ long CNavigationModel::GetIsSelectionEmpty(navlib::bool_t& empty) const
 
 long CNavigationModel::SetSelectionTransform(const navlib::matrix_t& matrix)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     return navlib::make_result_code(navlib::navlib_errc::no_data_available);
     return 0;
 }
@@ -207,14 +205,14 @@ long CNavigationModel::SetSelectionTransform(const navlib::matrix_t& matrix)
 // Pivot
 long CNavigationModel::IsUserPivot(navlib::bool_t& userPivot) const
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     userPivot = true;
     return 0;
 }
 
 long CNavigationModel::SetPivotPosition(const navlib::point_t& position)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__ << position;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__ << position;
     m_nav_params->pivot_point = glm::vec3(position.x, position.y, position.z);
     return 0;
 }
@@ -222,13 +220,13 @@ long CNavigationModel::SetPivotPosition(const navlib::point_t& position)
 long CNavigationModel::GetPivotVisible(navlib::bool_t& visible) const
 {
     visible = true;
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     return 0;
 }
 
 long CNavigationModel::SetPivotVisible(bool visible)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__ << visible;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__ << visible;
     return 0;
 }
 
@@ -236,53 +234,53 @@ long CNavigationModel::GetPivotPosition(navlib::point_t& position) const
 {
     auto pp = m_nav_params->pivot_point;
     position = { pp.x, pp.y, pp.z };
-    //qCDebug(spcms) << __PRETTY_FUNCTION__ << position;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__ << position;
     return 0;
 }
 
 // Hit
 long CNavigationModel::SetHitAperture(double aperture)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     hit_aperture = aperture;
     return 0;
 }
 
 long CNavigationModel::SetHitDirection(const navlib::vector_t& direction)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__;
     hit_direction = direction;
     return 0;
 }
 
 long CNavigationModel::SetHitLookFrom(const navlib::point_t& eye)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__ << eye.x << eye.y << eye.z;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__ << eye.x << eye.y << eye.z;
     hit_source = eye;
     return 0;
 }
 
 long CNavigationModel::SetHitSelectionOnly(bool onlySelection)
 {
-    //qCDebug(spcms) << __PRETTY_FUNCTION__ << onlySelection;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__ << onlySelection;
     return 0;
 }
 
 long CNavigationModel::GetHitLookAt(navlib::point_t& position) const
 {
     auto res = m_nav_params->hit_test({ hit_source.x, hit_source.y, hit_source.z }, { hit_direction.x, hit_direction.y, hit_direction.z });
-    //qDebug() << "resulting hit " << res;
+    // qDebug() << "resulting hit " << res;
     if (res == glm::vec3{ -1 })
         return 0;
 
     position = { res.x, res.y, res.z };
-    //qCDebug(spcms) << __PRETTY_FUNCTION__ << position.x << position.y << position.z;
+    // qCDebug(spcms) << __PRETTY_FUNCTION__ << position.x << position.y << position.z;
     return 0;
 }
 
 long CNavigationModel::SetActiveCommand(std::string commandId)
 {
-    //qCDebug(spcms) << commandId << __PRETTY_FUNCTION__;
+    // qCDebug(spcms) << commandId << __PRETTY_FUNCTION__;
 
     if (commandId.empty())
         return 0;

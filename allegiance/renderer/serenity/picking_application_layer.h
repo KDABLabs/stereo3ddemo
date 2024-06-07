@@ -1,7 +1,6 @@
 #pragma once
 #include "stereo_proxy_camera.h"
 
-
 namespace all::serenity {
 class StereoProxyCamera;
 class SerenityWindow;

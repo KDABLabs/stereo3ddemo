@@ -15,4 +15,4 @@ public:
         *(const_cast<KDBindings::Property<glm::mat4>*>(&centerEyeViewMatrix)) = center;
     }
 };
-}
+} // namespace all::serenity

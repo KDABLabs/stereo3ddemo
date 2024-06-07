@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     signal(SIGABRT, signalHandler);
     constexpr bool useRHI = false;
 
-    if constexpr(useRHI) {
+    if constexpr (useRHI) {
         qputenv("QT3D_RENDERER", "rhi");
         qputenv("QSG_RHI_BACKEND", "opengl"); // could also be vulkan, metal or d3d11, d3d12.
         // Note: that stereo is not supported on RHI backends, only on opengl, d3d12 and vulkan

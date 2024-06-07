@@ -14,11 +14,10 @@ class QRayCaster;
 class QMaterial;
 } // namespace Qt3DRender
 
-
 namespace all {
 struct ModelNavParameters;
 struct StereoCamera;
-}
+} // namespace all
 
 namespace all::qt3d {
 class CursorEntity;
@@ -64,6 +63,7 @@ private:
         _calculateSceneDimensions(node, e.min, e.max);
         return e;
     }
+
 protected:
     void _calculateSceneDimensions(Qt3DCore::QNode* node, QVector3D& minBounds, QVector3D& maxBounds) const;
     void OnModelExtentChanged(const QVector3D& min, const QVector3D& max);

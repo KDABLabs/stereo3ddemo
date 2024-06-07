@@ -18,4 +18,4 @@ uint32_t SerenityWindowExtentWatcher::height() const
     return m_window->GetHeight();
 }
 
-} // namespace all
+} // namespace all::serenity
