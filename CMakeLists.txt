@@ -37,7 +37,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Projects
 find_package(glm)
-if(NOT glm_FOUND)
+if(NOT glm_FOUND AND NOT BUILD_SERENITY_RENDERER)
     FetchContent_Declare(
         glm
         GIT_REPOSITORY https://github.com/g-truc/glm.git
