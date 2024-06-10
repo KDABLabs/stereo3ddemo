@@ -148,6 +148,12 @@ PageBase {
                 }, {
                   value: Cursor.CursorType.Cross,
                   text: "Cross"
+                }, {
+                  value: Cursor.CursorType.CrossHair,
+                  text: "Cross Hair"
+                }, {
+                  value: Cursor.CursorType.Dot,
+                  text: "Dot"
                 }]
               textRole: "text"
               valueRole: "value"

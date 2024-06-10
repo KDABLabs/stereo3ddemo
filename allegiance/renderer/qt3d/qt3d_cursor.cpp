@@ -14,6 +14,8 @@
 #include <Qt3DRender/QCameraLens>
 #include <Qt3DRender/QPickEvent>
 #include <Qt3DRender/QRayCaster>
+#include <qlogging.h>
+#include <qquaternion.h>
 #include <ranges>
 
 using namespace all::qt3d;
@@ -50,11 +52,54 @@ CursorBillboard::CursorBillboard(QNode* parent)
     m_transform = new Qt3DCore::QTransform;
     addComponent(m_transform);
     m_transform->setScale(12);
+
+    m_matrix = m_transform->matrix();
 }
 
 void CursorBillboard::setRotation(const QQuaternion& rotation)
 {
-    m_transform->setRotation(rotation);
+    QMatrix4x4 m = m_matrix;
+
+    m.rotate(rotation);
+
+    auto right = m.column(0).toVector3D().normalized();
+
+    auto right0 = right;
+    right0.setY(0);
+    right0.normalize();
+
+    auto r0 = QQuaternion::rotationTo(right, right0);
+
+
+    QMatrix4x4 x = m_matrix;
+
+    x.rotate(r0);
+    x.rotate(rotation);
+
+    QQuaternion turn_up = QQuaternion::rotationTo(QVector3D(0, 1, 0), QVector3D(0, 0, 1));
+
+    x.rotate(turn_up);
+
+    m_transform->setMatrix(x);
+}
+
+void CursorBillboard::setTexture(CursorTexture texture)
+{
+    auto tex = new Qt3DRender::QTextureLoader{};
+
+    switch (texture) {
+    case CursorTexture::Default:
+        tex->setSource(QUrl("qrc:/cursor_billboard.png"));
+        break;
+    case CursorTexture::CrossHair:
+        tex->setSource(QUrl("qrc:/cursor_billboard_crosshair.png"));
+        break;
+    case CursorTexture::Dot:
+        tex->setSource(QUrl("qrc:/cursor_billboard_dot.png"));
+        break;
+    }
+
+    m_material->setTexture(tex);
 }
 
 CursorSphere::CursorSphere(QNode* parent)
@@ -156,15 +201,28 @@ all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* 
 void all::qt3d::CursorEntity::setType(CursorType type)
 {
     switch (type) {
+    default:
+    case CursorType::Ball:
+        m_billboard->setTexture(CursorBillboard::CursorTexture::Default);
+        m_billboard->setEnabled(true);
+        m_sphere->setEnabled(true);
+        m_cross->setEnabled(false);
+        break;
     case CursorType::Cross:
         m_billboard->setEnabled(false);
         m_sphere->setEnabled(false);
         m_cross->setEnabled(true);
         break;
-    default:
-    case CursorType::Ball:
+    case CursorType::CrossHair:
+        m_billboard->setTexture(CursorBillboard::CursorTexture::CrossHair);
         m_billboard->setEnabled(true);
-        m_sphere->setEnabled(true);
+        m_sphere->setEnabled(false);
+        m_cross->setEnabled(false);
+        break;
+    case CursorType::Dot:
+        m_billboard->setTexture(CursorBillboard::CursorTexture::Dot);
+        m_billboard->setEnabled(true);
+        m_sphere->setEnabled(false);
         m_cross->setEnabled(false);
         break;
     }
@@ -213,7 +271,9 @@ void all::qt3d::CursorEntity::updateSize()
     m_transform->setScale(m_scale_factor * (m_scaling_enabled ? radius : cursor_size)); // Set the scale based on the calculated radius
 
     auto direction = (m_cameraTransform->translation() - m_transform->translation()).normalized();
-    QQuaternion rotationToFaceTarget = QQuaternion::rotationTo(QVector3D(0, 1, 0), direction);
+    auto cameraUp = QVector3D(viewMatrix.data()[4], viewMatrix.data()[5], viewMatrix.data()[6]); // Extract the up vector from the matrix
+
+    QQuaternion rotationToFaceTarget = QQuaternion::fromDirection(direction, cameraUp);
 
     m_billboard->setRotation(rotationToFaceTarget);
 }

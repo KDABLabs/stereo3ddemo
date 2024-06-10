@@ -27,6 +27,8 @@
         <file>gltf/venice1-env-2k.png</file>
         <file>gltf/venice1-sem-512.png</file>
         <file>cursor_billboard.png</file>
+        <file>cursor_billboard_crosshair.png</file>
+        <file>cursor_billboard_dot.png</file>
         <file>kdab.png</file>
         <file>schneider_white.png</file>
     </qresource>

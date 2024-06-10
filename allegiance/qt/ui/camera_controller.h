@@ -111,7 +111,9 @@ class CursorController : public QObject
 public:
     enum class CursorType {
         Ball = int(all::CursorType::Ball),
-        Cross = int(all::CursorType::Cross)
+        Cross = int(all::CursorType::Cross),
+        CrossHair = int(all::CursorType::CrossHair),
+        Dot = int(all::CursorType::Dot)
     };
     Q_ENUM(CursorType);
 

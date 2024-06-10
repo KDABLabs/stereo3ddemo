@@ -5,7 +5,9 @@
 namespace all {
 enum class CursorType {
     Ball,
-    Cross
+    Cross,
+    CrossHair,
+    Dot
 };
 
 struct ModelNavParameters {

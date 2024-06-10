@@ -1,6 +1,7 @@
 #pragma once
 #include <Qt3DCore/QEntity>
 #include <Qt3DRender/QObjectPicker>
+#include <Qt3DExtras/QTextureMaterial>
 #include <QMatrix4x4>
 
 #include <QScreenRayCaster>
@@ -26,14 +27,23 @@ namespace all::qt3d {
 class CursorBillboard : public Qt3DCore::QEntity
 {
 public:
+    enum class CursorTexture
+    {
+        Default,
+        CrossHair,
+        Dot
+    };
+
     CursorBillboard(Qt3DCore::QNode* parent);
 
     void setRotation(const QQuaternion& rotation);
+    void setTexture(CursorTexture texture);
 
 protected:
     Qt3DCore::QTransform* m_transform;
     Qt3DExtras::QPlaneMesh* m_plane;
-    Qt3DRender::QMaterial* m_material;
+    Qt3DExtras::QTextureMaterial* m_material;
+    QMatrix4x4 m_matrix;
 };
 
 class CursorSphere : public Qt3DCore::QEntity
