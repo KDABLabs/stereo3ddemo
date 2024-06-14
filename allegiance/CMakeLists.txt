@@ -1,11 +1,5 @@
 project(allegiance VERSION ${PROJECT_VERSION})
 
-execute_process(
-    COMMAND git log -1 --format=%cd --date=format:%Y-%m-%d
-    OUTPUT_VARIABLE GIT_COMMIT_DATE
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 add_subdirectory(renderer)
 
 # For now let it remain like this
@@ -178,12 +172,6 @@ endif()
 #               AUTORCC ON
 #)
 #target_precompile_headers(${PROJECT_NAME} PRIVATE "include/pch.h")
-#execute_process(
-#    COMMAND git log -1 --format=%cd --date=format:%Y-%m-%d
-#    OUTPUT_VARIABLE GIT_COMMIT_DATE
-#    OUTPUT_STRIP_TRAILING_WHITESPACE
-#)
-#target_compile_definitions(${PROJECT_NAME} PRIVATE ALLEGIANCE_BUILD_STR="v${PROJECT_VERSION} - ${GIT_COMMIT_DATE}")
 #if(ALLEGIANCE_UI STREQUAL "Qt")
 #    target_compile_definitions(${PROJECT_NAME} PRIVATE QT_NO_KEYWORDS)
 #    qt_add_qml_module(${PROJECT_NAME}

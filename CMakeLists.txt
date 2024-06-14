@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(Allegiance VERSION 0.2.3)
+project(Allegiance VERSION 0.2.4)
 
-add_definitions(-DALLEGIANCE_PROJECT_VERSION="${CMAKE_PROJECT_VERSION}")
+execute_process(
+    COMMAND git log -1 --format=%cd --date=format:%Y-%m-%d
+    OUTPUT_VARIABLE GIT_COMMIT_DATE
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+add_definitions(-DALLEGIANCE_PROJECT_VERSION="${PROJECT_VERSION}"
+                -DALLEGIANCE_BUILD_STR="v${PROJECT_VERSION} - ${GIT_COMMIT_DATE}")
+
 
 include(FetchContent)
 include(CMakeDependentOption)
