@@ -155,21 +155,19 @@ void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root, CursorController*
 
     m_view.setRootEntity(m_rootEntity.get());
 
-    // look at this dirty workaround
-    //  adding a light every three frames, to make sure we don't crash
-    auto mFrameAction = new FrameAction{ m_rootEntity.get() };
-    std::vector<QPair<QVector3D, QVector3D>> lightPositions{
-        { { 0, -1, 0 }, { 0, 1, 0 } },
-        { { 1, 0, 0 }, { -1, 0, 0 } },
-        { { 0, 0, -1 }, { 0, 0, 1 } }
+    std::vector<QVector3D> lightPositions{
+        { 0, -1, 0 }, { 0, 1, 0 }, { 1, 0, 0 }, { -1, 0, 0 }, { 0, 0, -1 }, { 0, 0, 1 }
     };
-    int actionFrame{ 3 };
-    for (auto positionPair : lightPositions) {
-        mFrameAction->callbacks.append({ actionFrame, [this, positionPair]() {
-                                            AddDirectionalLight(m_rootEntity.get(), positionPair.first);
-                                            AddDirectionalLight(m_rootEntity.get(), positionPair.second);
-                                        } });
-        actionFrame += 3;
+    for (auto position : lightPositions) {
+        auto le = new Qt3DCore::QEntity;
+        auto l = new Qt3DRender::QDirectionalLight;
+        l->setIntensity(0.3);
+        auto lt = new Qt3DCore::QTransform;
+        lt->setTranslation(position);
+        l->setWorldDirection(QVector3D{} - lt->translation());
+        le->addComponent(lt);
+        le->addComponent(l);
+        le->setParent(m_rootEntity.get());
     }
 
     LoadImage();
@@ -189,18 +187,6 @@ void all::qt3d::Qt3DImpl::ShowModel()
 glm::vec3 all::qt3d::Qt3DImpl::GetCursorWorldPosition() const
 {
     return toGlmVec3(m_picker->cursor_world);
-}
-
-void all::qt3d::Qt3DImpl::AddDirectionalLight(Qt3DCore::QNode* node, QVector3D position)
-{
-    auto le = new Qt3DCore::QEntity{ node };
-    auto l = new Qt3DRender::QDirectionalLight{ le };
-    l->setIntensity(0.3);
-    auto lt = new Qt3DCore::QTransform{ le };
-    lt->setTranslation(position);
-    l->setWorldDirection(QVector3D{} - lt->translation());
-    le->addComponent(lt);
-    le->addComponent(l);
 }
 
 void all::qt3d::Qt3DImpl::LoadImage(QUrl path)
