@@ -1,0 +1,11 @@
+{
+    "dependencies": [
+	"glm",
+	"assimp",
+        {
+            "name": "freetype",
+            "platform": "windows"
+        }
+    ],
+    "builtin-baseline": "66a252f70eebdd744c02d7ab8c1cc6fe123c70ee"
+}
