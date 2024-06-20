@@ -76,6 +76,18 @@ public:
 
     void updateSize();
 
+    void setScaleFactor(float scale_factor)
+    {
+        m_scale_factor = scale_factor;
+        updateSize();
+    }
+
+    void setScalingEnabled(bool enabled)
+    {
+        m_scaling_enabled = enabled;
+        updateSize();
+    }
+
 protected:
     CursorSphere* m_sphere;
     CursorCross* m_cross;
@@ -87,6 +99,9 @@ protected:
     const Qt3DCore::QEntity* m_camera;
     const Qt3DCore::QTransform* m_cameraTransform;
     const Qt3DRender::QCameraLens* m_cameraLens;
+
+    float m_scale_factor = 1.0f;
+    bool m_scaling_enabled = true;
 
 private:
     QMatrix4x4 m_worldMatrix;

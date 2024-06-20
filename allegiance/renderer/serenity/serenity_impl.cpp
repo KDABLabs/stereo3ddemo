@@ -1,4 +1,5 @@
 #include "serenity_impl.h"
+#include "serenity_impl.h"
 #include "stereo_proxy_camera.h"
 #include "window_extent_watcher.h"
 #include "serenity_stereo_graph.h"
@@ -23,6 +24,15 @@ void all::serenity::SerenityImpl::LoadModel(std::filesystem::path file)
         m_navParams->min_extent = bb.min;
 
         root->addChildEntity(std::move(entity));
+    }
+}
+
+void all::serenity::SerenityImpl::OnPropertyChanged(std::string_view name, std::any value)
+{
+    if (name == "scale_factor") {
+        m_pickingLayer->SetScaleFactor(std::any_cast<float>(value));
+    } else if (name == "scaling_enabled") {
+        m_pickingLayer->SetScalingEnabled(std::any_cast<bool>(value));
     }
 }
 

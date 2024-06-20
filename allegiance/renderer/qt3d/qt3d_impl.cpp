@@ -184,6 +184,15 @@ void all::qt3d::Qt3DImpl::ShowModel()
     LoadModel();
 }
 
+void all::qt3d::Qt3DImpl::OnPropertyChanged(std::string_view name, std::any value)
+{
+    if (name == "scale_factor") {
+        m_cursor->setScaleFactor(std::any_cast<float>(value));
+    } else if (name == "scaling_enabled") {
+        m_cursor->setScalingEnabled(std::any_cast<bool>(value));
+    }
+}
+
 glm::vec3 all::qt3d::Qt3DImpl::GetCursorWorldPosition() const
 {
     return toGlmVec3(m_picker->cursor_world);

@@ -143,6 +143,12 @@ public:
         QObject::connect(&qml.cursor, &CursorController::OnCursorVisibilityChanged, [this](bool checked) {
             impl->SetCursorEnabled(checked);
         });
+        QObject::connect(&qml.cursor, &CursorController::OnCursorScaleChanged, [this](float scale) {
+            impl->OnPropertyChanged("scale_factor", scale);
+        });
+        QObject::connect(&qml.cursor, &CursorController::OnCursorScalingEnableChanged, [this](bool enabled) {
+            impl->OnPropertyChanged("scaling_enabled", enabled);
+        });
         QObject::connect(&qml.scene, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(&wnd, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
             if (!fn.isEmpty()) {

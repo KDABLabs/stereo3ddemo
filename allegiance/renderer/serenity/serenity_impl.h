@@ -2,6 +2,7 @@
 #include "serenity_window.h"
 #include "mesh_loader.h"
 #include "cursor.h"
+#include <any>
 
 // #include <ui/camera_controller.h>
 
@@ -28,6 +29,8 @@ public:
     void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, void* cursorController = nullptr);
 
     void LoadModel(std::filesystem::path file);
+
+    void OnPropertyChanged(std::string_view name, std::any value);
     void SetCursorEnabled(bool enabled);
 
     void ShowModel()

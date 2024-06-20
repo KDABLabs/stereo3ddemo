@@ -204,6 +204,7 @@ void all::qt3d::CursorEntity::setCamera(const QEntity* camera)
 
 void all::qt3d::CursorEntity::updateSize()
 {
+    constexpr float cursor_size = 0.06f;
     int targetSize = 20;
     QMatrix4x4 viewMatrix = m_cameraTransform->matrix();
     QVector3D cameraPosition = viewMatrix.inverted() * m_transform->matrix() * QVector3D(0, 0, 0); // Apply the transformMatrix to the local origin
@@ -213,7 +214,7 @@ void all::qt3d::CursorEntity::updateSize()
     float fov = 2.0 * atan(1.0 / m_projectionMatrix(0, 0));
     float pixelsToAngle = fov / m_window->width();
     float radius = distanceToCamera * tan(targetSize * pixelsToAngle / 2.0);
-    m_transform->setScale(radius); // Set the scale based on the calculated radius
+    m_transform->setScale(m_scale_factor * (m_scaling_enabled ? radius : cursor_size)); // Set the scale based on the calculated radius
 
     auto direction = (m_cameraTransform->translation() - m_transform->translation()).normalized();
     QQuaternion rotationToFaceTarget = QQuaternion::rotationTo(QVector3D(0, 1, 0), direction);

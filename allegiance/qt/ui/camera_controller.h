@@ -104,6 +104,8 @@ public:
     Q_OBJECT
     Q_PROPERTY(float visible READ Visible WRITE SetVisible NOTIFY OnCursorVisibilityChanged)
     Q_PROPERTY(CursorType cursor READ Cursor WRITE SetCursorType NOTIFY OnCursorChanged)
+    Q_PROPERTY(bool scalingEnabled READ ScalingEnabled WRITE SetScalingEnabled NOTIFY OnCursorScalingEnableChanged)
+    Q_PROPERTY(float scaleFactor READ ScaleFactor WRITE SetScaleFactor NOTIFY OnCursorScaleChanged)
 public:
     CursorController(QObject* parent = nullptr)
         : QObject(parent)
@@ -129,11 +131,34 @@ public:
     {
         return m_cursorType;
     }
+    void SetScalingEnabled(bool enabled) noexcept
+    {
+        m_scaling_enabled = enabled;
+        OnCursorScalingEnableChanged(enabled);
+    }
+    void SetScaleFactor(float scale_factor) noexcept
+    {
+        m_scale_factor = scale_factor;
+        OnCursorScaleChanged(scale_factor);
+    }
+
+    bool ScalingEnabled() const noexcept
+    {
+        return m_scaling_enabled;
+    }
+    float ScaleFactor() const noexcept
+    {
+        return m_scale_factor;
+    }
 Q_SIGNALS:
     void OnCursorVisibilityChanged(bool state);
     void OnCursorChanged(CursorType cursorType);
+    void OnCursorScaleChanged(float scale);
+    void OnCursorScalingEnableChanged(bool enabled);
 
 private:
     bool m_visible = true;
     CursorType m_cursorType = CursorType::Default;
+    bool m_scaling_enabled = true;
+    float m_scale_factor = 1.0f;
 };

@@ -8,6 +8,7 @@
 #include <ui/camera_controller.h>
 
 #include <filesystem>
+#include <any>
 
 namespace Qt3DRender {
 class QRayCaster;
@@ -46,6 +47,7 @@ public:
     void ShowImage();
     void ShowModel();
 
+    void OnPropertyChanged(std::string_view name, std::any value);
     glm::vec3 GetCursorWorldPosition() const;
 
 private:

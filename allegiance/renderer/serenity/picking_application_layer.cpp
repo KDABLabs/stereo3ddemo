@@ -16,6 +16,7 @@ void all::serenity::PickingApplicationLayer::onAfterRootEntityChanged(Entity* ol
 
 void all::serenity::PickingApplicationLayer::update()
 {
+    constexpr float cursor_size = 0.3f;
     if (!enabled) {
         return;
     }
@@ -35,10 +36,10 @@ void all::serenity::PickingApplicationLayer::update()
         });
         assert(closest != hits.end());
         m_ctransform->translation = closest->position;
-        m_ctransform->scale = glm::vec3(std::clamp(closest->distance * 10.f, 0.01f, 1.0f));
+        m_ctransform->scale = glm::vec3(m_scale_factor * (m_scaling_enabled ? std::clamp(closest->distance * 10.f, 0.01f, 1.0f) : cursor_size));
     } else {
         m_ctransform->translation = unv;
-        m_ctransform->scale = glm::vec3(10.0f);
+        m_ctransform->scale = m_scale_factor * glm::vec3(10.0f);
     }
 }
 
