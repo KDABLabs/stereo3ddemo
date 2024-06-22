@@ -1,6 +1,7 @@
 #pragma once
 #include <QUrl>
 #include <QObject>
+#include <shared/cursor.h>
 
 class SceneController : public QObject
 {
@@ -94,13 +95,13 @@ private:
 class CursorController : public QObject
 {
 public:
-    // later a cursor type
     enum class CursorType {
-        Default,
-        Cross,
+        Ball = int(all::CursorType::Ball),
+        Cross = int(all::CursorType::Cross)
     };
     Q_ENUM(CursorType);
 
+public:
     Q_OBJECT
     Q_PROPERTY(float visible READ Visible WRITE SetVisible NOTIFY OnCursorVisibilityChanged)
     Q_PROPERTY(CursorType cursor READ Cursor WRITE SetCursorType NOTIFY OnCursorChanged)
@@ -125,12 +126,12 @@ public:
     }
     void SetCursorType(CursorType cursorType) noexcept
     {
-        m_cursorType = cursorType;
-        OnCursorChanged(cursorType);
+        m_cursorType = all::CursorType(cursorType);
+        OnCursorChanged(m_cursorType);
     }
     CursorType Cursor() const noexcept
     {
-        return m_cursorType;
+        return CursorType(m_cursorType);
     }
     void SetScalingEnabled(bool enabled) noexcept
     {
@@ -163,14 +164,14 @@ public:
     }
 Q_SIGNALS:
     void OnCursorVisibilityChanged(bool state);
-    void OnCursorChanged(CursorType cursorType);
+    void OnCursorChanged(all::CursorType cursorType);
     void OnCursorScaleChanged(float scale);
     void OnCursorScalingEnableChanged(bool enabled);
     void OnCursorFocusChanged(bool focus);
 
 private:
     bool m_visible = true;
-    CursorType m_cursorType = CursorType::Default;
+    all::CursorType m_cursorType = all::CursorType::Ball;
     bool m_cursor_focus = false;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;

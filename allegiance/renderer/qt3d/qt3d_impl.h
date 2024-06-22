@@ -33,13 +33,10 @@ public:
 public:
     void ViewChanged();
     void ProjectionChanged();
-    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, CursorController* cursorController);
+    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
     void LoadModel(std::filesystem::path path = "assets/gltf/showroom2303.gltf");
-    void SetCursorEnabled(bool /* enabled */)
-    {
-        // TODO
-    }
+    void SetCursorEnabled(bool /* enabled */);
 
     QWindow* GetWindow() { return &m_view; }
 
@@ -53,7 +50,7 @@ public:
 private:
     static void AddDirectionalLight(Qt3DCore::QNode* node, QVector3D position);
 
-    void CreateScene(Qt3DCore::QEntity* root, CursorController* cursorController);
+    void CreateScene(Qt3DCore::QEntity* root);
     void LoadImage(QUrl path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"));
 
     QVector2D calculateSceneDimensions(Qt3DCore::QEntity* scene) const;
@@ -84,6 +81,7 @@ private:
     QStereoForwardRenderer* m_renderer;
     QStereoProxyCamera* m_camera;
     CursorEntity* m_cursor;
+    float cursor_scale = 1.0f;
     all::StereoCamera* m_stereoCamera;
 
     Picker* m_picker;

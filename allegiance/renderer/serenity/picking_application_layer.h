@@ -25,6 +25,11 @@ public:
     {
         m_scaling_enabled = enabled;
     }
+    void SetTransform(Serenity::SrtTransform* transform)
+    {
+        m_ctransform = transform;
+        update();
+    }
 
 private:
     Serenity::SrtTransform* m_ctransform;

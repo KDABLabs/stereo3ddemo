@@ -16,7 +16,7 @@ void all::serenity::SerenityImpl::LoadModel(std::filesystem::path file)
         root->takeEntity(m_model);
         entity->layerMask = m_layerManager->layerMask({ "Opaque" });
         m_model = entity.get();
-        auto *bv = m_model->createComponent<TriangleBoundingVolume>();
+        auto* bv = m_model->createComponent<TriangleBoundingVolume>();
 
         bv->meshRenderer = entity->component<MeshRenderer>();
         auto bb = bv->worldAxisAlignedBoundingBox.get();
@@ -33,12 +33,20 @@ void all::serenity::SerenityImpl::OnPropertyChanged(std::string_view name, std::
         m_pickingLayer->SetScaleFactor(std::any_cast<float>(value));
     } else if (name == "scaling_enabled") {
         m_pickingLayer->SetScalingEnabled(std::any_cast<bool>(value));
+    } else if (name == "cursor_type") {
+        m_pickingLayer->SetTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->GetTransform());
     }
 }
 
 void all::serenity::SerenityImpl::SetCursorEnabled(bool enabled)
 {
-    m_cursor->GetTransform()->scale = glm::vec3(enabled ? 1.0f : 0.0f);
+    if (enabled) {
+        m_cursor->GetTransform()->scale = glm::vec3(scale_factor);
+    } else {
+        scale_factor = m_cursor->GetTransform()->scale().x;
+        m_cursor->GetTransform()->scale = glm::vec3(0.0f);
+    }
+
     m_pickingLayer->SetEnabled(enabled);
 }
 
@@ -60,7 +68,7 @@ void all::serenity::SerenityImpl::ProjectionChanged()
                                                camera.GetFarPlane());
 }
 
-void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, void* cursorController)
+void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
 {
     m_navParams = std::move(nav_params);
     KDGpu::Device device = m_window->CreateDevice();
@@ -70,6 +78,7 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
         m_layerManager->addLayer(layerName);
 
     std::unique_ptr<Serenity::Entity> rootEntity = CreateScene(*m_layerManager);
+    m_scene_root = rootEntity.get();
 
     // Add Camera into the Scene
 
@@ -82,6 +91,8 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
 #endif
 
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
+
+    m_cursor->ChangeCursor(m_scene_root, CursorType::Ball);
     m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window.get(), spatialAspect, m_cursor->GetTransform());
 
     m_renderAspect = m_engine.createAspect<Serenity::RenderAspect>(std::move(device));
@@ -158,7 +169,7 @@ std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::CreateScene(Seren
         auto entity = MeshLoader::load("assets/cottage.obj");
         entity->layerMask = layers.layerMask({ "Opaque" });
         m_model = entity.get();
-        auto *bv = m_model->createComponent<TriangleBoundingVolume>();
+        auto* bv = m_model->createComponent<TriangleBoundingVolume>();
 
         bv->meshRenderer = entity->component<MeshRenderer>();
         auto bb = bv->worldAxisAlignedBoundingBox.get();
@@ -253,7 +264,7 @@ std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::CreateScene(Seren
         renderer->material = material;
     }
 
-    m_cursor.emplace(rootEntity.get(), layers);
+    m_cursor.emplace(layers);
 
     return std::move(rootEntity);
 }

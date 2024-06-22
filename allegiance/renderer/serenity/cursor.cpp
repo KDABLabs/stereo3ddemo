@@ -1,15 +1,111 @@
 #include "cursor.h"
+#include "cursor.h"
 
-all::serenity::Cursor::Cursor(Serenity::Entity* parent, Serenity::LayerManager& layers)
+constexpr std::array<glm::vec3, 24> cross_vertices(float width, float height, float depth)
 {
-    auto ec = parent->createChildEntity<Serenity::Entity>();
-    m_transform = ec->createComponent<Serenity::SrtTransform>();
+    // divide cross into 3 parts
+    float w = width / 2;
+    float h = height / 2;
+    float d = depth / 2;
 
-    MakeBall(ec, layers);
-    MakeBillboard(ec, layers);
+    // one part
+    std::array<glm::vec3, 8> part = {
+        // front
+        glm::vec3(-w, -h, -d),
+        glm::vec3(w, -h, -d),
+        glm::vec3(w, h, -d),
+        glm::vec3(-w, h, -d),
+
+        // back
+        glm::vec3(-w, -h, d),
+        glm::vec3(w, -h, d),
+        glm::vec3(w, h, d),
+        glm::vec3(-w, h, d),
+    };
+
+    // rotated part 90 degrees around y axis
+    std::array<glm::vec3, 8> part_rotated = {
+        // front
+        glm::vec3(-d, -h, -w),
+        glm::vec3(d, -h, -w),
+        glm::vec3(d, h, -w),
+        glm::vec3(-d, h, -w),
+
+        // back
+        glm::vec3(-d, -h, w),
+        glm::vec3(d, -h, w),
+        glm::vec3(d, h, w),
+        glm::vec3(-d, h, w),
+    };
+
+    // rotate part 90 degrees around z axis
+    std::array<glm::vec3, 8> part_rotated_z = {
+        // front
+        glm::vec3(-h, -w, -d),
+        glm::vec3(h, -w, -d),
+        glm::vec3(h, w, -d),
+        glm::vec3(-h, w, -d),
+
+        // back
+        glm::vec3(-h, -w, d),
+        glm::vec3(h, -w, d),
+        glm::vec3(h, w, d),
+        glm::vec3(-h, w, d),
+    };
+
+    // combine all parts
+    std::array<glm::vec3, 24> vertices;
+    std::copy(part.begin(), part.end(), vertices.begin());
+    std::copy(part_rotated.begin(), part_rotated.end(), vertices.begin() + 8);
+    std::copy(part_rotated_z.begin(), part_rotated_z.end(), vertices.begin() + 16);
+
+    return vertices;
 }
 
-void all::serenity::Cursor::MakeBall(Serenity::Entity* ec, Serenity::LayerManager& layers)
+constexpr std::array<uint32_t, 3 * 36> cross_indices()
+{
+    // 3 parts, 8 vertices each parallelepiped
+    // first part
+    // clang-format off
+    std::array indices = {
+        0, 1, 2, 2, 3, 0,
+        4, 5, 6, 6, 7, 4,
+        0, 4, 7, 7, 3, 0,
+        1, 5, 6, 6, 2, 1,
+        0, 1, 5, 5, 4, 0,
+        2, 3, 7, 7, 6, 2,
+    };
+    // clang-format on
+
+    // second part
+    std::array indices_rotated = indices;
+    for (auto& i : indices_rotated) {
+        i += 8;
+    }
+
+    // third part
+    std::array indices_rotated_x = indices;
+    for (auto& i : indices_rotated_x) {
+        i += 16;
+    }
+
+    std::array<uint32_t, 3 * 36> all_indices;
+    std::copy(indices.begin(), indices.end(), all_indices.begin());
+    std::copy(indices_rotated.begin(), indices_rotated.end(), all_indices.begin() + indices.size());
+    std::copy(indices_rotated_x.begin(), indices_rotated_x.end(), all_indices.begin() + 2 * indices.size());
+
+    return all_indices;
+}
+
+all::serenity::Cursor::Cursor(Serenity::LayerManager& layers)
+{
+    m_cursors.push_back(std::make_unique<BallCursor>(layers));
+    m_cursors.push_back(std::make_unique<CrossCursor>(layers));
+
+    m_currentCursor = (CursorBase*)m_cursors[0].get();
+}
+
+void all::serenity::BallCursor::MakeBall(Serenity::Entity* ec, Serenity::LayerManager& layers)
 {
     auto shader_ball = ec->createChild<Serenity::SpirVShaderProgram>();
     shader_ball->vertexShader = SHADER_DIR "color.vert.spv";
@@ -47,7 +143,7 @@ void all::serenity::Cursor::MakeBall(Serenity::Entity* ec, Serenity::LayerManage
     ec->layerMask = layers.layerMask({ "Opaque" });
 }
 
-void all::serenity::Cursor::MakeBillboard(Serenity::Entity* ec, Serenity::LayerManager& layers)
+void all::serenity::BallCursor::MakeBillboard(Serenity::Entity* ec, Serenity::LayerManager& layers)
 {
     auto shader_bb = ec->createChild<Serenity::SpirVShaderProgram>();
     shader_bb->vertexShader = SHADER_DIR "billboard.vert.spv";
@@ -74,4 +170,66 @@ void all::serenity::Cursor::MakeBillboard(Serenity::Entity* ec, Serenity::LayerM
     cmodel->material = material;
 
     ec->layerMask = layers.layerMask({ "Alpha" });
+}
+
+void all::serenity::CrossCursor::MakeCross(Serenity::Entity* ec, Serenity::LayerManager& layers)
+{
+    auto shader_ball = ec->createChild<Serenity::SpirVShaderProgram>();
+    shader_ball->vertexShader = SHADER_DIR "color.vert.spv";
+    shader_ball->fragmentShader = SHADER_DIR "color.frag.spv";
+
+    constexpr auto vertices = cross_vertices(6, 0.2f, 0.2f);
+    constexpr auto indices = cross_indices();
+    Serenity::Mesh::VertexBufferData vertexBufferData;
+    vertexBufferData.resize(sizeof(vertices));
+    std::memcpy(vertexBufferData.data(), vertices.data(), sizeof(vertices));
+
+    std::vector<uint32_t> vindices;
+    vindices.resize(indices.size());
+    std::memcpy(vindices.data(), indices.data(), sizeof(indices));
+
+    m_cross_mesh = std::make_unique<Serenity::Mesh>();
+    m_cross_mesh->setObjectName("Cursor Cross Mesh");
+    m_cross_mesh->setVertices({ vertexBufferData });
+    m_cross_mesh->setIndices(std::move(vindices));
+    m_cross_mesh->setVertexFormat(Serenity::VertexFormat{
+            .buffers = {
+                    KDGpu::VertexBufferLayout{
+                            .binding = 0,
+                            .stride = sizeof(glm::vec3),
+                    } },
+            .attributes = { KDGpu::VertexAttribute{
+                    .location = 0,
+                    .binding = 0,
+                    .format = KDGpu::Format::R32G32B32_SFLOAT,
+                    .offset = 0,
+            } },
+    });
+
+    struct ColorData {
+        float ambient[4];
+    };
+    const Serenity::Material::UboDataBuilder materialDataBuilder[] = {
+        [](uint32_t set, uint32_t binding) {
+            const ColorData data{
+                { 1.0f, 1.0f, 1.0f, 1.0f },
+            };
+            std::vector<uint8_t> rawData(sizeof(ColorData));
+            std::memcpy(rawData.data(), &data, sizeof(ColorData));
+            return rawData;
+        },
+    };
+
+    Serenity::StaticUniformBuffer* cbuf = ec->createChild<Serenity::StaticUniformBuffer>();
+    cbuf->size = sizeof(ColorData);
+
+    Serenity::Material* material = ec->createChild<Serenity::Material>();
+    material->shaderProgram = shader_ball;
+    material->setUniformBuffer(3, 0, cbuf);
+    material->setUniformBufferDataBuilder(materialDataBuilder[0]);
+
+    auto cmodel = ec->createComponent<Serenity::MeshRenderer>();
+    cmodel->mesh = m_cross_mesh.get();
+    cmodel->material = material;
+    ec->layerMask = layers.layerMask({ "Opaque" });
 }

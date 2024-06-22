@@ -26,7 +26,7 @@ public:
 public:
     void ViewChanged();
     void ProjectionChanged();
-    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, void* cursorController = nullptr);
+    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
     void LoadModel(std::filesystem::path file);
 
@@ -73,6 +73,7 @@ protected:
     Serenity::RenderAspect* m_renderAspect{ nullptr };
     Serenity::LayerManager* m_layerManager{ nullptr };
     Serenity::Entity* m_model{ nullptr };
+    Serenity::Entity* m_scene_root{ nullptr };
     all::StereoCamera& camera;
     std::shared_ptr<all::ModelNavParameters> m_navParams;
 
@@ -81,5 +82,6 @@ protected:
     all::serenity::PickingApplicationLayer* m_pickingLayer;
 
     std::optional<all::serenity::Cursor> m_cursor;
+    float scale_factor = 1.0f;
 };
 } // namespace all::serenity

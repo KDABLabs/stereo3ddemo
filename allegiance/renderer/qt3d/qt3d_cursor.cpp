@@ -104,7 +104,7 @@ CursorCross::CursorCross(QNode* parent)
     c3Entity->addComponent(material);
 }
 
-all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController* cursorController, all::StereoCamera* pCamera)
+all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, all::StereoCamera* pCamera)
     : QEntity(parent)
 {
 
@@ -124,11 +124,6 @@ all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* 
     m_billboard = new CursorBillboard{ this };
     m_sphere = new CursorSphere{ this };
     m_cross = new CursorCross{ this };
-
-    connect(cursorController, &CursorController::OnCursorChanged,
-            this, &CursorEntity::setType);
-
-    setType(cursorController->Cursor());
 
     m_raycaster = new Qt3DRender::QScreenRayCaster{scene};
     m_raycaster->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
@@ -158,15 +153,16 @@ all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* 
     scene->addComponent(m_raycaster);
 }
 
-void all::qt3d::CursorEntity::setType(CursorController::CursorType type)
+void all::qt3d::CursorEntity::setType(CursorType type)
 {
     switch (type) {
-    case CursorController::CursorType::Cross:
+    case CursorType::Cross:
         m_billboard->setEnabled(false);
         m_sphere->setEnabled(false);
         m_cross->setEnabled(true);
         break;
-    case CursorController::CursorType::Default:
+    default:
+    case CursorType::Ball:
         m_billboard->setEnabled(true);
         m_sphere->setEnabled(true);
         m_cross->setEnabled(false);

@@ -4,7 +4,7 @@
 #include <QMatrix4x4>
 
 #include <QScreenRayCaster>
-#include <ui/camera_controller.h>
+#include <shared/cursor.h>
 
 namespace all {
 class StereoCamera;
@@ -51,14 +51,14 @@ public:
 class CursorEntity : public Qt3DCore::QEntity
 {
 public:
-    CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, CursorController* cursorController, all::StereoCamera* pCamera);
+    CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, all::StereoCamera* pCamera);
 
 public:
     void setPosition(const QVector3D& positionInScene);
 
     void setCamera(const QEntity* camera);
 
-    void setType(CursorController::CursorType type);
+    void setType(CursorType type);
 
 public:
     void onMouseMoveEvent(QVector3D pos, QPoint  cursorPosition);
@@ -80,6 +80,9 @@ public:
     {
         m_scale_factor = scale_factor;
         updateSize();
+    }
+    float getScaleFactor() const noexcept {
+        return m_scale_factor;
     }
 
     void setScalingEnabled(bool enabled)

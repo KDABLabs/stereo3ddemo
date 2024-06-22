@@ -89,7 +89,7 @@ void all::qt3d::Qt3DImpl::ProjectionChanged()
     m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), m_stereoCamera->ShearCoefficient());
 }
 
-void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params, CursorController* cursorController)
+void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
 {
     using namespace Qt3DCore;
     using namespace Qt3DRender;
@@ -139,17 +139,18 @@ void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters>
 
             return toGlmVec3(nearestHitIterator->worldIntersection());
         };
-    CreateScene(m_rootEntity.get(), cursorController);
+    CreateScene(m_rootEntity.get());
 }
 
-void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root, CursorController* cursorController)
+void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
 {
     m_sceneEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
     m_sceneEntity->setObjectName("SceneEntity");
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
 
-    m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->GetLeftCamera(), &m_view, cursorController, m_stereoCamera);
+    m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->GetLeftCamera(), &m_view, m_stereoCamera);
+    m_cursor->setType(CursorType::Ball);
     m_picker = new Picker(m_sceneEntity, m_cursor);
     LoadModel();
 
@@ -190,6 +191,8 @@ void all::qt3d::Qt3DImpl::OnPropertyChanged(std::string_view name, std::any valu
         m_cursor->setScaleFactor(std::any_cast<float>(value));
     } else if (name == "scaling_enabled") {
         m_cursor->setScalingEnabled(std::any_cast<bool>(value));
+    } else if (name == "cursor_type") {
+        m_cursor->setType(std::any_cast<CursorType>(value));
     }
 }
 
@@ -330,6 +333,19 @@ void all::qt3d::Qt3DImpl::LoadModel(std::filesystem::path path)
     if (cam) {
         cam->SetTarget(toGlmVec3((ext.min + k / 2) * scaleFactor));
         cam->Rotate(0, 0);
+    }
+}
+
+void all::qt3d::Qt3DImpl::SetCursorEnabled(bool enabled)
+{
+    if (enabled)
+    {
+        m_cursor->setScaleFactor(cursor_scale);
+    }
+    else
+    {
+        cursor_scale = m_cursor->getScaleFactor();
+        m_cursor->setScaleFactor(0);
     }
 }
 

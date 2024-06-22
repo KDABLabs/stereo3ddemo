@@ -150,6 +150,9 @@ public:
         QObject::connect(&qml.cursor, &CursorController::OnCursorVisibilityChanged, [this](bool checked) {
             impl->SetCursorEnabled(checked);
         });
+        QObject::connect(&qml.cursor, &CursorController::OnCursorChanged, [this](CursorType type) {
+            impl->OnPropertyChanged("cursor_type", type);
+        });
         QObject::connect(&qml.cursor, &CursorController::OnCursorScaleChanged, [this](float scale) {
             impl->OnPropertyChanged("scale_factor", scale);
         });
@@ -183,7 +186,7 @@ public:
         //         }
         // #endif
 
-        impl->CreateAspects(nav_params, &qml.cursor);
+        impl->CreateAspects(nav_params);
         ResetCamera();
         wnd.show();
     }
