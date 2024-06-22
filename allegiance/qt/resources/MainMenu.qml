@@ -101,11 +101,18 @@ PageBase {
 			anchors.margins: 0
 			anchors.left: parent.left
 			anchors.right: parent.right
+            spacing: 10
             CheckBoxX {
               visible: Cursor.visible
               text: "Cursor Scaling"
               initial: Cursor.scalingEnabled
               onChecked: bchecked => Cursor.scalingEnabled = bchecked
+            }
+            CheckBoxX {
+              visible: Cursor.visible
+              text: "Cursor Focus"
+              initial: Cursor.cursorFocus
+              onChecked: bchecked => Cursor.cursorFocus = bchecked
             }
             
             SliderValue {

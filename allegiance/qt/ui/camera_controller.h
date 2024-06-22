@@ -106,6 +106,7 @@ public:
     Q_PROPERTY(CursorType cursor READ Cursor WRITE SetCursorType NOTIFY OnCursorChanged)
     Q_PROPERTY(bool scalingEnabled READ ScalingEnabled WRITE SetScalingEnabled NOTIFY OnCursorScalingEnableChanged)
     Q_PROPERTY(float scaleFactor READ ScaleFactor WRITE SetScaleFactor NOTIFY OnCursorScaleChanged)
+    Q_PROPERTY(bool cursorFocus READ CursorChangesFocus WRITE SetCursorChangesFocus NOTIFY OnCursorFocusChanged)
 public:
     CursorController(QObject* parent = nullptr)
         : QObject(parent)
@@ -150,15 +151,27 @@ public:
     {
         return m_scale_factor;
     }
+
+    bool CursorChangesFocus() const noexcept
+    {
+        return m_cursor_focus;
+    }
+    void SetCursorChangesFocus(bool focus) noexcept
+    {
+        m_cursor_focus = focus;
+        OnCursorFocusChanged(focus);
+    }
 Q_SIGNALS:
     void OnCursorVisibilityChanged(bool state);
     void OnCursorChanged(CursorType cursorType);
     void OnCursorScaleChanged(float scale);
     void OnCursorScalingEnableChanged(bool enabled);
+    void OnCursorFocusChanged(bool focus);
 
 private:
     bool m_visible = true;
     CursorType m_cursorType = CursorType::Default;
+    bool m_cursor_focus = false;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
 };

@@ -16,6 +16,7 @@ struct MouseTracker {
     QPoint last_pos = {};
     bool is_pressed = false;
     bool skip_first = false;
+    bool cursor_changes_focus = false;
 };
 
 class App
@@ -86,6 +87,12 @@ public:
                                  if (e->buttons() & Qt::MouseButton::LeftButton) {
                                      input.is_pressed = true;
                                      input.skip_first = true;
+                                     if (input.cursor_changes_focus)
+                                     {
+                                         auto pos = impl->GetCursorWorldPosition();
+                                         qml.camera.SetFocusDistance(std::clamp(glm::length(pos - camera.GetPosition()),0.5f, 100.f));
+                                     }
+
                                  } else if (e->buttons() & Qt::MouseButton::RightButton) {
                                      auto pos = impl->GetCursorWorldPosition();
                                      qDebug() << " setting pivot " << pos.x << pos.y << pos.z;
@@ -148,6 +155,9 @@ public:
         });
         QObject::connect(&qml.cursor, &CursorController::OnCursorScalingEnableChanged, [this](bool enabled) {
             impl->OnPropertyChanged("scaling_enabled", enabled);
+        });
+        QObject::connect(&qml.cursor, &CursorController::OnCursorFocusChanged, [this](bool enabled) {
+            input.cursor_changes_focus = enabled;
         });
         QObject::connect(&qml.scene, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(&wnd, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
