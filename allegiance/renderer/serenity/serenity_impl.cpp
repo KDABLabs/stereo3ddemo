@@ -218,7 +218,7 @@ std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::CreateScene(Seren
                     .binding = 0,
                     .stride = sizeof(Vertex),
                     .inputRate = KDGpu::VertexRate::Vertex });
-            mesh->setVertexFormat(vertexFormat);
+            mesh->vertexFormat = vertexFormat;
 
             const std::array<Vertex, 4> vertexData = { {
                     { { -1, -1 }, { 0, 1 } },
@@ -271,10 +271,10 @@ Serenity::StereoForwardAlgorithm::RenderPhase all::serenity::SerenityImpl::creat
         LayerFilterType::AcceptAll
     };
 
-    auto depthState = std::make_shared<DepthStencilState>();
-    depthState->depthTestEnabled = true;
-    depthState->depthWritesEnabled = true;
-    depthState->depthCompareOperation = KDGpu::CompareOperation::Less;
+    DepthStencilState depthState ;
+    depthState.depthTestEnabled = true;
+    depthState.depthWritesEnabled = true;
+    depthState.depthCompareOperation = KDGpu::CompareOperation::Less;
     phase.renderStates.setDepthStencilState(std::move(depthState));
 
     return phase;
@@ -287,13 +287,13 @@ Serenity::StereoForwardAlgorithm::RenderPhase all::serenity::SerenityImpl::creat
         LayerFilterType::AcceptAll
     };
 
-    auto depthState = std::make_shared<DepthStencilState>();
-    depthState->depthTestEnabled = true;
-    depthState->depthWritesEnabled = false;
-    depthState->depthCompareOperation = KDGpu::CompareOperation::Less;
+    DepthStencilState depthState;
+    depthState.depthTestEnabled = true;
+    depthState.depthWritesEnabled = false;
+    depthState.depthCompareOperation = KDGpu::CompareOperation::Less;
     phase.renderStates.setDepthStencilState(std::move(depthState));
 
-    auto blendState = std::make_shared<ColorBlendState>();
+    ColorBlendState blendState;
     ColorBlendState::AttachmentBlendState attachmentBlendState;
 
     attachmentBlendState.format = KDGpu::Format::UNDEFINED;
@@ -304,7 +304,7 @@ Serenity::StereoForwardAlgorithm::RenderPhase all::serenity::SerenityImpl::creat
     attachmentBlendState.blending.color.srcFactor = KDGpu::BlendFactor::SrcAlpha;
     attachmentBlendState.blending.alpha.dstFactor = KDGpu::BlendFactor::OneMinusSrcAlpha;
     attachmentBlendState.blending.color.dstFactor = KDGpu::BlendFactor::OneMinusSrcAlpha;
-    blendState->attachmentBlendStates = { attachmentBlendState };
+    blendState.attachmentBlendStates = { attachmentBlendState };
 
     phase.renderStates.setColorBlendState(std::move(blendState));
 
@@ -321,14 +321,14 @@ Serenity::StereoForwardAlgorithm::RenderPhase all::serenity::SerenityImpl::creat
         .frustumCulling = false,
     };
 
-    auto depthState = std::make_shared<DepthStencilState>();
-    depthState->depthTestEnabled = false;
-    depthState->depthWritesEnabled = false;
+    DepthStencilState depthState;
+    depthState.depthTestEnabled = false;
+    depthState.depthWritesEnabled = false;
     phase.renderStates.setDepthStencilState(std::move(depthState));
 
-    auto inputAssemblyState = std::make_shared<PrimitiveRasterizerState>();
-    inputAssemblyState->topology = KDGpu::PrimitiveTopology::TriangleStrip;
-    inputAssemblyState->cullMode = KDGpu::CullModeFlagBits::None;
+    PrimitiveRasterizerState inputAssemblyState;
+    inputAssemblyState.topology = KDGpu::PrimitiveTopology::TriangleStrip;
+    inputAssemblyState.cullMode = KDGpu::CullModeFlagBits::None;
     phase.renderStates.setPrimitiveRasterizerState(std::move(inputAssemblyState));
 
     return phase;

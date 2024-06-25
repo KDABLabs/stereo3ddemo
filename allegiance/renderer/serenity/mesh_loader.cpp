@@ -73,7 +73,7 @@ std::unique_ptr<Serenity::Mesh> all::serenity::MeshLoader::MakeMesh(const aiMesh
 {
     std::unique_ptr<Serenity::Mesh> smesh = std::make_unique<Serenity::Mesh>();
     auto vertex_format = MakeVertexFormat(material);
-    smesh->setVertexFormat(vertex_format);
+    smesh->vertexFormat = vertex_format;
 
     std::vector<Serenity::Mesh::VertexBufferData> verts;
     verts.resize(vertex_format.buffers.size());
