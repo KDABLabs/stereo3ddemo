@@ -111,9 +111,11 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     algo->renderTargetRefs = { std::move(offscreenRenderTargetRef), std::move(windowRenderTargetRef) };
 #else
     Serenity::RenderTargetRef windowRenderTargetRef{
-        Serenity::RenderTargetRef::Type::Surface, m_window->GetSurface().handle(),
-        std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
-        2, // Request 2 array layers
+        .type = Serenity::RenderTargetRef::Type::Surface,
+        .surfaceHandle = m_window->GetSurface().handle(),
+        .extentWatcher = std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
+        .arrayLayers = 2, // Request 2 array layers,
+        .additionalUsageFlags = Serenity::RenderTargetUsageFlagBits::ShaderReadable,
     };
     algo->renderTargetRefs = { std::move(windowRenderTargetRef) };
 #endif
