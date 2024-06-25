@@ -4,6 +4,8 @@ add_library(
     ${PROJECT_NAME} STATIC
 )
 
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+
 set(VAR_SRCS_PUBLIC)
 set(VAR_SRCS_PRIVATE)
 
