@@ -6,7 +6,41 @@
 #include "picking_application_layer.h"
 #include "shared/cursor.h"
 
+#include <Serenity/gui/imgui/overlay.h>
+#include <Serenity/gui/render/renderer.h>
+#include <imgui.h>
+
 using namespace Serenity;
+
+namespace {
+
+Serenity::ImGui::Overlay* createImGuiOverlay(all::serenity::SerenityWindow* w, AspectEngine* engine, StereoForwardAlgorithm* algo)
+{
+    auto renderOverlay = [&w, engine, algo](ImGuiContext* ctx) {
+        ::ImGui::SetCurrentContext(ctx);
+        ::ImGui::SetNextWindowPos(ImVec2(10, 10));
+        ::ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+        ::ImGui::Begin(
+                "Schneider Serenity",
+                nullptr,
+                ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        const auto* dev = algo->renderer()->device();
+        ::ImGui::Text("GPU: %s", dev->adapter()->properties().deviceName.c_str());
+        const auto fps = engine->fps.get();
+        ::ImGui::Text("%.2f ms/frame (%.1f fps)", (1000.0f / fps), fps);
+
+        ::ImGui::End();
+    };
+
+    // TODO:
+    // Set Serenity::ImGui::Overlay on the window to
+    // - send input events to the overlay
+    auto overlay = algo->createChild<Serenity::ImGui::Overlay>(renderOverlay);
+    //    w->registerEventReceiver(overlay);
+    return overlay;
+}
+
+} // namespace
 
 void all::serenity::SerenityImpl::LoadModel(std::filesystem::path file)
 {
@@ -84,11 +118,9 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
 
     m_camera = rootEntity->createChildEntity<StereoProxyCamera>();
     // Create Render Algo
-#if defined(RENDER_MODE_LEFT_ONLY)
-    auto algo = std::make_unique<StereoForwardAlgorithm>();
-#else
     auto algo = std::make_unique<all::serenity::StereoRenderAlgorithm>();
-#endif
+
+    const uint32_t maxSupportedSwapchainArrayLayers = device.adapter()->swapchainProperties(m_window->GetSurface().handle()).capabilities.maxImageArrayLayers;
 
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
 
@@ -98,44 +130,48 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     m_renderAspect = m_engine.createAspect<Serenity::RenderAspect>(std::move(device));
     auto logicAspect = m_engine.createAspect<Serenity::LogicAspect>();
 
-#if defined(RENDER_MODE_LEFT_ONLY)
-    Serenity::RenderTargetRef windowRenderTargetRef{
-        Serenity::RenderTargetRef::Type::Surface,
-        m_window->GetSurface().handle(),
-        std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
-    };
-    Serenity::RenderTargetRef offscreenRenderTargetRef{
-        Serenity::RenderTargetRef::Type::Texture, {}, std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
-        2, // Request 2 array layers
-    };
-    algo->renderTargetRefs = { std::move(offscreenRenderTargetRef), std::move(windowRenderTargetRef) };
-#else
+    const bool supportsStereoSwapchain = maxSupportedSwapchainArrayLayers > 1;
+
     Serenity::RenderTargetRef windowRenderTargetRef{
         .type = Serenity::RenderTargetRef::Type::Surface,
         .surfaceHandle = m_window->GetSurface().handle(),
         .extentWatcher = std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
-        .arrayLayers = 2, // Request 2 array layers,
+        .arrayLayers = std::min(2u, maxSupportedSwapchainArrayLayers), // Request 2 array layers for stereo (if possible)
         .additionalUsageFlags = Serenity::RenderTargetUsageFlagBits::ShaderReadable,
     };
-    algo->renderTargetRefs = { std::move(windowRenderTargetRef) };
-#endif
+    Serenity::RenderTargetRef offscreenRenderTargetRef{
+        .type = Serenity::RenderTargetRef::Type::Texture,
+        .extentWatcher = std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
+        .arrayLayers = 2, // Request 2 array layers
+    };
+
+    if (supportsStereoSwapchain) {
+        algo->renderTargetRefs = { std::move(windowRenderTargetRef) };
+        algo->offscreenMultiViewRenderTargetRefIndex = 0;
+        algo->presentRenderTargetRefIndex = 0;
+        algo->renderMode = Serenity::StereoForwardAlgorithm::StereoRenderMode::Stereo;
+    } else {
+        algo->renderTargetRefs = { std::move(offscreenRenderTargetRef), std::move(windowRenderTargetRef) };
+        algo->offscreenMultiViewRenderTargetRefIndex = 0;
+        algo->presentRenderTargetRefIndex = 1;
+        algo->renderMode = Serenity::StereoForwardAlgorithm::StereoRenderMode::SideBySide;
+    }
 
     // The RenderAlgo works in a 2 render passes process:
-    // 1) Offscreen MultiView Rendering (stereo render views) of the Scene
-    // (using the Offscreen Render Target) 2) Onscreen FullScreenQuad drawing of
-    // offscreen content + optional Overlays on Window backbuffer (using the
-    // Window Render Target)
+
+    // If we support Stereo Swachain
+    // 1) MultiView Rendering (stereo render views) of the Scene into the Swapchain
+    // 2) Overlay pass where we draw the overlay to a single of the array layer
+
+    // If we don't support Stereo Swapchain
+    // 1) Multiview Rendering (using the Offscreen Render Target
+    // 2) Onscreen FullScreenQuad drawing of offscreen content + optional Overlays
 
     algo->camera = m_camera;
-    algo->offscreenMultiViewRenderTargetRefIndex = 0;
     algo->msaaSamples = Serenity::RenderAlgorithm::SamplesCount::Samples_4;
-#if defined(RENDER_MODE_LEFT_ONLY)
-    algo->presentRenderTargetRefIndex = 1;
-    algo->renderMode = Serenity::StereoForwardAlgorithm::StereoRenderMode::LeftOnly;
-#else
-    algo->presentRenderTargetRefIndex = 0;
-    algo->renderMode = Serenity::StereoForwardAlgorithm::StereoRenderMode::Stereo;
-#endif
+
+    auto imguiOverlay = createImGuiOverlay(m_window.get(), &m_engine, algo.get());
+    algo->overlays = { imguiOverlay };
 
     m_renderAspect->setRenderAlgorithm(std::move(algo));
 
