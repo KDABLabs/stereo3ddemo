@@ -5,6 +5,9 @@
 #include "shared/cursor.h"
 
 #include <Serenity/gui/imgui/overlay.h>
+#ifdef FLUTTER_UI_ASSET_DIR
+#include <Serenity/gui/flutter/overlay.h>
+#endif
 #include <Serenity/gui/render/renderer.h>
 #include <imgui.h>
 
@@ -37,6 +40,24 @@ Serenity::ImGui::Overlay* createImGuiOverlay(all::serenity::SerenityWindow* w, A
     //    w->registerEventReceiver(overlay);
     return overlay;
 }
+
+#ifdef FLUTTER_UI_ASSET_DIR
+
+Serenity::Flutter::Overlay *createFlutterOverlay(all::serenity::SerenityWindow* w, StereoForwardAlgorithm* algo)
+{
+    auto flutterOverlay = algo->createChild<Serenity::Flutter::Overlay>();
+
+    // TODO:
+    // Set Serenity::Flutter::Overlay on the window to
+    // - send input events to the overlay
+    // w->registerEventReceiver(flutterOverlay.get());
+
+    flutterOverlay->flutterBundlePath = FLUTTER_UI_ASSET_DIR "/build/flutter_assets";
+    flutterOverlay->icuDataPath = FLUTTER_UI_ASSET_DIR "/icudtl.dat";
+    return flutterOverlay;
+}
+
+#endif
 
 } // namespace
 
@@ -191,8 +212,16 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     algo->camera = m_camera;
     algo->msaaSamples = Serenity::RenderAlgorithm::SamplesCount::Samples_4;
 
-    auto imguiOverlay = createImGuiOverlay(m_window.get(), &m_engine, algo.get());
+    auto *imguiOverlay = createImGuiOverlay(m_window.get(), &m_engine, algo.get());
+
+#ifdef FLUTTER_UI_ASSET_DIR
+    auto *flutterOverlay = createFlutterOverlay(m_window.get(), algo.get());
+    algo->overlays = { imguiOverlay, flutterOverlay };
+#else
     algo->overlays = { imguiOverlay };
+#endif
+
+
 
     m_renderAspect->setRenderAlgorithm(std::move(algo));
 

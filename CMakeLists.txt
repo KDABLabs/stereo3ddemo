@@ -14,25 +14,13 @@ add_definitions(-DALLEGIANCE_PROJECT_VERSION="${PROJECT_VERSION}"
 include(FetchContent)
 include(CMakeDependentOption)
 
+find_program(FLUTTER_EXE flutter)
+
 option(BUILD_QT_UI "Build Qt UI" ON)
-option(BUILD_FLUTTER_UI "Build Flutter UI" OFF)
+cmake_dependent_option(BUILD_QT3D_RENDERER "Build Qt3D renderer" ON "BUILD_QT_UI" OFF)
 
-option(BUILD_QT3D_RENDERER "Build Qt3D renderer" ON)
 option(BUILD_SERENITY_RENDERER "Build Serenity renderer" ON)
-
-if(NOT BUILD_QT_UI)
-    if(BUILD_QT3D_RENDERER)
-        set(BUILD_QT3D_RENDERER OFF)
-        message(STATUS "Qt3D renderer requires Qt UI")
-    endif()
-endif()
-
-if(NOT BUILD_SERENITY_RENDERER)
-    if(BUILD_FLUTTER_UI)
-        set(BUILD_FLUTTER_UI OFF)
-        message(STATUS "Flutter UI requires Serenity renderer")
-    endif()
-endif()
+cmake_dependent_option(BUILD_FLUTTER_UI "Build Flutter UI" ON "BUILD_SERENITY_RENDERER;FLUTTER_EXE" OFF)
 
 if(WIN32 OR APPLE)
     option(WITH_NAVLIB "Compile with support for 3DxWare Navlib" ON)
@@ -59,16 +47,6 @@ set(BUILD_SERENITY_RENDERER_QT ${BUILD_SERENITY_RENDERER})
 set(BUILD_SERENITY_RENDERER_KDGUI ${BUILD_SERENITY_RENDERER})
 
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets)
-
-# Not working yet
-if(BUILD_FLUTTER_UI
-   AND FLUTTER_EXE_FOUND
-   AND BUILD_SERENITY_RENDERER
-)
-    set(POSTFIX "KDAB_SMC_Vulkan_Flutter")
-    set(ALLEGIANCE_UI "Flutter")
-    set(ALLEGIANCE_RENDERER "Serenity")
-endif()
 
 add_subdirectory(shared)
 add_subdirectory(allegiance)

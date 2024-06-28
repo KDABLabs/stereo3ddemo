@@ -74,9 +74,45 @@ public:
 
     KDGpu::Device CreateDevice() override
     {
+#ifndef FLUTTER_UI_ASSET_DIR
         KDGpu::AdapterAndDevice defaultDevice = m_instance.createDefaultDevice(m_surface);
         m_deviceHandle = defaultDevice.device.handle();
         return std::move(defaultDevice.device);
+#else
+
+        // The Flutter Embedder requires a device which has 2 graphics queues
+
+        // Enumerate the adapters (physical devices) and select one to use.
+        KDGpu::Adapter *selectedAdapter = m_instance.selectAdapter(KDGpu::AdapterDeviceType::Default);
+        if (!selectedAdapter) {
+            SPDLOG_CRITICAL("Unable to find a suitable Adapter. Aborting...");
+            return {};
+        }
+
+        auto queueTypes = selectedAdapter->queueTypes();
+        const bool hasGraphicsAndCompute = queueTypes[0].supportsFeature(KDGpu::QueueFlagBits::GraphicsBit | KDGpu::QueueFlagBits::ComputeBit);
+        const bool supportsPresentation = selectedAdapter->supportsPresentation(m_surface, 0); // Query about the 1st queue type
+
+        if (!supportsPresentation || !hasGraphicsAndCompute) {
+            SPDLOG_CRITICAL("Selected adapter queue family 0 does not meet requirements. Aborting.");
+            return {};
+        }
+
+        // Now we can create a device from the selected adapter that we can then use to interact with the GPU.
+        // We try to request 2 GraphicQueues as Flutter needs its own queue
+        KDGpu::Device device = selectedAdapter->createDevice(KDGpu::DeviceOptions{
+                                                           .queues = {
+                                                                      KDGpu::QueueRequest{
+                                                                          .queueTypeIndex = 0,
+                                                                          .count = std::min(queueTypes[0].availableQueues, 2U),
+                                                                          .priorities = { 0.0f, 0.0f },
+                                                                          },
+                                                                      },
+                                                           .requestedFeatures = selectedAdapter->features(),
+                                                           });
+        m_deviceHandle = device.handle();
+        return device;
+#endif
     }
 
     QWindow* GetWindow()
