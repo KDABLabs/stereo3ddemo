@@ -1,4 +1,5 @@
 #pragma once
+#include "serenity_stereo_graph.h"
 #include "serenity_window.h"
 #include "mesh_loader.h"
 #include "cursor.h"
@@ -41,6 +42,7 @@ public:
     {
         setMode(Mode::StereoImage);
     }
+    void Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in);
 
     glm::vec3 GetCursorWorldPosition() const;
 
@@ -80,8 +82,9 @@ protected:
     std::shared_ptr<all::ModelNavParameters> m_navParams;
 
     // Camera
-    all::serenity::StereoProxyCamera* m_camera;
-    all::serenity::PickingApplicationLayer* m_pickingLayer;
+    all::serenity::StereoProxyCamera* m_camera{nullptr};
+    all::serenity::PickingApplicationLayer* m_pickingLayer{nullptr};
+    all::serenity::StereoRenderAlgorithm* m_renderAlgorithm{nullptr};
 
     std::optional<all::serenity::Cursor> m_cursor;
     float scale_factor = 1.0f;

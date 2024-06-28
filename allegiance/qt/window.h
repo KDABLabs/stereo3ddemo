@@ -46,6 +46,8 @@ public:
         }
         if (e->key() == Qt::Key_F1)
             camera_control->Reload();
+        if (e->key() == Qt::Key_F2)
+            Q_EMIT OnScreenshot();
     }
 
 private:
@@ -60,6 +62,7 @@ private:
 
 Q_SIGNALS:
     void OnClose();
+    void OnScreenshot();
 
 private:
     QWindow* window;

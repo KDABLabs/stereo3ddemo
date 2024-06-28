@@ -10,6 +10,7 @@
 #include <QStyleFactory>
 #include <QFileDialog>
 #include <QMouseEvent>
+#include <QClipboard>
 
 namespace all::qt {
 struct MouseTracker {
@@ -17,6 +18,20 @@ struct MouseTracker {
     bool is_pressed = false;
     bool skip_first = false;
     bool cursor_changes_focus = false;
+};
+
+struct ScreenshotGrabber {
+    void CreatePixmap(const uint8_t* data, uint32_t width, uint32_t height)
+    {
+        QImage img(data, width, height, QImage::Format_RGBA8888);
+        // img.save("screenshot.png");
+        QPixmap pixmap = QPixmap::fromImage(img);
+        Place(pixmap);
+    }
+    void Place(const QPixmap& pixmap)
+    {
+        QApplication::clipboard()->setPixmap(pixmap);
+    }
 };
 
 class App
@@ -56,6 +71,14 @@ public:
                          [this]() {
                              impl.reset();
                              app.quit();
+                         });
+        QObject::connect(&wnd, &Window::OnScreenshot,
+                         [this]() {
+                             auto x = [this](const uint8_t* data, uint32_t width, uint32_t height) {
+                                 grabber.CreatePixmap(data, width, height);
+                             };
+
+                             impl->Screenshot(x);
                          });
         QObject::connect(&watcher, &WindowEventWatcher::OnScroll,
                          [this](::QWheelEvent* e) {
@@ -221,6 +244,7 @@ private:
     Window wnd;
     WindowEventWatcher watcher{ &wnd };
     std::optional<all::SpacemouseImpl> spacemouse;
+    ScreenshotGrabber grabber;
 
     MouseTracker input;
 };

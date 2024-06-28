@@ -1,4 +1,5 @@
 #include "serenity_stereo_graph.h"
+#include "serenity_stereo_graph.h"
 #include <Serenity/gui/render/renderer.h>
 #include <Serenity/gui/render/algorithm/building_blocks/bind_groups.h>
 
@@ -8,6 +9,8 @@ using namespace KDGpu;
 
 KDGpu::Handle<KDGpu::GpuSemaphore_t> all::serenity::StereoRenderAlgorithm::submitCommandBuffers(uint32_t frameInFlightIndex, const std::vector<KDGpu::Handle<KDGpu::GpuSemaphore_t>>& presentationCompleteSemaphores, KDGpu::Handle<KDGpu::Fence_t> frameFence)
 {
+    m_captureRecorder.clearCompletedCaptures(frameInFlightIndex);
+
     // Create a command recorder
     CommandRecorder commandRecorder = renderer()->device()->createCommandRecorder();
 
@@ -86,6 +89,11 @@ KDGpu::Handle<KDGpu::GpuSemaphore_t> all::serenity::StereoRenderAlgorithm::submi
 
         // End render pass
         renderPass.end();
+    }
+
+    // Capture Requested ?
+    if (m_captureRecorder.capturesRequested()) {
+        m_captureRecorder.recordCaptures(&commandRecorder, frameInFlightIndex);
     }
 
     // 2) Render offscreen content side by side + overlays on Window
@@ -359,4 +367,18 @@ void all::serenity::StereoRenderAlgorithm::overlayForStereo(KDGpu::CommandRecord
     renderPass.end();
 
     finalizeOverlaysAfterRecording(&commandRecorder, frameInFlightIndex);
+}
+
+void all::serenity::StereoRenderAlgorithm::Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
+{
+    m_captureRecorder.requestCapture({ offscreenMultiViewRenderTargetRefIndex(), [this, in](const uint8_t* data, uint32_t width, uint32_t height, Format format, const SubresourceLayout& layout) {
+                                          uint32_t arrayLayers = layout.rowPitch / (width * 4); // 4 bytes per pixel
+                                          std::unique_ptr<uint8_t[]> data_unpacked = std::make_unique_for_overwrite<uint8_t[]>(width * arrayLayers * height * 4);
+
+                                          for (size_t i = 0; i < height; i++) {
+                                              std::memcpy(data_unpacked.get() + i * width * 4 * arrayLayers, data + i * layout.rowPitch, width * 4 * arrayLayers);
+                                          }
+                                          // Save the image
+                                          in(data_unpacked.get(), width * arrayLayers, height);
+                                      } });
 }

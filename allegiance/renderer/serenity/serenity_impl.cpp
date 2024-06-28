@@ -1,8 +1,6 @@
 #include "serenity_impl.h"
-#include "serenity_impl.h"
 #include "stereo_proxy_camera.h"
 #include "window_extent_watcher.h"
-#include "serenity_stereo_graph.h"
 #include "picking_application_layer.h"
 #include "shared/cursor.h"
 
@@ -84,6 +82,12 @@ void all::serenity::SerenityImpl::SetCursorEnabled(bool enabled)
     m_pickingLayer->SetEnabled(enabled);
 }
 
+void all::serenity::SerenityImpl::Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
+{
+    assert(m_renderAlgorithm != nullptr);
+    m_renderAlgorithm->Screenshot(in);
+}
+
 glm::vec3 all::serenity::SerenityImpl::GetCursorWorldPosition() const
 {
     return glm::vec3();
@@ -119,9 +123,9 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     m_camera = rootEntity->createChildEntity<StereoProxyCamera>();
     // Create Render Algo
     auto algo = std::make_unique<all::serenity::StereoRenderAlgorithm>();
+    m_renderAlgorithm = algo.get();
 
     const uint32_t maxSupportedSwapchainArrayLayers = device.adapter()->swapchainProperties(m_window->GetSurface().handle()).capabilities.maxImageArrayLayers;
-
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
 
     m_cursor->ChangeCursor(m_scene_root, CursorType::Ball);
