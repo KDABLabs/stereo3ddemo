@@ -59,6 +59,19 @@ PageBase {
 
           onMoved: current => Camera.focusAngle = current
         }
+
+        SliderValue {
+          id: fov
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignTop
+          Layout.bottomMargin: 20
+          from: 30.0
+          to: 89.9
+          value: Camera.fov
+          title: "FOV"
+
+          onMoved: current => Camera.fov = current
+        }
       }
     }
 

@@ -144,6 +144,9 @@ public:
         QObject::connect(&qml.camera, &CameraController::OnFocusDistanceChanged, [this](float v) {
             camera.SetConvergencePlaneDistance(v);
         });
+        QObject::connect(&qml.camera, &CameraController::OnFOVChanged, [this](float v) {
+            camera.SetFov(v);
+        });
         QObject::connect(&qml.camera, &CameraController::OnEyeDistanceChanged, [this](float v) {
             camera.SetInterocularDistance(v);
         });

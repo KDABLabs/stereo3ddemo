@@ -142,6 +142,12 @@ public:
     {
         return fov_y;
     }
+    void SetFov(float fov)
+    {
+        fov_y = fov;
+        UpdateProjectionMatrix();
+    }
+
     float GetHorizontalFov() const
     {
         return glm::degrees(2.0f * std::atan(std::tan(glm::radians(fov_y / 2.0f)) * aspect_ratio));
@@ -153,9 +159,9 @@ private:
     glm::mat4x4 view_center;
     glm::mat4x4 camera_matrix = glm::identity<glm::mat4x4>();
     glm::mat4x4 projection;
-    const float fov_y{ 45 };
 
 private:
+    float fov_y{ 45 };
     float interocular_distance = 0.06f;
     float convergence_plane_distance = 10.0f;
     float near_plane = 0.1f;
