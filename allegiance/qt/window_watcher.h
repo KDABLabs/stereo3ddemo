@@ -3,11 +3,11 @@
 #include <QWindow>
 
 namespace all::qt {
-class WindowDestructionWatcher : public QObject
+class WindowEventWatcher : public QObject
 {
     Q_OBJECT
 public:
-    explicit WindowDestructionWatcher(Window* window)
+    explicit WindowEventWatcher(Window* window)
         : m_window(window)
     {
         qApp->installEventFilter(this);

@@ -52,12 +52,12 @@ public:
         spacemouse->SetUseUserPivot(true);
         auto* pnav_params = nav_params.get();
 
-        QObject::connect(&watcher, &WindowDestructionWatcher::OnClose,
+        QObject::connect(&watcher, &WindowEventWatcher::OnClose,
                          [this]() {
                              impl.reset();
                              app.quit();
                          });
-        QObject::connect(&watcher, &WindowDestructionWatcher::OnScroll,
+        QObject::connect(&watcher, &WindowEventWatcher::OnScroll,
                          [this](::QWheelEvent* e) {
                              camera.Zoom(e->angleDelta().y() / qml.scene.GetMouseSensitivity());
                          });
@@ -78,7 +78,7 @@ public:
                          [this]() {
                              app.postEvent(&wnd, new QCloseEvent);
                          });
-        QObject::connect(&watcher, &WindowDestructionWatcher::OnMouseEvent,
+        QObject::connect(&watcher, &WindowEventWatcher::OnMouseEvent,
                          [this, pnav_params](::QMouseEvent* e) {
                              static bool flipped = false;
 
@@ -214,7 +214,7 @@ private:
     all::qt::OrbitalStereoCamera camera;
     std::optional<Renderer> impl;
     Window wnd;
-    WindowDestructionWatcher watcher{ &wnd };
+    WindowEventWatcher watcher{ &wnd };
     std::optional<all::SpacemouseImpl> spacemouse;
 
     MouseTracker input;
