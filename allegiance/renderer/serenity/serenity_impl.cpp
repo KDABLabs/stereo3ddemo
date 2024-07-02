@@ -305,7 +305,7 @@ std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::CreateScene(Seren
 
     m_cursor.emplace(layers);
 
-    return std::move(rootEntity);
+    return rootEntity;
 }
 
 void all::serenity::SerenityImpl::updateRenderPhases()

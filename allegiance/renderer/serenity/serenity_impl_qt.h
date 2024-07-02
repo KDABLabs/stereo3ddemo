@@ -42,7 +42,7 @@ public:
         else if (event->button() == Qt::MiddleButton)
             button = KDGui::MiddleButton;
 
-        std::time_t timestamp = std::time(nullptr);
+        const std::time_t timestamp = std::time(nullptr);
 
         switch (event->type()) {
         case QEvent::MouseButtonPress:
