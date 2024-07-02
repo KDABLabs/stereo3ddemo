@@ -137,12 +137,13 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
         .surfaceHandle = m_window->GetSurface().handle(),
         .extentWatcher = std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
         .arrayLayers = std::min(2u, maxSupportedSwapchainArrayLayers), // Request 2 array layers for stereo (if possible)
-        .additionalUsageFlags = Serenity::RenderTargetUsageFlagBits::ShaderReadable,
+        .additionalUsageFlags = Serenity::RenderTargetUsageFlagBits::ShaderReadable | Serenity::RenderTargetUsageFlagBits::Capture,
     };
     Serenity::RenderTargetRef offscreenRenderTargetRef{
         .type = Serenity::RenderTargetRef::Type::Texture,
         .extentWatcher = std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
         .arrayLayers = 2, // Request 2 array layers
+        .additionalUsageFlags = Serenity::RenderTargetUsageFlagBits::Capture,
     };
 
     if (supportsStereoSwapchain) {
