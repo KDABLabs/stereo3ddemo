@@ -44,6 +44,8 @@ public:
 
     glm::vec3 GetCursorWorldPosition() const;
 
+    void OnMouseEvent(const KDFoundation::Event& event);
+
 protected:
     std::unique_ptr<Serenity::Entity> CreateScene(Serenity::LayerManager& layers);
 

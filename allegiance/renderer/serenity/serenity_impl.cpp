@@ -393,3 +393,12 @@ Serenity::StereoForwardAlgorithm::RenderPhase all::serenity::SerenityImpl::creat
 
     return phase;
 }
+
+void all::serenity::SerenityImpl::OnMouseEvent(const KDFoundation::Event& event)
+{
+    auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
+
+    // Forward Events to the Overlays
+    for (Serenity::AbstractOverlay* overlay : algo->overlays())
+        overlay->event(overlay, const_cast<KDFoundation::Event*>(&event));
+}

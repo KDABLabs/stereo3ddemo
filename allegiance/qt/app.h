@@ -133,6 +133,11 @@ public:
                              default:
                                  break;
                              }
+
+// Event Forwarding for Serenity
+#ifdef ALLEGIANCE_SERENITY
+                             impl->OnMouseEvent(e);
+#endif
                          });
 
         QObject::connect(&qwin, &QWindow::widthChanged, [this, &qwin](int width) {
