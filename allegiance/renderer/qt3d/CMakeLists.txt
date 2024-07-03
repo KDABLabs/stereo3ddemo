@@ -11,18 +11,6 @@ find_package(
                Qml
     REQUIRED
 )
-find_package(assimp QUIET)
-if(NOT assimp_FOUND)
-    FetchContent_Declare(
-        assimp
-        GIT_REPOSITORY https://github.com/assimp/assimp.git
-        GIT_TAG master
-    )
-
-    set(ASSIMP_WARNINGS_AS_ERRORS OFF)
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(assimp)
-endif()
 
 add_library(
     ${PROJECT_NAME} STATIC

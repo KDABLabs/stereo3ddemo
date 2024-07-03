@@ -1,5 +1,15 @@
 project(shared)
 
+FetchContent_Declare(
+    assimp
+    GIT_REPOSITORY https://github.com/assimp/assimp.git
+    GIT_TAG master
+)
+set(ASSIMP_WARNINGS_AS_ERRORS OFF)
+set(BUILD_SHARED_LIBS OFF)
+FetchContent_MakeAvailable(assimp)
+
+
 add_library(
     ${PROJECT_NAME} STATIC
 )
@@ -43,7 +53,7 @@ target_sources(
 
 target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC glm::glm
+    PUBLIC glm::glm assimp::assimp
 )
 target_include_directories(
     ${PROJECT_NAME}

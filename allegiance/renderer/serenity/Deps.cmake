@@ -17,15 +17,3 @@ if(NOT Serenity_FOUND)
     set(SERENITY_QT_QUICK_OVERLAY OFF)
     FetchContent_MakeAvailable(Serenity)
 endif()
-
-find_package(assimp QUIET)
-if(NOT assimp_FOUND)
-    FetchContent_Declare(
-        assimp
-        GIT_REPOSITORY https://github.com/assimp/assimp.git
-        GIT_TAG master
-    )
-    set(ASSIMP_WARNINGS_AS_ERRORS OFF)
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(assimp)
-endif()
