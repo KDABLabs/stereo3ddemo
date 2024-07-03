@@ -192,7 +192,7 @@ void all::serenity::CrossCursor::MakeCross(Serenity::Entity* ec, Serenity::Layer
     m_cross_mesh->setObjectName("Cursor Cross Mesh");
     m_cross_mesh->setVertices({ vertexBufferData });
     m_cross_mesh->setIndices(std::move(vindices));
-    m_cross_mesh->setVertexFormat(Serenity::VertexFormat{
+    m_cross_mesh->vertexFormat = Serenity::VertexFormat{
             .buffers = {
                     KDGpu::VertexBufferLayout{
                             .binding = 0,
@@ -204,7 +204,7 @@ void all::serenity::CrossCursor::MakeCross(Serenity::Entity* ec, Serenity::Layer
                     .format = KDGpu::Format::R32G32B32_SFLOAT,
                     .offset = 0,
             } },
-    });
+    };
 
     struct ColorData {
         float ambient[4];
