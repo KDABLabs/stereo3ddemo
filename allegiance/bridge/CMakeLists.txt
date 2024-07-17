@@ -1,9 +1,7 @@
 project(bridge)
 
-set(AUTO_STEREO_SHEAR 1)
 if(ALLEGIANCE_RENDERER STREQUAL "Qt3D")
     set(RENDER_IMPL qt3d_render)
-    set(AUTO_STEREO_SHEAR 0)
 elseif(ALLEGIANCE_RENDERER STREQUAL "Serenity")
     set(RENDER_IMPL serenity_render)
 else()
@@ -23,4 +21,3 @@ target_link_libraries(
     ${QT_TARGET_LIB}
     INTERFACE ${RENDER_IMPL}
 )
-target_compile_definitions(${QT_TARGET_LIB} INTERFACE AUTO_STEREO_SHEAR=${AUTO_STEREO_SHEAR})

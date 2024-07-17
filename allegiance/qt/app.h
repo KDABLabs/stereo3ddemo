@@ -33,7 +33,7 @@ public:
         app.setPalette(qml.style.palette());
 
         // Setup the camera
-        camera.SetShear(!AUTO_STEREO_SHEAR);
+        camera.SetShear(all::UseShearing);
         QObject::connect(&camera,
                          &all::qt::OrbitalStereoCamera::OnViewChanged,
                          [this]() {

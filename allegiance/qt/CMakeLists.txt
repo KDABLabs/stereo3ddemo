@@ -8,6 +8,7 @@ find_package(
                Gui
                QuickControls2
                Qml
+               3DExtras
     REQUIRED
 )
 qt_standard_project_setup()
