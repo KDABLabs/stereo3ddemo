@@ -52,7 +52,7 @@ PageBase {
           Layout.fillWidth: true
           Layout.alignment: Qt.AlignTop
           Layout.bottomMargin: 20
-          from: 30.0
+          from: 79.0
           to: 89.9
           value: Camera.focusAngle
           title: "Z Focus"
