@@ -35,7 +35,7 @@ public:
     void ProjectionChanged();
     void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
-    void LoadModel(std::filesystem::path path = "assets/gltf/showroom2303.gltf");
+    void LoadModel(std::filesystem::path path = "assets/motorbike.fbx");
     void SetCursorEnabled(bool /* enabled */);
 
     QWindow* GetWindow() { return &m_view; }
