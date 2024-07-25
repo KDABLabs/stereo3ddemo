@@ -45,6 +45,9 @@ PageBase {
           title: "Eye Separation"
 
           onMoved: current => Camera.eyeDistance = current
+
+          ToolTip.visible: eyesep.hovered
+          ToolTip.text: "F3 -  F12 +"
         }
 
         SliderValue {

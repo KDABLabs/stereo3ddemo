@@ -30,24 +30,38 @@ public:
     // Issue: unstable focus on camera control widget resizing
     void OnKeyPress(QKeyEvent* e)
     {
-        if (e->key() == Qt::Key_F11)
+        switch (e->key()) {
+        case Qt::Key_F11:
             setWindowState(isFullScreen() ? Qt::WindowNoState : Qt::WindowFullScreen);
-        if ((e->key() == Qt::Key_Return) && (e->modifiers() & Qt::AltModifier))
-            setWindowState(Qt::WindowFullScreen);
-        if (e->key() == Qt::Key_Escape)
+            break;
+        case Qt::Key_Return:
+            if (e->modifiers() & Qt::AltModifier)
+                setWindowState(isFullScreen() ? Qt::WindowNoState : Qt::WindowFullScreen);
+            break;
+        case Qt::Key_Escape:
             if (isFullScreen())
                 setWindowState(Qt::WindowNoState);
-        if (e->key() == Qt::Key_Space) {
+            break;
+        case Qt::Key_Space:
             cursor = !cursor;
-            if (!cursor)
-                setCursor(Qt::BlankCursor);
-            else
-                setCursor(Qt::ArrowCursor);
-        }
-        if (e->key() == Qt::Key_F1)
+            setCursor(cursor ? Qt::ArrowCursor : Qt::BlankCursor);
+            break;
+        case Qt::Key_F1:
             camera_control->Reload();
-        if (e->key() == Qt::Key_F2)
+            break;
+        case Qt::Key_F3:
+            OnEyeSeparation(false);
+            break;
+        case Qt::Key_F12:
+            OnEyeSeparation(true);
+            break;
+        case Qt::Key_F2:
             Q_EMIT OnScreenshot();
+            break;
+
+        default:
+            break;
+        }
     }
 
 private:
@@ -62,6 +76,7 @@ private:
 
 Q_SIGNALS:
     void OnClose();
+    void OnEyeSeparation(bool increase);
     void OnScreenshot();
 
 private:

@@ -12,6 +12,7 @@ Item {
   property alias from: slider.from
   property alias to: slider.to
   property alias value: slider.value
+  property alias hovered: slider.hovered
 
   signal moved(real fvalue)
 

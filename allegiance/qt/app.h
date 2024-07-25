@@ -110,10 +110,9 @@ public:
                                  if (e->buttons() & Qt::MouseButton::LeftButton) {
                                      input.is_pressed = true;
                                      input.skip_first = true;
-                                     if (input.cursor_changes_focus)
-                                     {
+                                     if (input.cursor_changes_focus) {
                                          auto pos = impl->GetCursorWorldPosition();
-                                         qml.camera.SetFocusDistance(std::clamp(glm::length(pos - camera.GetPosition()),0.5f, 100.f));
+                                         qml.camera.SetFocusDistance(std::clamp(glm::length(pos - camera.GetPosition()), 0.5f, 100.f));
                                      }
 
                                  } else if (e->buttons() & Qt::MouseButton::RightButton) {
@@ -199,6 +198,10 @@ public:
                 ResetCamera();
                 impl->LoadModel(fn.toStdString());
             }
+        });
+        QObject::connect(&wnd, &Window::OnEyeSeparation, [this](bool increased) {
+            float distance = qml.camera.EyeDistance() + increased ? 0.05f : -0.05f;
+            qml.camera.SetEyeDistance(std::clamp(distance, 0.01f, 0.5f));
         });
 
         // #if !ALLEGIANCE_SERENITY
