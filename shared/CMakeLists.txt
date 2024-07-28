@@ -6,6 +6,8 @@ FetchContent_Declare(
     GIT_TAG master
 )
 set(ASSIMP_WARNINGS_AS_ERRORS OFF)
+set(ASSIMP_BUILD_TESTS OFF)
+set(ASSIMP_BUILD_IFC_IMPORTER OFF)
 set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(assimp)
 
