@@ -1,6 +1,7 @@
 #pragma once
 #include <QUrl>
 #include <QObject>
+#include <QColor>
 #include <shared/cursor.h>
 
 class SceneController : public QObject
@@ -124,6 +125,7 @@ public:
     Q_PROPERTY(bool scalingEnabled READ ScalingEnabled WRITE SetScalingEnabled NOTIFY OnCursorScalingEnableChanged)
     Q_PROPERTY(float scaleFactor READ ScaleFactor WRITE SetScaleFactor NOTIFY OnCursorScaleChanged)
     Q_PROPERTY(bool cursorFocus READ CursorChangesFocus WRITE SetCursorChangesFocus NOTIFY OnCursorFocusChanged)
+    Q_PROPERTY(QColor color READ Color WRITE SetColor NOTIFY OnCursorColorChanged)
 public:
     CursorController(QObject* parent = nullptr)
         : QObject(parent)
@@ -159,6 +161,11 @@ public:
         m_scale_factor = scale_factor;
         OnCursorScaleChanged(scale_factor);
     }
+    void SetColor(QColor color)
+    {
+        m_color = color;
+        OnCursorColorChanged(color);
+    }
 
     bool ScalingEnabled() const noexcept
     {
@@ -167,6 +174,10 @@ public:
     float ScaleFactor() const noexcept
     {
         return m_scale_factor;
+    }
+    QColor Color() const noexcept
+    {
+        return m_color;
     }
 
     bool CursorChangesFocus() const noexcept
@@ -184,6 +195,7 @@ Q_SIGNALS:
     void OnCursorScaleChanged(float scale);
     void OnCursorScalingEnableChanged(bool enabled);
     void OnCursorFocusChanged(bool focus);
+    void OnCursorColorChanged(QColor color);
 
 private:
     bool m_visible = true;
@@ -191,4 +203,5 @@ private:
     bool m_cursor_focus = false;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
+    QColor m_color = QColor("lightyellow");
 };
