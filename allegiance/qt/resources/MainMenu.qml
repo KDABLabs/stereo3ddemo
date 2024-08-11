@@ -21,108 +21,103 @@ PageBase {
       }
     }
 
-    AccItem {
-      id: cameraGroup
-      title: "Camera"
+    GroupBox {
+      id: camera
+      label: Label {
+        text: "Camera"
+        font: Style.fontButton
+      }
       Layout.fillWidth: true
       Layout.alignment: Qt.AlignTop
-      GroupBox {
-        id: camera
+
+      ColumnLayout {
+        anchors.margins: 10
         anchors.left: parent.left
         anchors.right: parent.right
 
-        ColumnLayout {
-          anchors.margins: 10
-          anchors.left: parent.left
-          anchors.right: parent.right
+        SliderValue {
+          id: eyesep
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignTop
+          from: 0.01
+          to: 0.5
+          value: Camera.eyeDistance
+          title: "Eye Separation"
 
-          SliderValue {
-            id: eyesep
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            Layout.bottomMargin: 20
-            from: 0.01
-            to: 0.5
-            value: Camera.eyeDistance
-            title: "Eye Separation"
+          onMoved: current => Camera.eyeDistance = current
 
-            onMoved: current => Camera.eyeDistance = current
+          ToolTip.visible: eyesep.hovered
+          ToolTip.text: "F3 -  F12 +"
+        }
 
-            ToolTip.visible: eyesep.hovered
-            ToolTip.text: "F3 -  F12 +"
-          }
+        SliderValue {
+          id: focus
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignTop
+          Layout.bottomMargin: 20
+          from: 79.0
+          to: 89.9
+          value: Camera.focusAngle
+          title: "Z Focus"
 
-          SliderValue {
-            id: focus
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            Layout.bottomMargin: 20
-            from: 79.0
-            to: 89.9
-            value: Camera.focusAngle
-            title: "Z Focus"
+          onMoved: current => Camera.focusAngle = current
+        }
 
-            onMoved: current => Camera.focusAngle = current
-          }
+        SliderValue {
+          id: fov
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignTop
+          Layout.bottomMargin: 20
+          from: 30.0
+          to: 89.9
+          value: Camera.fov
+          title: "FOV"
 
-          SliderValue {
-            id: fov
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            Layout.bottomMargin: 20
-            from: 30.0
-            to: 89.9
-            value: Camera.fov
-            title: "FOV"
-
-            onMoved: current => Camera.fov = current
-          }
+          onMoved: current => Camera.fov = current
         }
       }
     }
 
-
-    AccItem {
-      id: cursorGroup
-      title: "Cursor"
+    GroupBox {
+      id: cursor
       Layout.fillWidth: true
       Layout.alignment: Qt.AlignTop
-      GroupBox {
-        id: cursor
+      label: Label {
+        text: "Cursor"
+        font: Style.fontButton
+      }
+      ColumnLayout {
+        anchors.margins: 10
         anchors.left: parent.left
         anchors.right: parent.right
-        ColumnLayout {
-          anchors.margins: 10
-          anchors.left: parent.left
-          anchors.right: parent.right
-          CheckBoxX {
-            text: "Cursor Visible"
-            initial: Cursor.visible
-            onChecked: bchecked => Cursor.visible = bchecked
-          }
-          Item {
-            visible: Cursor.visible
-            implicitWidth: cursorlayout.implicitWidth
-            implicitHeight: cursorlayout.implicitHeight
-            ColumnLayout {
-              id: cursorlayout
-              anchors.margins: 0
-              anchors.left: parent.left
-              anchors.right: parent.right
-              spacing: 10
+        CheckBoxX {
+          text: "Cursor Visible"
+          initial: Cursor.visible
+          onChecked: bchecked => Cursor.visible = bchecked
+        }
+        Item{
+          visible: Cursor.visible
+          implicitWidth: cursorlayout.implicitWidth
+          implicitHeight: cursorlayout.implicitHeight
+		      ColumnLayout {
+            id: cursorlayout
+			      anchors.margins: 0
+			      anchors.left: parent.left
+			      anchors.right: parent.right
+            spacing: 10
 
-              RowLayout {
+            RowLayout {
+              Layout.fillWidth: true
+              Layout.alignment: Qt.AlignTop
+              spacing: 10
+              Label {
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                spacing: 10
-                Label {
-                  Layout.fillWidth: true
-                  Layout.alignment: Qt.AlignHCenter
-                  text: "Cursor Type:"
-                  font: Style.fontDefault
-                }
-                ComboBox {
-                  model: [{
+                Layout.alignment: Qt.AlignHCenter
+                text: "Cursor Type:"
+                font: Style.fontDefault
+              }
+              ComboBox {
+                model: [{
                     value: Cursor.CursorType.Default,
                     text: "Default"
                   }, {
@@ -139,112 +134,107 @@ PageBase {
                   valueRole: "value"
                   currentIndex: Cursor.cursor
                   onCurrentIndexChanged: {
-                    if (currentIndex != -1 && Cursor.cursor != currentIndex)
-                    {
-                      Cursor.cursor = currentIndex;
-                    }
+                  if (currentIndex != -1 && Cursor.cursor != currentIndex) {
+                    Cursor.cursor = currentIndex;
                   }
                 }
               }
+            }
 
-              ColorDialog {
-                id: colorDialog
-                selectedColor: Cursor.color
-                onAccepted: Cursor.color = colorDialog.selectedColor
-              }
-              Rectangle {
-                id: colorRectangle
-                visible: Cursor.visible
-                Layout.fillWidth: true
-                height: 30
-                color: colorDialog.selectedColor
+            ColorDialog {
+              id: colorDialog
+              selectedColor: Cursor.color
+              onAccepted: Cursor.color = colorDialog.selectedColor
+            }
+            Rectangle {
+              visible: Cursor.visible
+              Layout.fillWidth: true
+              height: 30
+              color: colorDialog.selectedColor
 
-                MouseArea {
-                  anchors.fill: parent
-                  onClicked: colorDialog.open()
-                }
+              MouseArea {
+                anchors.fill: parent
+                onClicked: colorDialog.open()
               }
+            }
 
-              CheckBoxX {
-                visible: Cursor.visible
-                text: "Cursor Scaling"
-                initial: Cursor.scalingEnabled
-                onChecked: bchecked => Cursor.scalingEnabled = bchecked
-              }
-              SliderValue {
-                id: scalefactor
-                visible: Cursor.scalingEnabled
-                Layout.fillWidth: true
-                Layout.alignment: Qt.AlignTop
-                from: 0.1
-                to: 2.0
-                value: Cursor.scaleFactor
-                title: "Scale Factor"
-                onMoved: current => Cursor.scaleFactor = current
-              }
+            CheckBoxX {
+              visible: Cursor.visible
+              text: "Cursor Scaling"
+              initial: Cursor.scalingEnabled
+              onChecked: bchecked => Cursor.scalingEnabled = bchecked
+            }
+            SliderValue {
+              id: scalefactor
+    		      visible: Cursor.scalingEnabled
+              Layout.fillWidth: true
+              Layout.alignment: Qt.AlignTop
+              from: 0.1
+              to: 2.0
+              value: Cursor.scaleFactor
+              title: "Scale Factor"
+              onMoved: current => Cursor.scaleFactor = current
+            }
 
-              CheckBoxX {
-                visible: Cursor.visible
-                text: "Cursor Focus"
-                initial: Cursor.cursorFocus
-                onChecked: bchecked => Cursor.cursorFocus = bchecked
-              }
+            CheckBoxX {
+              visible: Cursor.visible
+              text: "Cursor Focus"
+              initial: Cursor.cursorFocus
+              onChecked: bchecked => Cursor.cursorFocus = bchecked
             }
           }
         }
       }
     }
 
-    AccItem {
-      id: navigationGroup
-      title: "Navigation"
-      Layout.fillWidth: true
-      Layout.alignment: Qt.AlignTop
-      GroupBox {
+    GroupBox {
         id: navigation
-        anchors.left: parent.left
-        anchors.right: parent.right
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        label: Label {
+            text: "Navigation"
+            font: Style.fontButton
+        }
 
         ColumnLayout {
-          anchors.margins: 10
-          anchors.left: parent.left
-          anchors.right: parent.right
-          spacing: 10
-
-          SliderValue {
-            id: mousesensitivity
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            from: 20
-            to: 300
-            value: Scene.mouseSensitivity
-            title: "Mouse Sensitivity"
-
-            onMoved: current => Scene.mouseSensitivity = current
-          }
-/*      Still needs to be implemented on Application Side
-          Item {
-            Layout.fillWidth: true
-            height: 30
             anchors.margins: 10
-            Button {
-              anchors.left: parent.left
-              anchors.top: parent.top
-              anchors.topMargin: 10
-              anchors.bottomMargin: 10
-              text: "Reset Pivot Point"
+            anchors.left: parent.left
+            anchors.right: parent.right
+            spacing: 10
+
+            SliderValue {
+                id: mousesensitivity
+                Layout.fillWidth: true
+                Layout.alignment: Qt.AlignTop
+                from: 20
+                to: 300
+                value: Scene.mouseSensitivity
+                title: "Mouse Sensitivity"
+
+                onMoved: current => Scene.mouseSensitivity = current
             }
-            Button {
-              anchors.top: parent.top
-              anchors.right: parent.right
-              anchors.topMargin: 10
-              anchors.bottomMargin: 10
-              text: "Reset Camera Position"
+/*      Still needs to be implemented on Application Side
+            Item {
+                Layout.fillWidth: true
+                height: 30
+                anchors.margins: 10
+                Button {
+                    anchors.left: parent.left
+                    anchors.top: parent.top
+                    anchors.topMargin: 10
+                    anchors.bottomMargin: 10
+                    text: "Reset Pivot Point"
+                }
+                Button {
+                    anchors.top: parent.top
+                    anchors.right: parent.right
+                    anchors.topMargin: 10
+                    anchors.bottomMargin: 10
+                    text: "Reset Camera Position"
+                }
             }
-          }
  */
         }
-      }
     }
   }
 }
