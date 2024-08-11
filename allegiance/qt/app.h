@@ -192,9 +192,6 @@ public:
         QObject::connect(&qml.cursor, &CursorController::OnCursorFocusChanged, [this](bool enabled) {
             input.cursor_changes_focus = enabled;
         });
-        QObject::connect(&qml.cursor, &CursorController::OnCursorColorChanged, [this](QColor color) {
-            impl->OnPropertyChanged("cursor_color", color);
-        });
         QObject::connect(&qml.scene, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(&wnd, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
             if (!fn.isEmpty()) {

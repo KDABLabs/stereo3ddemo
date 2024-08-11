@@ -141,23 +141,6 @@ PageBase {
               }
             }
 
-            ColorDialog {
-              id: colorDialog
-              selectedColor: Cursor.color
-              onAccepted: Cursor.color = colorDialog.selectedColor
-            }
-            Rectangle {
-              visible: Cursor.visible
-              Layout.fillWidth: true
-              height: 30
-              color: colorDialog.selectedColor
-
-              MouseArea {
-                anchors.fill: parent
-                onClicked: colorDialog.open()
-              }
-            }
-
             CheckBoxX {
               visible: Cursor.visible
               text: "Cursor Scaling"
