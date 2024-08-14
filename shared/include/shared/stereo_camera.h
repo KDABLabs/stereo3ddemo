@@ -35,6 +35,12 @@ public:
     }
     float GetConvergencePlaneDistance() const noexcept { return convergence_plane_distance; }
 
+    void SetFlipped(bool flipped) noexcept
+    {
+        this->flipped = flipped;
+        UpdateViewMatrix();
+    }
+
     void SetNearPlane(float distance) noexcept
     {
         near_plane = distance;
@@ -96,7 +102,8 @@ public:
 
     float ShearCoefficient() const noexcept
     {
-        return converge_on_near * interocular_distance * 0.5f / convergence_plane_distance;
+        float coef = converge_on_near * interocular_distance * 0.5f / convergence_plane_distance;
+        return flipped ? -coef : coef;
     }
     void SetShear(bool shear) noexcept
     {
@@ -169,6 +176,7 @@ private:
     float aspect_ratio = 1.0f;
     bool converge_on_near = true;
     bool shear = true;
+    bool flipped = false;
 };
 
 class OrbitalStereoCamera : public StereoCamera

@@ -75,6 +75,11 @@ PageBase {
 
           onMoved: current => Camera.fov = current
         }
+        CheckBoxX {
+          text: "Eyes Flipped"
+          initial: Camera.flipped
+          onChecked: bchecked => Camera.flipped = bchecked
+        }
       }
     }
 

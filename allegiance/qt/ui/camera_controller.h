@@ -36,6 +36,7 @@ class CameraController : public QObject
     Q_PROPERTY(float focusDistance READ FocusDistance WRITE SetFocusDistance NOTIFY OnFocusDistanceChanged)
     Q_PROPERTY(float focusAngle READ FocusAngle WRITE SetFocusAngle NOTIFY OnFocusAngleChanged)
     Q_PROPERTY(float fov READ FOV WRITE SetFOV NOTIFY OnFOVChanged)
+    Q_PROPERTY(bool flipped READ Flipped WRITE SetFlipped NOTIFY OnFlippedChanged)
 
 public:
     CameraController(QObject* parent = nullptr)
@@ -93,17 +94,29 @@ public:
     {
         return m_fov;
     }
+
+    void SetFlipped(bool flipped) noexcept
+    {
+        m_flipped = flipped;
+        OnFlippedChanged(flipped);
+    }
+    bool Flipped() const noexcept
+    {
+        return m_flipped;
+    }
 Q_SIGNALS:
     void OnEyeDistanceChanged(float eyeDistance);
     void OnFocusDistanceChanged(float focusDistance);
     void OnFocusAngleChanged(float focusAngle);
     void OnFOVChanged(float fov);
+    void OnFlippedChanged(bool flipped);
 
 private:
     float m_eyeDistance = 0.06f;
     float m_focusDistance = 10.0f;
     float m_focusAngle = 80.0f;
     float m_fov = 60.0f;
+    bool m_flipped = false;
 };
 
 class CursorController : public QObject
