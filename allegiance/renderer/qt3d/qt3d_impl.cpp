@@ -146,10 +146,13 @@ void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
 {
     m_sceneEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
     m_sceneEntity->setObjectName("SceneEntity");
+    m_sceneEntity->addComponent(m_renderer->sceneLayer());
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
 
     m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->GetLeftCamera(), &m_view, m_stereoCamera);
+    m_cursor->setObjectName("CursorEntity");
+    m_cursor->addComponent(m_renderer->cursorLayer());
     m_cursor->setType(CursorType::Ball);
     m_picker = new Picker(m_sceneEntity, m_cursor);
     LoadModel();
@@ -168,6 +171,7 @@ void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
         l->setWorldDirection(QVector3D{} - lt->translation());
         le->addComponent(lt);
         le->addComponent(l);
+        le->addComponent(m_renderer->sceneLayer());
         le->setParent(m_rootEntity.get());
     }
 

@@ -22,14 +22,17 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     , m_leftLayer(new Qt3DRender::QLayer(this))
     , m_rightLayer(new Qt3DRender::QLayer(this))
     , m_stereoImageLayer(new Qt3DRender::QLayer(this))
+    , m_sceneLayer(new Qt3DRender::QLayer(this))
+    , m_cursorLayer(new Qt3DRender::QLayer(this))
 {
+    m_sceneLayer->setObjectName(QStringLiteral("SceneLayer"));
+    m_sceneLayer->setRecursive(true);
+    m_cursorLayer->setObjectName(QStringLiteral("CursorLayer"));
+    m_cursorLayer->setRecursive(true);
+
     auto vp = new Qt3DRender::QViewport();
 
     // Frame graph sub branch for the 3D scene
-    auto* clearBuffers = new Qt3DRender::QClearBuffers();
-    clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
-    clearBuffers->setClearColor(QColor{ "#48536A" });
-
     auto renderStateSet = new Qt3DRender::QRenderStateSet();
 
     auto cullFace = new Qt3DRender::QCullFace(renderStateSet);
@@ -70,6 +73,27 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         rts->setTarget(rt);
         rts->setParent(cameraSelector);
 
+        auto* clearBuffers = new Qt3DRender::QClearBuffers();
+        clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
+        clearBuffers->setClearColor(QColor{ "#48536A" });
+
+        auto *noDraw = new Qt3DRender::QNoDraw();
+        noDraw->setParent(clearBuffers);
+
+        auto* sceneLayerFilter = new Qt3DRender::QLayerFilter();
+        sceneLayerFilter->setObjectName("SceneLayerFilter");
+        sceneLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
+        sceneLayerFilter->addLayer(m_sceneLayer);
+
+        auto* cursorLayerFilter = new Qt3DRender::QLayerFilter();
+        cursorLayerFilter->setObjectName("CursorLayerFilter");
+        cursorLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
+        cursorLayerFilter->addLayer(m_cursorLayer);
+
+        clearBuffers->setParent(rts);
+        sceneLayerFilter->setParent(rts);
+        cursorLayerFilter->setParent(rts);
+
         return cameraSelector;
     };
 
@@ -80,8 +104,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
 
     // Hierarchy
     vp->setParent(this);
-    clearBuffers->setParent(vp);
-    sortPolicy->setParent(clearBuffers);
+    sortPolicy->setParent(vp);
     renderStateSet->setParent(sortPolicy);
     m_leftLayerFilter->setParent(renderStateSet);
     m_leftCamera->setParent(m_leftLayerFilter);
@@ -89,7 +112,11 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     m_rightCamera->setParent(m_rightLayerFilter);
 
 #ifdef QT_DEBUG
-    (void)new Qt3DRender::QDebugOverlay(m_rightCamera);
+    auto *debugOverlay = new Qt3DRender::QDebugOverlay();
+    auto *noDraw = new Qt3DRender::QNoDraw();
+    noDraw->setParent(debugOverlay);
+    debugOverlay->setParent(m_rightCamera);
+
 // To dump out FrameGraph tree to console:
 // CMakeLists.txt:    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::3DExtras Qt6::3DRenderPrivate)
 // Add    #include <Qt3DRender/private/qframegraphnode_p.h>

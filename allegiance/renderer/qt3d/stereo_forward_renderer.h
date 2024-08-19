@@ -44,6 +44,16 @@ public:
         return m_stereoImageLayer;
     }
 
+    Qt3DRender::QLayer* sceneLayer() const
+    {
+        return m_sceneLayer;
+    }
+
+    Qt3DRender::QLayer* cursorLayer() const
+    {
+        return m_cursorLayer;
+    }
+
     void setMode(Mode mode);
 
     void setCamera(QStereoProxyCamera* newCamera);
@@ -58,6 +68,8 @@ private:
     Qt3DRender::QLayer* m_leftLayer;
     Qt3DRender::QLayer* m_rightLayer;
     Qt3DRender::QLayer* m_stereoImageLayer;
+    Qt3DRender::QLayer* m_sceneLayer;
+    Qt3DRender::QLayer* m_cursorLayer;
     Qt3DRender::QNoDraw* m_sceneNoDraw;
     Qt3DRender::QNoDraw* m_stereoImageNoDraw;
     QStereoProxyCamera* m_camera;
