@@ -21,7 +21,6 @@ target_include_directories(
 target_sources(
     ${PROJECT_NAME}
     PUBLIC "serenity_window.h"
-           "serenity_impl_qt.h"
            "serenity_impl.h"
            "mesh_loader.h"
            "window_extent_watcher.h"
@@ -36,6 +35,27 @@ target_sources(
             "serenity_impl.cpp"
             "cursor.cpp"
 )
+
+
+if (BUILD_SERENITY_RENDERER_QT)
+    target_sources(
+        ${PROJECT_NAME}
+        PUBLIC
+               "serenity_impl_qt.h"
+               "serenity_qt.h"
+    )
+endif()
+
+if (BUILD_SERENITY_RENDERER_KDGUI)
+    target_sources(
+        ${PROJECT_NAME}
+        PUBLIC
+               "serenity_impl_kdgui.h"
+               "serenity_kdgui.h"
+    )
+endif()
+
+
 
 target_link_libraries(
     ${PROJECT_NAME}
