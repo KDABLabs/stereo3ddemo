@@ -194,8 +194,6 @@ all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* 
 
     m_raycaster->setEnabled(true);
     scene->addComponent(m_raycaster);
-    m_raycaster->setEnabled(true);
-    scene->addComponent(m_raycaster);
 }
 
 void all::qt3d::CursorEntity::setType(CursorType type)
