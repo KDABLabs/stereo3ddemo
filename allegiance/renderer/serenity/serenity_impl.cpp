@@ -67,6 +67,9 @@ void all::serenity::SerenityImpl::OnPropertyChanged(std::string_view name, std::
         m_pickingLayer->SetScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
         m_pickingLayer->SetTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->GetTransform());
+    } else if (name == "camera_mode") {
+        m_cameraMode = std::any_cast<CameraMode>(value);
+        ViewChanged();
     }
 }
 
@@ -95,7 +98,20 @@ glm::vec3 all::serenity::SerenityImpl::GetCursorWorldPosition() const
 
 void all::serenity::SerenityImpl::ViewChanged()
 {
-    m_camera->SetMatrices(camera.GetViewLeft(), camera.GetViewRight(), camera.GetViewCenter());
+    switch (m_cameraMode) {
+    case CameraMode::Mono:
+        m_camera->SetMatrices(camera.GetViewCenter(), camera.GetViewCenter(), camera.GetViewCenter());
+        break;
+    case CameraMode::Stereo:
+        m_camera->SetMatrices(camera.GetViewLeft(), camera.GetViewRight(), camera.GetViewCenter());
+        break;
+    case CameraMode::Left:
+        m_camera->SetMatrices(camera.GetViewLeft(), camera.GetViewLeft(), camera.GetViewCenter());
+        break;
+    case CameraMode::Right:
+        m_camera->SetMatrices(camera.GetViewRight(), camera.GetViewRight(), camera.GetViewCenter());
+        break;
+    }
 }
 
 void all::serenity::SerenityImpl::ProjectionChanged()
@@ -335,7 +351,7 @@ Serenity::StereoForwardAlgorithm::RenderPhase all::serenity::SerenityImpl::creat
         LayerFilterType::AcceptAll
     };
 
-    DepthStencilState depthState ;
+    DepthStencilState depthState;
     depthState.depthTestEnabled = true;
     depthState.depthWritesEnabled = true;
     depthState.depthCompareOperation = KDGpu::CompareOperation::Less;

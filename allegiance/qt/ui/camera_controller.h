@@ -2,6 +2,7 @@
 #include <QUrl>
 #include <QObject>
 #include <shared/cursor.h>
+#include <shared/stereo_camera.h>
 
 class SceneController : public QObject
 {
@@ -32,12 +33,21 @@ protected:
 class CameraController : public QObject
 {
     Q_OBJECT
+public:
+    enum class CameraMode {
+        Stereo = int(all::CameraMode::Stereo),
+        Mono = int(all::CameraMode::Mono),
+        Left = int(all::CameraMode::Left),
+        Right = int(all::CameraMode::Right)
+    };
+    Q_ENUM(CameraMode);
+
     Q_PROPERTY(float eyeDistance READ EyeDistance WRITE SetEyeDistance NOTIFY OnEyeDistanceChanged)
     Q_PROPERTY(float focusDistance READ FocusDistance WRITE SetFocusDistance NOTIFY OnFocusDistanceChanged)
     Q_PROPERTY(float focusAngle READ FocusAngle WRITE SetFocusAngle NOTIFY OnFocusAngleChanged)
     Q_PROPERTY(float fov READ FOV WRITE SetFOV NOTIFY OnFOVChanged)
     Q_PROPERTY(bool flipped READ Flipped WRITE SetFlipped NOTIFY OnFlippedChanged)
-
+    Q_PROPERTY(CameraMode cameraMode READ GetCameraMode WRITE SetCameraMode NOTIFY OnCameraModeChanged)
 public:
     CameraController(QObject* parent = nullptr)
         : QObject(parent)
@@ -104,14 +114,26 @@ public:
     {
         return m_flipped;
     }
+
+    void SetCameraMode(CameraMode mode) noexcept
+    {
+        m_cameraMode = mode;
+        OnCameraModeChanged(mode);
+    }
+    CameraMode GetCameraMode() const noexcept
+    {
+        return m_cameraMode;
+    }
 Q_SIGNALS:
     void OnEyeDistanceChanged(float eyeDistance);
     void OnFocusDistanceChanged(float focusDistance);
     void OnFocusAngleChanged(float focusAngle);
     void OnFOVChanged(float fov);
     void OnFlippedChanged(bool flipped);
+    void OnCameraModeChanged(CameraMode mode);
 
 private:
+    CameraMode m_cameraMode = CameraMode::Stereo;
     float m_eyeDistance = 0.06f;
     float m_focusDistance = 10.0f;
     float m_focusAngle = 80.0f;

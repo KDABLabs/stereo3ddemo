@@ -5,6 +5,8 @@
 #include "cursor.h"
 #include <any>
 
+#include <shared/stereo_camera.h>
+
 // #include <ui/camera_controller.h>
 
 namespace all {
@@ -79,6 +81,8 @@ protected:
     Serenity::Entity* m_model{ nullptr };
     Serenity::Entity* m_scene_root{ nullptr };
     all::StereoCamera& camera;
+    all::CameraMode m_cameraMode{ all::CameraMode::Stereo };
+
     std::shared_ptr<all::ModelNavParameters> m_navParams;
 
     // Camera

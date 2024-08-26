@@ -180,6 +180,9 @@ public:
         QObject::connect(&qml.camera, &CameraController::OnEyeDistanceChanged, [this](float v) {
             camera.SetInterocularDistance(v);
         });
+        QObject::connect(&qml.camera, &CameraController::OnCameraModeChanged, [this](CameraController::CameraMode v) {
+            impl->OnPropertyChanged("camera_mode", all::CameraMode(v));
+        });
         QObject::connect(&qml.cursor, &CursorController::OnCursorVisibilityChanged, [this](bool checked) {
             impl->SetCursorEnabled(checked);
         });

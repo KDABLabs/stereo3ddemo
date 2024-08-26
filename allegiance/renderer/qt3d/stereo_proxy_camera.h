@@ -28,7 +28,7 @@ public:
     void SetPositionAndForward(const QVector3D& position, const QQuaternion& rotation);
 
     void SetMatrices(const QMatrix4x4& left, const QMatrix4x4& right);
-    void SetProjection(const QMatrix4x4& proj, qreal skew);
+    void SetProjection(const QMatrix4x4& proj, qreal skew, bool same = false);
 
 private:
     Qt3DCore::QEntity* m_leftCamera;

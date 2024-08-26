@@ -40,10 +40,10 @@ void all::qt3d::QStereoProxyCamera::SetMatrices(const QMatrix4x4& left, const QM
     m_rightTransform->setMatrix(right.inverted());
 }
 
-void all::qt3d::QStereoProxyCamera::SetProjection(const QMatrix4x4& proj, qreal skew)
+void all::qt3d::QStereoProxyCamera::SetProjection(const QMatrix4x4& proj, qreal skew, bool same)
 {
     QMatrix4x4 m;
-    m(0, 2) = -skew;
+    m(0, 2) = same ? skew : -skew;
     m_leftCameraLens->setProjectionMatrix(m * proj);
     m(0, 2) = skew;
     m_rightCameraLens->setProjectionMatrix(m * proj);

@@ -80,13 +80,39 @@ all::qt3d::Qt3DImpl::~Qt3DImpl()
 
 void all::qt3d::Qt3DImpl::ViewChanged()
 {
-    m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewLeft()), toQMatrix4x4(m_stereoCamera->GetViewRight()));
+    switch (m_cameraMode) {
+    case CameraMode::Stereo:
+        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewLeft()), toQMatrix4x4(m_stereoCamera->GetViewRight()));
+        break;
+    case CameraMode::Right:
+        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewRight()), toQMatrix4x4(m_stereoCamera->GetViewRight()));
+        break;
+    case CameraMode::Left:
+        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewLeft()), toQMatrix4x4(m_stereoCamera->GetViewLeft()));
+        break;
+    case CameraMode::Mono:
+        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewCenter()), toQMatrix4x4(m_stereoCamera->GetViewCenter()));
+        break;
+    }
     ProjectionChanged();
 }
 
 void all::qt3d::Qt3DImpl::ProjectionChanged()
 {
-    m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), m_stereoCamera->ShearCoefficient());
+    switch (m_cameraMode) {
+    case CameraMode::Mono:
+        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), 0);
+        break;
+    case CameraMode::Stereo:
+        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), m_stereoCamera->ShearCoefficient());
+        break;
+    case CameraMode::Right:
+        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), m_stereoCamera->ShearCoefficient(), true);
+        break;
+    case CameraMode::Left:
+        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), -m_stereoCamera->ShearCoefficient(), true);
+        break;
+    }
 }
 
 void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
@@ -197,6 +223,9 @@ void all::qt3d::Qt3DImpl::OnPropertyChanged(std::string_view name, std::any valu
         m_cursor->setScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
         m_cursor->setType(std::any_cast<CursorType>(value));
+    } else if (name == "camera_mode") {
+        m_cameraMode = std::any_cast<CameraMode>(value);
+        ViewChanged();
     }
 }
 
@@ -342,12 +371,9 @@ void all::qt3d::Qt3DImpl::LoadModel(std::filesystem::path path)
 
 void all::qt3d::Qt3DImpl::SetCursorEnabled(bool enabled)
 {
-    if (enabled)
-    {
+    if (enabled) {
         m_cursor->setScaleFactor(cursor_scale);
-    }
-    else
-    {
+    } else {
         cursor_scale = m_cursor->getScaleFactor();
         m_cursor->setScaleFactor(0);
     }

@@ -75,6 +75,40 @@ PageBase {
 
           onMoved: current => Camera.fov = current
         }
+        RowLayout {
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignTop
+          spacing: 10
+          Label {
+            Layout.fillWidth: true 
+            Layout.alignment: Qt.AlignHCenter
+            text: "Stereo Mode:"
+            font: Style.fontDefault
+          }
+          ComboBox {
+            model: [{
+                value: Camera.CameraMode.Stereo,
+                text: "Stereo"
+              }, {
+                value: Camera.CameraMode.Mono,
+                text: "Mono"
+              }, {
+                value: Camera.CameraMode.Left,
+                text: "Left Eye"
+              }, {
+                value: Camera.CameraMode.Right,
+                text: "Right Eye"
+              }]
+            textRole: "text"
+            valueRole: "value"
+            currentIndex: Camera.cameraMode
+            onCurrentIndexChanged: {
+              if (currentIndex != -1 && Camera.cameraMode != currentIndex) {
+                Camera.cameraMode = currentIndex;
+              }
+            }
+          }
+        }
         CheckBoxX {
           text: "Eyes Flipped"
           initial: Camera.flipped
@@ -136,7 +170,7 @@ PageBase {
               onMoved: current => Cursor.scaleFactor = current
             }
             
-            RowLayout {
+          RowLayout {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
             spacing: 10

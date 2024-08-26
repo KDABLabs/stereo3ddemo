@@ -6,6 +6,7 @@
 #include <QVector2D>
 #include <QUrl>
 #include <ui/camera_controller.h>
+#include <shared/stereo_camera.h>
 
 #include <filesystem>
 #include <any>
@@ -86,6 +87,7 @@ private:
     CursorEntity* m_cursor;
     float cursor_scale = 1.0f;
     all::StereoCamera* m_stereoCamera;
+    all::CameraMode m_cameraMode = all::CameraMode::Stereo;
 
     Picker* m_picker;
     std::shared_ptr<all::ModelNavParameters> m_nav_params;

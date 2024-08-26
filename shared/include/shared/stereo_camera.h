@@ -5,6 +5,13 @@
 #include <algorithm>
 
 namespace all {
+// The camera is always stereo, this enum is used to determine which eye to render
+enum class CameraMode {
+    Stereo,
+    Mono,
+    Left,
+    Right
+};
 class StereoCamera
 {
 public:
