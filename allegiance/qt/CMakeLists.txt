@@ -26,6 +26,7 @@ qt_add_qml_module(
     "resources/CheckBoxX.qml"
     "resources/MainMenu.qml"
     "resources/PageBase.qml"
+    "resources/CursorMenu.qml"
     "resources/SliderValue.qml"
 )
 

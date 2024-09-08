@@ -1,5 +1,5 @@
 <RCC>
-    <qresource prefix="resources">
+    <qresource prefix="/resources">
         <file>checked.svg</file>
         <file>unchecked.svg</file>
         <file>ButtonX.qml</file>
@@ -8,5 +8,6 @@
         <file>MainMenu.qml</file>
         <file>PageBase.qml</file>
         <file>SliderValue.qml</file>
+        <file>CursorMenu.qml</file>
     </qresource>
 </RCC>
