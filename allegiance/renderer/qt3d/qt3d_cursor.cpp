@@ -1,9 +1,14 @@
 #include "qt3d_cursor.h"
+#include "qt3d_cursor.h"
+#include "qt3d_cursor.h"
+#include "qt3d_cursor.h"
+#include "qt3d_cursor.h"
 #include "shared/stereo_camera.h"
 #include "util_qt.h"
 
 #include <glm/ext/matrix_projection.hpp>
 #include <Qt3DExtras/QCuboidMesh>
+#include <Qt3DExtras/QDiffuseSpecularMaterial>
 #include <Qt3DExtras/QSphereMesh>
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QPlaneMesh>
@@ -41,10 +46,11 @@ CursorBillboard::CursorBillboard(QNode* parent)
     m_plane = new Qt3DExtras::QPlaneMesh;
     addComponent(m_plane);
 
-    auto m = new Qt3DExtras::QTextureMaterial;
+    auto m = new Qt3DExtras::QDiffuseSpecularMaterial;
     auto tex = new Qt3DRender::QTextureLoader{};
     tex->setSource(QUrl("qrc:/cursor_billboard.png"));
-    m->setTexture(tex);
+    m->setAmbient(Qt::white);
+    m->setDiffuse(QVariant::fromValue(tex));
     m->setAlphaBlendingEnabled(true);
     m_material = m;
     addComponent(m_material);
@@ -99,7 +105,12 @@ void CursorBillboard::setTexture(CursorTexture texture)
         break;
     }
 
-    m_material->setTexture(tex);
+    m_material->setDiffuse(QVariant::fromValue(tex));
+}
+
+void all::qt3d::CursorBillboard::setCursorTintColor(const QColor& color)
+{
+    m_material->setAmbient(color);
 }
 
 CursorSphere::CursorSphere(QNode* parent)
@@ -112,7 +123,13 @@ CursorSphere::CursorSphere(QNode* parent)
     material->setShininess(100.0);
     material->setDiffuse(QColor("lightyellow"));
     material->setAmbient(QColor("lightyellow"));
+    m_material = material;
     addComponent(material);
+}
+
+void all::qt3d::CursorSphere::setCursorTintColor(const QColor& color)
+{
+    m_material->setAmbient(color);
 }
 
 CursorCross::CursorCross(QNode* parent)
@@ -147,6 +164,12 @@ CursorCross::CursorCross(QNode* parent)
     c1Entity->addComponent(material);
     c2Entity->addComponent(material);
     c3Entity->addComponent(material);
+    m_material = material;
+}
+
+void all::qt3d::CursorCross::setCursorTintColor(const QColor& color)
+{
+    m_material->setAmbient(color);
 }
 
 all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, all::StereoCamera* pCamera)
@@ -224,6 +247,13 @@ void all::qt3d::CursorEntity::setType(CursorType type)
         m_cross->setEnabled(false);
         break;
     }
+}
+
+void all::qt3d::CursorEntity::setCursorTintColor(const QColor& color)
+{
+    m_billboard->setCursorTintColor(color);
+    m_sphere->setCursorTintColor(color);
+    m_cross->setCursorTintColor(color);
 }
 
 void all::qt3d::CursorEntity::setPosition(const QVector3D& positionInScene)

@@ -13,6 +13,11 @@ namespace all::serenity {
 class CursorBase : public Serenity::Entity
 {
 public:
+    struct ColorData {
+        float ambient[4];
+    };
+
+public:
     CursorBase()
     {
         m_transform = createComponent<Serenity::SrtTransform>();
@@ -23,6 +28,7 @@ public:
     {
         return m_transform;
     }
+    virtual void SetColor(const ColorData& colorData) { }
 
 protected:
     Serenity::SrtTransform* m_transform;
@@ -40,11 +46,14 @@ public:
 protected:
     void MakeBall(Serenity::Entity* ec, Serenity::LayerManager& layers);
     void MakeBillboard(Serenity::Entity* ec, Serenity::LayerManager& layers);
+    void SetColor(const ColorData& colorData);
 
 protected:
     std::unique_ptr<Serenity::Mesh> m_bb_mesh;
     std::unique_ptr<Serenity::Mesh> m_ball_mesh;
     std::unique_ptr<Serenity::Texture2D> m_texture;
+    Serenity::DynamicUniformBuffer* m_cbuf = nullptr;
+    Serenity::DynamicUniformBuffer* m_bb_cbuf = nullptr;
 };
 
 class CrossCursor : public CursorBase
@@ -55,11 +64,15 @@ public:
         MakeCross(this, layers);
     }
 
+public:
+    void SetColor(const ColorData& colorData) override;
+
 protected:
     void MakeCross(Serenity::Entity* ec, Serenity::LayerManager& layers);
 
 protected:
     std::unique_ptr<Serenity::Mesh> m_cross_mesh;
+    Serenity::DynamicUniformBuffer* m_cbuf = nullptr;
 };
 
 class Cursor
@@ -72,6 +85,9 @@ public:
     auto ChangeCursor(Serenity::Entity* parent, CursorType cursor) noexcept
     {
         if (m_currentType == cursor)
+            return m_currentCursor;
+
+        if (cursor > CursorType::Cross) // not implemented
             return m_currentCursor;
 
         size_t index = static_cast<size_t>(cursor);
@@ -89,6 +105,7 @@ public:
 
         m_currentCursor = (CursorBase*)parent->addChildEntity(std::move(m_cursors[index]));
         m_currentType = cursor;
+        m_currentCursor->SetColor(m_colorData);
         return m_currentCursor;
     }
 
@@ -96,10 +113,16 @@ public:
     {
         return m_currentCursor->GetTransform();
     }
+    void SetColor(const CursorBase::ColorData& colorData)
+    {
+        m_colorData = colorData;
+        m_currentCursor->SetColor(colorData);
+    }
 
 private:
     std::vector<std::unique_ptr<Serenity::Entity>> m_cursors;
     CursorBase* m_currentCursor = nullptr;
     CursorType m_currentType = CursorType(-1);
+    CursorBase::ColorData m_colorData = { { 1.0f, 1.0f, 1.0f, 1.0f } };
 };
 } // namespace all::serenity

@@ -1,5 +1,6 @@
 #include "cursor.h"
-#include "cursor.h"
+#include <ranges>
+#include <algorithm>
 
 constexpr std::array<glm::vec3, 24> cross_vertices(float width, float height, float depth)
 {
@@ -103,6 +104,7 @@ all::serenity::Cursor::Cursor(Serenity::LayerManager& layers)
     m_cursors.push_back(std::make_unique<CrossCursor>(layers));
 
     m_currentCursor = (CursorBase*)m_cursors[0].get();
+    SetColor(m_colorData);
 }
 
 void all::serenity::BallCursor::MakeBall(Serenity::Entity* ec, Serenity::LayerManager& layers)
@@ -115,27 +117,13 @@ void all::serenity::BallCursor::MakeBall(Serenity::Entity* ec, Serenity::LayerMa
     m_ball_mesh->setObjectName("Cursor Mesh");
     Serenity::MeshGenerators::sphereGenerator(m_ball_mesh.get(), 24, 24, 1.0f);
 
-    struct ColorData {
-        float ambient[4];
-    };
-    const Serenity::Material::UboDataBuilder materialDataBuilder[] = {
-        [](uint32_t set, uint32_t binding) {
-            const ColorData data{
-                { 1.0f, 1.0f, 1.0f, 1.0f },
-            };
-            std::vector<uint8_t> rawData(sizeof(ColorData));
-            std::memcpy(rawData.data(), &data, sizeof(ColorData));
-            return rawData;
-        },
-    };
-
-    Serenity::StaticUniformBuffer* cbuf = ec->createChild<Serenity::StaticUniformBuffer>();
+    Serenity::DynamicUniformBuffer* cbuf = ec->createChild<Serenity::DynamicUniformBuffer>();
     cbuf->size = sizeof(ColorData);
+    m_cbuf = cbuf;
 
     Serenity::Material* material = ec->createChild<Serenity::Material>();
     material->shaderProgram = shader_ball;
     material->setUniformBuffer(3, 0, cbuf);
-    material->setUniformBufferDataBuilder(materialDataBuilder[0]);
 
     auto cmodel = ec->createComponent<Serenity::MeshRenderer>();
     cmodel->mesh = m_ball_mesh.get();
@@ -165,11 +153,27 @@ void all::serenity::BallCursor::MakeBillboard(Serenity::Entity* ec, Serenity::La
     m_texture->setPath("assets/cursor_billboard.png");
     material->setTexture(4, 0, m_texture.get());
 
+    Serenity::DynamicUniformBuffer* cbuf = ec->createChild<Serenity::DynamicUniformBuffer>();
+    cbuf->size = sizeof(ColorData);
+    m_bb_cbuf = cbuf;
+    material->setUniformBuffer(3, 0, cbuf);
+
     auto cmodel = ec->createComponent<Serenity::MeshRenderer>();
     cmodel->mesh = m_bb_mesh.get();
     cmodel->material = material;
 
     ec->layerMask = layers.layerMask({ "Alpha" });
+}
+
+void all::serenity::BallCursor::SetColor(const ColorData& colorData)
+{
+    m_cbuf->data = std::vector<uint8_t>{ (uint8_t*)&colorData, (uint8_t*)&colorData + sizeof(colorData) };
+    m_bb_cbuf->data = std::vector<uint8_t>{ (uint8_t*)&colorData, (uint8_t*)&colorData + sizeof(colorData) };
+}
+
+void all::serenity::CrossCursor::SetColor(const ColorData& colorData)
+{
+    m_cbuf->data = std::vector<uint8_t>{ (uint8_t*)&colorData, (uint8_t*)&colorData + sizeof(colorData) };
 }
 
 void all::serenity::CrossCursor::MakeCross(Serenity::Entity* ec, Serenity::LayerManager& layers)
@@ -193,40 +197,26 @@ void all::serenity::CrossCursor::MakeCross(Serenity::Entity* ec, Serenity::Layer
     m_cross_mesh->setVertices({ vertexBufferData });
     m_cross_mesh->setIndices(std::move(vindices));
     m_cross_mesh->vertexFormat = Serenity::VertexFormat{
-            .buffers = {
-                    KDGpu::VertexBufferLayout{
-                            .binding = 0,
-                            .stride = sizeof(glm::vec3),
-                    } },
-            .attributes = { KDGpu::VertexAttribute{
-                    .location = 0,
-                    .binding = 0,
-                    .format = KDGpu::Format::R32G32B32_SFLOAT,
-                    .offset = 0,
-            } },
+        .buffers = {
+                KDGpu::VertexBufferLayout{
+                        .binding = 0,
+                        .stride = sizeof(glm::vec3),
+                } },
+        .attributes = { KDGpu::VertexAttribute{
+                .location = 0,
+                .binding = 0,
+                .format = KDGpu::Format::R32G32B32_SFLOAT,
+                .offset = 0,
+        } },
     };
 
-    struct ColorData {
-        float ambient[4];
-    };
-    const Serenity::Material::UboDataBuilder materialDataBuilder[] = {
-        [](uint32_t set, uint32_t binding) {
-            const ColorData data{
-                { 1.0f, 1.0f, 1.0f, 1.0f },
-            };
-            std::vector<uint8_t> rawData(sizeof(ColorData));
-            std::memcpy(rawData.data(), &data, sizeof(ColorData));
-            return rawData;
-        },
-    };
-
-    Serenity::StaticUniformBuffer* cbuf = ec->createChild<Serenity::StaticUniformBuffer>();
+    Serenity::DynamicUniformBuffer* cbuf = ec->createChild<Serenity::DynamicUniformBuffer>();
     cbuf->size = sizeof(ColorData);
+    m_cbuf = cbuf;
 
     Serenity::Material* material = ec->createChild<Serenity::Material>();
     material->shaderProgram = shader_ball;
     material->setUniformBuffer(3, 0, cbuf);
-    material->setUniformBufferDataBuilder(materialDataBuilder[0]);
 
     auto cmodel = ec->createComponent<Serenity::MeshRenderer>();
     cmodel->mesh = m_cross_mesh.get();

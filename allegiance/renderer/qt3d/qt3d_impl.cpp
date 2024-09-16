@@ -226,6 +226,9 @@ void all::qt3d::Qt3DImpl::OnPropertyChanged(std::string_view name, std::any valu
     } else if (name == "camera_mode") {
         m_cameraMode = std::any_cast<CameraMode>(value);
         ViewChanged();
+    } else if (name == "cursor_color") {
+        auto color = std::any_cast<std::array<float, 4>>(value);
+        m_cursor->setCursorTintColor(QColor::fromRgbF(color[0], color[1], color[2], color[3]));
     }
 }
 

@@ -70,7 +70,45 @@ GroupBox {
             }
           }
         }
+
         // Cursor Color
+        RowLayout{
+          id: colorlayout
+          Layout.fillWidth: true
+          Layout.alignment: Qt.AlignTop
+          spacing: 10
+          Label {
+            //Layout.fillWidth: true 
+            Layout.alignment: Qt.AlignHCenter
+            text: "Cursor Color:"
+            font: Style.fontDefault
+          }
+          Button {
+            id: button
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.alignment: Qt.AlignTop
+
+            background: Rectangle {
+              id: rect
+              color: Cursor.cursorTint
+              border.color: Style.link
+              border.width: 2
+              radius: 2
+              Behavior on color {
+                ColorAnimation {
+                  duration: 200
+                }
+              }
+            }
+            onClicked: colorDialog.open()
+          }
+          ColorDialog {
+              id: colorDialog
+              selectedColor: Cursor.cursorTint
+              onAccepted: Cursor.cursorTint = selectedColor
+          }
+        }
 
         // Cursor Scaling
         CheckBoxX {

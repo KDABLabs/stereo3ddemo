@@ -1,7 +1,6 @@
 #pragma once
 #include <Qt3DCore/QEntity>
 #include <Qt3DRender/QObjectPicker>
-#include <Qt3DExtras/QTextureMaterial>
 #include <QMatrix4x4>
 
 #include <QScreenRayCaster>
@@ -18,6 +17,8 @@ class QCameraLens;
 namespace Qt3DExtras {
 class QPlaneMesh;
 class Qt3DWindow;
+class QDiffuseSpecularMaterial;
+class QPhongMaterial;
 } // namespace Qt3DExtras
 namespace Qt3DCore {
 class QTransform;
@@ -38,11 +39,12 @@ public:
 
     void setRotation(const QQuaternion& rotation);
     void setTexture(CursorTexture texture);
+    void setCursorTintColor(const QColor& color);
 
 protected:
     Qt3DCore::QTransform* m_transform;
     Qt3DExtras::QPlaneMesh* m_plane;
-    Qt3DExtras::QTextureMaterial* m_material;
+    Qt3DExtras::QDiffuseSpecularMaterial* m_material;
     QMatrix4x4 m_matrix;
 };
 
@@ -50,12 +52,24 @@ class CursorSphere : public Qt3DCore::QEntity
 {
 public:
     CursorSphere(QNode* parent = nullptr);
+
+public:
+    void setCursorTintColor(const QColor& color);
+
+private:
+    Qt3DExtras::QPhongMaterial* m_material;
 };
 
 class CursorCross : public Qt3DCore::QEntity
 {
 public:
     CursorCross(QNode* parent = nullptr);
+
+public:
+    void setCursorTintColor(const QColor& color);
+
+private:
+    Qt3DExtras::QPhongMaterial* m_material;
 };
 
 class CursorEntity : public Qt3DCore::QEntity
@@ -69,6 +83,8 @@ public:
     void setCamera(const QEntity* camera);
 
     void setType(CursorType type);
+
+    void setCursorTintColor(const QColor& color);
 
 public:
     void onMouseMoveEvent(QVector3D pos, QPoint  cursorPosition);

@@ -159,6 +159,7 @@ public:
     Q_PROPERTY(bool scalingEnabled READ ScalingEnabled WRITE SetScalingEnabled NOTIFY OnCursorScalingEnableChanged)
     Q_PROPERTY(float scaleFactor READ ScaleFactor WRITE SetScaleFactor NOTIFY OnCursorScaleChanged)
     Q_PROPERTY(bool cursorFocus READ CursorChangesFocus WRITE SetCursorChangesFocus NOTIFY OnCursorFocusChanged)
+    Q_PROPERTY(QColor cursorTint READ CursorTint WRITE SetCursorTint NOTIFY OnCursorTintChanged)
 public:
     CursorController(QObject* parent = nullptr)
         : QObject(parent)
@@ -213,12 +214,24 @@ public:
         m_cursor_focus = focus;
         OnCursorFocusChanged(focus);
     }
+
+    void SetCursorTint(QColor color) noexcept
+    {
+        m_tint = color;
+        OnCursorTintChanged(color);
+    }
+    QColor CursorTint() const noexcept
+    {
+        return m_tint;
+    }
+
 Q_SIGNALS:
     void OnCursorVisibilityChanged(bool state);
     void OnCursorChanged(all::CursorType cursorType);
     void OnCursorScaleChanged(float scale);
     void OnCursorScalingEnableChanged(bool enabled);
     void OnCursorFocusChanged(bool focus);
+    void OnCursorTintChanged(QColor color);
 
 private:
     bool m_visible = true;
@@ -226,4 +239,5 @@ private:
     bool m_cursor_focus = false;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
+    QColor m_tint = QColor(255, 255, 255);
 };

@@ -192,6 +192,10 @@ public:
         QObject::connect(&qml.cursor, &CursorController::OnCursorScaleChanged, [this](float scale) {
             impl->OnPropertyChanged("scale_factor", scale);
         });
+        QObject::connect(&qml.cursor, &CursorController::OnCursorTintChanged, [this](const QColor& color) {
+            std::array<float, 4> c = { color.redF(), color.greenF(), color.blueF(), color.alphaF() };
+            impl->OnPropertyChanged("cursor_color", c);
+        });
         QObject::connect(&qml.cursor, &CursorController::OnCursorScalingEnableChanged, [this](bool enabled) {
             impl->OnPropertyChanged("scaling_enabled", enabled);
         });
