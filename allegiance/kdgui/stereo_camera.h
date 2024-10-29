@@ -17,7 +17,11 @@ template<typename Camera>
 class BasicStereoCamera : public StereoCameraBase, public Camera
 {
 public:
-    BasicStereoCamera() noexcept = default;
+    BasicStereoCamera() noexcept
+        : Camera(all::StereoCamera::API::Vulkan)
+    {
+    }
+
     operator Camera*() noexcept
     {
         return static_cast<Camera*>(this);

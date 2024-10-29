@@ -16,6 +16,7 @@ include(CMakeDependentOption)
 
 find_program(FLUTTER_EXE flutter)
 
+option(BUILD_UNIT_TESTS "Build Unit Tests" ON)
 option(BUILD_QT_UI "Build Qt UI" ON)
 cmake_dependent_option(BUILD_QT3D_RENDERER "Build Qt3D renderer" ON "BUILD_QT_UI" OFF)
 
@@ -50,6 +51,10 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets)
 
 add_subdirectory(shared)
 add_subdirectory(allegiance)
+
+if (BUILD_UNIT_TESTS)
+    add_subdirectory(tests)
+endif()
 
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 set(CPACK_COMPONENTS_ALL applications)

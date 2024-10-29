@@ -12,10 +12,17 @@ enum class CameraMode {
     Left,
     Right
 };
+
 class StereoCamera
 {
 public:
-    StereoCamera()
+    enum class API {
+        OpenGL,
+        Vulkan,
+    };
+
+    explicit StereoCamera(API api)
+        : m_api(api)
     {
         UpdateViewMatrix();
         UpdateProjectionMatrix();
@@ -109,7 +116,9 @@ public:
 
     float ShearCoefficient() const noexcept
     {
-        float coef = converge_on_near * interocular_distance * 0.5f / convergence_plane_distance;
+        if (!converge_on_near)
+            return 0.0f;
+        float coef = interocular_distance * 0.5f / convergence_plane_distance;
         return flipped ? -coef : coef;
     }
     void SetShear(bool shear) noexcept
@@ -143,7 +152,13 @@ public:
     }
     virtual void UpdateProjectionMatrix() noexcept
     {
-        projection = glm::perspective(glm::radians(fov_y), aspect_ratio, near_plane, far_plane);
+        // Note: for OpenGL depth range is expected to be in [-1, 1] perspectiveRH_NO
+        // Unlike Vulkan which expects depth range to be in [0, 1] perspectiveRH_ZO
+        if (m_api == API::OpenGL) {
+            projection = glm::perspectiveRH_NO(glm::radians(fov_y), aspect_ratio, near_plane, far_plane);
+        } else {
+            projection = glm::perspectiveRH_ZO(glm::radians(fov_y), aspect_ratio, near_plane, far_plane);
+        }
     }
 
     void SetCameraMatrix(const glm::mat4x4& viewMatrix)
@@ -184,12 +199,14 @@ private:
     bool converge_on_near = true;
     bool shear = true;
     bool flipped = false;
+    const API m_api;
 };
 
 class OrbitalStereoCamera : public StereoCamera
 {
 public:
-    OrbitalStereoCamera()
+    OrbitalStereoCamera(StereoCamera::API api)
+        : StereoCamera(api)
     {
         UpdateViewMatrix2();
     }
