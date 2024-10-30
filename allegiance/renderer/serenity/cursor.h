@@ -52,8 +52,8 @@ protected:
     std::unique_ptr<Serenity::Mesh> m_bb_mesh;
     std::unique_ptr<Serenity::Mesh> m_ball_mesh;
     std::unique_ptr<Serenity::Texture2D> m_texture;
-    Serenity::DynamicUniformBuffer* m_cbuf = nullptr;
-    Serenity::DynamicUniformBuffer* m_bb_cbuf = nullptr;
+    Serenity::StaticUniformBuffer* m_cbuf = nullptr;
+    Serenity::StaticUniformBuffer* m_bb_cbuf = nullptr;
 };
 
 class CrossCursor : public CursorBase
@@ -72,7 +72,7 @@ protected:
 
 protected:
     std::unique_ptr<Serenity::Mesh> m_cross_mesh;
-    Serenity::DynamicUniformBuffer* m_cbuf = nullptr;
+    Serenity::StaticUniformBuffer* m_cbuf = nullptr;
 };
 
 class Cursor

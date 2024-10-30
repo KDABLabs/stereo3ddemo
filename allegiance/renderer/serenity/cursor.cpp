@@ -117,7 +117,8 @@ void all::serenity::BallCursor::MakeBall(Serenity::Entity* ec, Serenity::LayerMa
     m_ball_mesh->setObjectName("Cursor Mesh");
     Serenity::MeshGenerators::sphereGenerator(m_ball_mesh.get(), 24, 24, 1.0f);
 
-    Serenity::DynamicUniformBuffer* cbuf = ec->createChild<Serenity::DynamicUniformBuffer>();
+    Serenity::StaticUniformBuffer* cbuf = ec->createChild<Serenity::StaticUniformBuffer>();
+
     cbuf->size = sizeof(ColorData);
     m_cbuf = cbuf;
 
@@ -153,7 +154,7 @@ void all::serenity::BallCursor::MakeBillboard(Serenity::Entity* ec, Serenity::La
     m_texture->setPath("assets/cursor_billboard.png");
     material->setTexture(4, 0, m_texture.get());
 
-    Serenity::DynamicUniformBuffer* cbuf = ec->createChild<Serenity::DynamicUniformBuffer>();
+    Serenity::StaticUniformBuffer* cbuf = ec->createChild<Serenity::StaticUniformBuffer>();
     cbuf->size = sizeof(ColorData);
     m_bb_cbuf = cbuf;
     material->setUniformBuffer(3, 0, cbuf);
@@ -210,7 +211,7 @@ void all::serenity::CrossCursor::MakeCross(Serenity::Entity* ec, Serenity::Layer
         } },
     };
 
-    Serenity::DynamicUniformBuffer* cbuf = ec->createChild<Serenity::DynamicUniformBuffer>();
+    Serenity::StaticUniformBuffer* cbuf = ec->createChild<Serenity::StaticUniformBuffer>();
     cbuf->size = sizeof(ColorData);
     m_cbuf = cbuf;
 
