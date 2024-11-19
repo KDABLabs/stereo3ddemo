@@ -373,12 +373,12 @@ void all::serenity::StereoRenderAlgorithm::Screenshot(const std::function<void(c
 {
     m_captureRecorder.requestCapture({ offscreenMultiViewRenderTargetRefIndex(), [this, in](const uint8_t* data, uint32_t width, uint32_t height, Format format, const SubresourceLayout& layout) {
                                           uint32_t arrayLayers = layout.rowPitch / (width * 4); // 4 bytes per pixel
-                                          std::unique_ptr<uint8_t[]> data_unpacked = std::make_unique_for_overwrite<uint8_t[]>(width * arrayLayers * height * 4);
+                                          std::vector<uint8_t> data_unpacked(width * arrayLayers * height * 4);
 
                                           for (size_t i = 0; i < height; i++) {
-                                              std::memcpy(data_unpacked.get() + i * width * 4 * arrayLayers, data + i * layout.rowPitch, width * 4 * arrayLayers);
+                                              std::memcpy(data_unpacked.data() + i * width * 4 * arrayLayers, data + i * layout.rowPitch, width * 4 * arrayLayers);
                                           }
                                           // Save the image
-                                          in(data_unpacked.get(), width * arrayLayers, height);
+                                          in(data_unpacked.data(), width * arrayLayers, height);
                                       } });
 }
