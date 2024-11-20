@@ -43,7 +43,7 @@ Serenity::ImGui::Overlay* createImGuiOverlay(all::serenity::SerenityWindow* w, A
 
 #ifdef FLUTTER_UI_ASSET_DIR
 
-Serenity::Flutter::Overlay *createFlutterOverlay(all::serenity::SerenityWindow* w, StereoForwardAlgorithm* algo)
+Serenity::Flutter::Overlay* createFlutterOverlay(all::serenity::SerenityWindow* w, StereoForwardAlgorithm* algo)
 {
     auto flutterOverlay = algo->createChild<Serenity::Flutter::Overlay>();
 
@@ -90,12 +90,12 @@ void all::serenity::SerenityImpl::OnPropertyChanged(std::string_view name, std::
         m_pickingLayer->SetTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->GetTransform());
     } else if (name == "camera_mode") {
         m_cameraMode = std::any_cast<CameraMode>(value);
-        ViewChanged();
+        viewChanged();
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->SetColor(CursorBase::ColorData{
                 .ambient = { color[0], color[1], color[2], color[3] },
-            });
+        });
     }
 }
 
@@ -122,30 +122,30 @@ glm::vec3 all::serenity::SerenityImpl::GetCursorWorldPosition() const
     return glm::vec3();
 }
 
-void all::serenity::SerenityImpl::ViewChanged()
+void all::serenity::SerenityImpl::viewChanged()
 {
     switch (m_cameraMode) {
     case CameraMode::Mono:
-        m_camera->SetMatrices(camera.GetViewCenter(), camera.GetViewCenter(), camera.GetViewCenter());
+        m_camera->setMatrices(camera.viewCenter(), camera.viewCenter(), camera.viewCenter());
         break;
     case CameraMode::Stereo:
-        m_camera->SetMatrices(camera.GetViewLeft(), camera.GetViewRight(), camera.GetViewCenter());
+        m_camera->setMatrices(camera.viewLeft(), camera.viewRight(), camera.viewCenter());
         break;
     case CameraMode::Left:
-        m_camera->SetMatrices(camera.GetViewLeft(), camera.GetViewLeft(), camera.GetViewCenter());
+        m_camera->setMatrices(camera.viewLeft(), camera.viewLeft(), camera.viewCenter());
         break;
     case CameraMode::Right:
-        m_camera->SetMatrices(camera.GetViewRight(), camera.GetViewRight(), camera.GetViewCenter());
+        m_camera->setMatrices(camera.viewRight(), camera.viewRight(), camera.viewCenter());
         break;
     }
 }
 
-void all::serenity::SerenityImpl::ProjectionChanged()
+void all::serenity::SerenityImpl::projectionChanged()
 {
-    m_camera->lens()->setPerspectiveProjection(camera.GetFov(),
-                                               camera.GetAspectRatio(),
-                                               camera.GetNearPlane(),
-                                               camera.GetFarPlane());
+    m_camera->lens()->setPerspectiveProjection(camera.fov(),
+                                               camera.aspectRatio(),
+                                               camera.nearPlane(),
+                                               camera.farPlane());
 }
 
 void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
@@ -217,16 +217,14 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     algo->camera = m_camera;
     algo->msaaSamples = Serenity::RenderAlgorithm::SamplesCount::Samples_4;
 
-    auto *imguiOverlay = createImGuiOverlay(m_window.get(), &m_engine, algo.get());
+    auto* imguiOverlay = createImGuiOverlay(m_window.get(), &m_engine, algo.get());
 
 #ifdef FLUTTER_UI_ASSET_DIR
-    auto *flutterOverlay = createFlutterOverlay(m_window.get(), algo.get());
+    auto* flutterOverlay = createFlutterOverlay(m_window.get(), algo.get());
     algo->overlays = { imguiOverlay, flutterOverlay };
 #else
     algo->overlays = { imguiOverlay };
 #endif
-
-
 
     m_renderAspect->setRenderAlgorithm(std::move(algo));
 

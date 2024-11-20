@@ -16,19 +16,19 @@ public:
     QStereoProxyCamera(Qt3DCore::QNode* parent = nullptr);
 
 public:
-    Qt3DCore::QEntity* GetLeftCamera() const
+    Qt3DCore::QEntity* leftCamera() const
     {
         return m_leftCamera;
     }
-    Qt3DCore::QEntity* GetRightCamera() const
+    Qt3DCore::QEntity* rightCamera() const
     {
         return m_rightCamera;
     }
 
-    void SetPositionAndForward(const QVector3D& position, const QQuaternion& rotation);
+    void setPositionAndForward(const QVector3D& position, const QQuaternion& rotation);
 
-    void SetMatrices(const QMatrix4x4& left, const QMatrix4x4& right);
-    void SetProjection(const QMatrix4x4& proj, qreal skew, bool same = false);
+    void setMatrices(const QMatrix4x4& left, const QMatrix4x4& right);
+    void setProjection(const QMatrix4x4& proj, qreal skew, bool same = false);
 
 private:
     Qt3DCore::QEntity* m_leftCamera;

@@ -27,7 +27,8 @@ using namespace all::qt3d;
 using namespace Qt3DRender;
 
 // Function to convert screen coordinates to world coordinates
-static glm::vec3 screenToWorld(const QPoint& cursorPos, const QSize& frameSize, const QMatrix4x4& viewMatrix, const QMatrix4x4& projectionMatrix) {
+static glm::vec3 screenToWorld(const QPoint& cursorPos, const QSize& frameSize, const QMatrix4x4& viewMatrix, const QMatrix4x4& projectionMatrix)
+{
     // Convert cursor position to NDC
     float x = (2.0f * cursorPos.x()) / frameSize.width() - 1.0f;
     float y = 1.0f - (2.0f * cursorPos.y()) / frameSize.height();
@@ -36,7 +37,7 @@ static glm::vec3 screenToWorld(const QPoint& cursorPos, const QSize& frameSize, 
     glm::vec4 rayView(x, y, -1.0f, 1.0f);
 
     // Convert view space to world space
-    glm::vec4 rayWorld = glm::inverse(toGlmMat4x4(viewMatrix) * toGlmMat4x4(projectionMatrix))*(rayView);
+    glm::vec4 rayWorld = glm::inverse(toGlmMat4x4(viewMatrix) * toGlmMat4x4(projectionMatrix)) * (rayView);
     return glm::normalize(glm::vec3(rayWorld));
 }
 
@@ -75,7 +76,6 @@ void CursorBillboard::setRotation(const QQuaternion& rotation)
     right0.normalize();
 
     auto r0 = QQuaternion::rotationTo(right, right0);
-
 
     QMatrix4x4 x = m_matrix;
 
@@ -193,7 +193,7 @@ all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* 
     m_sphere = new CursorSphere{ this };
     m_cross = new CursorCross{ this };
 
-    m_raycaster = new Qt3DRender::QScreenRayCaster{scene};
+    m_raycaster = new Qt3DRender::QScreenRayCaster{ scene };
     m_raycaster->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
     connect(m_raycaster, &QRayCaster::hitsChanged,
             [this, pCamera](const Qt3DRender::QRayCaster::Hits& hits) {
@@ -205,10 +205,10 @@ all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* 
                     auto frame = m_window->frameGeometry();
                     auto cursorPos = m_window->mapFromGlobal(m_window->cursor().pos());
                     auto unv = glm::unProject(glm::vec3(cursorPos.x(), frame.height() - cursorPos.y(), 1.0f),
-                                              pCamera->GetViewCenter(),
-                                              pCamera->GetProjection(),
-                                              glm::vec4{frame.x(), frame.y(), frame.width(), frame.height()});
-                    auto pos= glm::inverse(pCamera->GetViewCenter()) * glm::vec4(0, 0, 0, 1);
+                                              pCamera->viewCenter(),
+                                              pCamera->projection(),
+                                              glm::vec4{ frame.x(), frame.y(), frame.width(), frame.height() });
+                    auto pos = glm::inverse(pCamera->viewCenter()) * glm::vec4(0, 0, 0, 1);
                     setPosition(toQVector3D(glm::vec3(pos) + 0.1f * (unv - glm::vec3(pos))));
                     return;
                 }
@@ -307,7 +307,7 @@ void all::qt3d::CursorEntity::updateSize()
 }
 void CursorEntity::onMouseMoveEvent(QVector3D pos, QPoint cursorPosition)
 {
-        this->m_raycaster->trigger(cursorPosition);
+    this->m_raycaster->trigger(cursorPosition);
 }
 
 all::qt3d::Picker::Picker(Qt3DCore::QEntity* parent, CursorEntity* cursor)

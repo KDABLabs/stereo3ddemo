@@ -43,13 +43,13 @@ long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 {
     auto m = toGlmMat(matrix);
     // qCDebug(spcmsView) << "setting app camera matrix to " << m;
-    m_camera->SetCameraMatrix(m);
+    m_camera->setCameraMatrix(m);
     return 0;
 }
 
 long CNavigationModel::GetCameraMatrix(navlib::matrix_t& matrix) const
 {
-    auto m = m_camera->GetCameraMatrix();
+    auto m = m_camera->cameraMatrix();
     // qCDebug(spcmsView) << "setting SpcMouse Camera Matrix to " << m;
     matrix = toNavlibMatrix(m);
     return 0;
@@ -107,19 +107,19 @@ long CNavigationModel::GetViewExtents(navlib::box_t& extents) const
 
 long CNavigationModel::GetViewFOV(double& fov) const
 {
-    fov = glm::radians(m_camera->GetFov());
+    fov = glm::radians(m_camera->fov());
     // qCDebug(spcms) << "GetViewFoV " << fov;
     return 0;
 }
 
 long CNavigationModel::GetViewFrustum(navlib::frustum_t& frustum) const
 {
-    float verticalFieldOfView = m_camera->GetFov(), // in degrees,
-            aspectRatio = m_camera->GetAspectRatio(),
-          nearPlane = m_camera->GetNearPlane(), farPlane = m_camera->GetFarPlane();
+    const float verticalFieldOfView = m_camera->fov(); // in degrees,
+    const float aspectRatio = m_camera->aspectRatio();
+    const float nearPlane = m_camera->nearPlane(), farPlane = m_camera->farPlane();
 
-    float halfVerticalFOV = DegreesToRadians(verticalFieldOfView) / 2.0f;
-    float halfHorizontalFOV = atanf(tanf(halfVerticalFOV) * aspectRatio);
+    const float halfVerticalFOV = glm::radians(verticalFieldOfView) / 2.0f;
+    const float halfHorizontalFOV = atanf(tanf(halfVerticalFOV) * aspectRatio);
 
     // Calculate frustum parameters
     frustum.top = nearPlane * tanf(halfVerticalFOV);

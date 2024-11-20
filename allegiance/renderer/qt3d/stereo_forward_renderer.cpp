@@ -77,7 +77,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
         clearBuffers->setClearColor(QColor{ "#48536A" });
 
-        auto *noDraw = new Qt3DRender::QNoDraw();
+        auto* noDraw = new Qt3DRender::QNoDraw();
         noDraw->setParent(clearBuffers);
 
         auto* sceneLayerFilter = new Qt3DRender::QLayerFilter();
@@ -112,8 +112,8 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     m_rightCamera->setParent(m_rightLayerFilter);
 
 #ifdef QT_DEBUG
-    auto *debugOverlay = new Qt3DRender::QDebugOverlay();
-    auto *noDraw = new Qt3DRender::QNoDraw();
+    auto* debugOverlay = new Qt3DRender::QDebugOverlay();
+    auto* noDraw = new Qt3DRender::QNoDraw();
     noDraw->setParent(debugOverlay);
     debugOverlay->setParent(m_rightCamera);
 
@@ -149,7 +149,7 @@ void all::qt3d::QStereoForwardRenderer::setCamera(QStereoProxyCamera* newCamera)
     Q_EMIT cameraChanged();
 
     if (m_camera) {
-        m_leftCamera->setCamera(m_camera->GetLeftCamera());
-        m_rightCamera->setCamera(m_camera->GetRightCamera());
+        m_leftCamera->setCamera(m_camera->leftCamera());
+        m_rightCamera->setCamera(m_camera->rightCamera());
     }
 }

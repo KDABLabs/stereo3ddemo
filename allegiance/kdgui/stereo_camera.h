@@ -8,8 +8,8 @@ namespace all::kdgui {
 class StereoCameraBase
 {
 public:
-    KDBindings::Signal<bool> OnViewChanged;
-    KDBindings::Signal<bool> OnProjectionChanged;
+    KDBindings::Signal<bool> viewChanged;
+    KDBindings::Signal<bool> projectionChanged;
 };
 
 template<typename Camera>
@@ -28,15 +28,15 @@ public:
     }
 
 public:
-    virtual void UpdateViewMatrix() noexcept override
+    virtual void updateViewMatrix() noexcept override
     {
-        Camera::UpdateViewMatrix();
-        OnViewChanged.emit(true);
+        Camera::updateViewMatrix();
+        viewChanged.emit(true);
     }
-    virtual void UpdateProjectionMatrix() noexcept override
+    virtual void updateProjectionMatrix() noexcept override
     {
-        Camera::UpdateProjectionMatrix();
-        OnProjectionChanged.emit(true);
+        Camera::updateProjectionMatrix();
+        projectionChanged.emit(true);
     }
 };
 

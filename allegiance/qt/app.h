@@ -48,15 +48,15 @@ public:
         app.setPalette(qml.style.palette());
 
         // Setup the camera
-        camera.SetShear(all::UseShearing);
+        camera.setShear(all::UseShearing);
         QObject::connect(&camera,
-                         &all::qt::OrbitalStereoCamera::OnViewChanged,
+                         &all::qt::OrbitalStereoCamera::viewChanged,
                          [this]() {
-                             impl->ViewChanged();
+                             impl->viewChanged();
                          });
 
-        QObject::connect(&camera, &all::qt::OrbitalStereoCamera::OnProjectionChanged, [this]() {
-            impl->ProjectionChanged();
+        QObject::connect(&camera, &all::qt::OrbitalStereoCamera::projectionChanged, [this]() {
+            impl->projectionChanged();
         });
 
         auto* cc = wnd.GetCameraControl();
@@ -82,7 +82,7 @@ public:
                          });
         QObject::connect(&watcher, &WindowEventWatcher::OnScroll,
                          [this](::QWheelEvent* e) {
-                             camera.Zoom(e->angleDelta().y() / qml.scene.GetMouseSensitivity());
+                             camera.zoom(e->angleDelta().y() / qml.scene.GetMouseSensitivity());
                          });
 
         auto b = new QAction(QIcon{ ":stereo3_contrast.png" }, "Show Image", cc);
@@ -112,7 +112,7 @@ public:
                                      input.skip_first = true;
                                      if (input.cursor_changes_focus) {
                                          auto pos = impl->GetCursorWorldPosition();
-                                         qml.camera.SetFocusDistance(std::clamp(glm::length(pos - camera.GetPosition()), 0.5f, 100.f));
+                                         qml.camera.SetFocusDistance(std::clamp(glm::length(pos - camera.position()), 0.5f, 100.f));
                                      }
 
                                  } else if (e->buttons() & Qt::MouseButton::RightButton) {
@@ -143,10 +143,10 @@ public:
                                  case Qt::LeftButton:
                                      if (flipped)
                                          dy = -dy;
-                                     flipped = flipped ^ camera.Rotate(dx, dy);
+                                     flipped = flipped ^ camera.rotate(dx, dy);
                                      break;
                                  case Qt::MiddleButton:
-                                     camera.Translate(dx, dy);
+                                     camera.translate(dx, dy);
                                      break;
                                  }
                                  input.last_pos = pos;
@@ -163,22 +163,22 @@ public:
                          });
 
         QObject::connect(&qwin, &QWindow::widthChanged, [this, &qwin](int width) {
-            camera.SetAspectRatio(float(qwin.width()) / qwin.height());
+            camera.setAspectRatio(float(qwin.width()) / qwin.height());
         });
         QObject::connect(&qwin, &QWindow::heightChanged, [this, &qwin](int height) {
-            camera.SetAspectRatio(float(qwin.width()) / qwin.height());
+            camera.setAspectRatio(float(qwin.width()) / qwin.height());
         });
         QObject::connect(&qml.camera, &CameraController::OnFocusDistanceChanged, [this](float v) {
-            camera.SetConvergencePlaneDistance(v);
+            camera.setConvergencePlaneDistance(v);
         });
         QObject::connect(&qml.camera, &CameraController::OnFOVChanged, [this](float v) {
-            camera.SetFov(v);
+            camera.setFov(v);
         });
         QObject::connect(&qml.camera, &CameraController::OnFlippedChanged, [this](bool v) {
-            camera.SetFlipped(v);
+            camera.setFlipped(v);
         });
         QObject::connect(&qml.camera, &CameraController::OnEyeDistanceChanged, [this](float v) {
-            camera.SetInterocularDistance(v);
+            camera.setInterocularDistance(v);
         });
         QObject::connect(&qml.camera, &CameraController::OnCameraModeChanged, [this](CameraController::CameraMode v) {
             impl->OnPropertyChanged("camera_mode", all::CameraMode(v));
@@ -244,8 +244,8 @@ public:
 
     void ResetCamera() noexcept
     {
-        camera.SetPosition({ 0.2, 5, -10 });
-        camera.SetForwardVector({ 0, -.5, 1 });
+        camera.setPosition({ 0.2, 5, -10 });
+        camera.setForwardVector({ 0, -.5, 1 });
     }
 
 private:

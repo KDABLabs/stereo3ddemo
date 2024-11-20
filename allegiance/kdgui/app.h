@@ -39,16 +39,16 @@ public:
         window->registerEventReceiver(windowEventWatcher);
 
         // Setup Camera
-        camera.SetShear(all::UseShearing);
+        camera.setShear(all::UseShearing);
 
-        camera.OnViewChanged.connect([this] { impl->ViewChanged(); });
-        camera.OnProjectionChanged.connect([this] { impl->ProjectionChanged(); });
+        camera.viewChanged.connect([this] { impl->viewChanged(); });
+        camera.projectionChanged.connect([this] { impl->projectionChanged(); });
 
         window->width.valueChanged().connect([this, window](const uint32_t w) {
-            camera.SetAspectRatio(float(w) / window->height());
+            camera.setAspectRatio(float(w) / window->height());
         });
         window->height.valueChanged().connect([this, window](const uint32_t h) {
-            camera.SetAspectRatio(float(window->width()) / h);
+            camera.setAspectRatio(float(window->width()) / h);
         });
 
         // SpaceMouse
@@ -90,11 +90,11 @@ public:
             if (e->buttons() & KDGui::MouseButton::LeftButton) {
                 if (flipped)
                     dy = -dy;
-                flipped = flipped ^ camera.Rotate(dx, dy);
+                flipped = flipped ^ camera.rotate(dx, dy);
             }
 
             if (e->buttons() & KDGui::MouseButton::MiddleButton) {
-                camera.Translate(dx, dy);
+                camera.translate(dx, dy);
             }
 
             input.last_x_pos = e->xPos();
@@ -109,7 +109,7 @@ public:
             impl->OnMouseEvent(*e);
         });
         windowEventWatcher->mouseWheelEvent.connect([this](const KDGui::MouseWheelEvent* e) {
-            camera.Zoom(e->yDelta() / mouseSensitivity);
+            camera.zoom(e->yDelta() / mouseSensitivity);
 
             impl->OnMouseEvent(*e);
         });
@@ -132,8 +132,8 @@ public:
 
     void ResetCamera() noexcept
     {
-        camera.SetPosition({ 0.2, 5, -10 });
-        camera.SetForwardVector({ 0, -.5, 1 });
+        camera.setPosition({ 0.2, 5, -10 });
+        camera.setForwardVector({ 0, -.5, 1 });
     }
 
 private:

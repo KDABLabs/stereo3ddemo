@@ -8,7 +8,7 @@ public:
     using StereoCamera::StereoCamera;
 
 public:
-    void SetMatrices(const glm::mat4& left, const glm::mat4& right, const glm::mat4& center) noexcept
+    void setMatrices(const glm::mat4& left, const glm::mat4& right, const glm::mat4& center) noexcept
     {
         *(const_cast<KDBindings::Property<glm::mat4>*>(&leftEyeViewMatrix)) = left;
         *(const_cast<KDBindings::Property<glm::mat4>*>(&rightEyeViewMatrix)) = right;

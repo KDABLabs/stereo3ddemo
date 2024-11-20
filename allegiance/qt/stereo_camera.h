@@ -7,8 +7,8 @@ class StereoCameraBase : public QObject
 {
     Q_OBJECT
 Q_SIGNALS:
-    void OnViewChanged();
-    void OnProjectionChanged();
+    void viewChanged();
+    void projectionChanged();
 };
 
 template<typename Camera>
@@ -27,15 +27,15 @@ public:
     }
 
 public:
-    virtual void UpdateViewMatrix() noexcept override
+    virtual void updateViewMatrix() noexcept override
     {
-        Camera::UpdateViewMatrix();
-        Q_EMIT OnViewChanged();
+        Camera::updateViewMatrix();
+        Q_EMIT viewChanged();
     }
-    virtual void UpdateProjectionMatrix() noexcept override
+    virtual void updateProjectionMatrix() noexcept override
     {
-        Camera::UpdateProjectionMatrix();
-        Q_EMIT OnProjectionChanged();
+        Camera::updateProjectionMatrix();
+        Q_EMIT projectionChanged();
     }
 };
 

@@ -10,13 +10,12 @@
 
 namespace {
 
-enum class Eye
-{
+enum class Eye {
     Left,
     Right
 };
 
-QMatrix4x4 glmToMat4(const glm::mat4x4 &m)
+QMatrix4x4 glmToMat4(const glm::mat4x4& m)
 {
     return QMatrix4x4(m[0][0], m[1][0], m[2][0], m[3][0],
                       m[0][1], m[1][1], m[2][1], m[3][1],
@@ -26,7 +25,7 @@ QMatrix4x4 glmToMat4(const glm::mat4x4 &m)
 
 QVector3D glmToVec3(const glm::vec3 v)
 {
-    return {v[0], v[1], v[2]};
+    return { v[0], v[1], v[2] };
 }
 
 /*
@@ -39,8 +38,8 @@ QVector3D glmToVec3(const glm::vec3 v)
 */
 
 // QGIS Qt3D Assymetric Stereo Implementation
-void updateQt3DStereoCamera(Qt3DRender::QCamera *centerCamera,
-                            Qt3DRender::QCamera *eyeCamera,
+void updateQt3DStereoCamera(Qt3DRender::QCamera* centerCamera,
+                            Qt3DRender::QCamera* eyeCamera,
                             float interocularDistance,
                             Eye eye,
                             bool toeIn = false)
@@ -124,7 +123,7 @@ void updateQt3DStereoCamera(Qt3DRender::QCamera *centerCamera,
     CHECK(v1[1] == v2[1]);   \
     CHECK(v1[2] == v2[2]);
 
-} // anonymouse
+} // namespace
 
 TEST_SUITE("StereoCamera")
 {
@@ -139,7 +138,7 @@ TEST_SUITE("StereoCamera")
 
         // WHEN
         m_qt.translate(QVector3D(1.0f, 2.0f, 3.0f));
-        m_glm = glm::translate(m_glm, {1.0f, 2.0f, 3.0f});
+        m_glm = glm::translate(m_glm, { 1.0f, 2.0f, 3.0f });
 
         // THEN
         CHECK(m_qt == glmToMat4((m_glm)));
@@ -154,35 +153,35 @@ TEST_SUITE("StereoCamera")
         const float convergencePlaneDist = 30.0f;
 
         // WHEN
-        camera.SetAspectRatio(1.0f);
-        camera.SetFarPlane(1000.0f);
-        camera.SetNearPlane(1.0f);
-        camera.SetFov(45.0f);
-        camera.SetUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
-        camera.SetPosition(glm::vec3(0.0f, 0.0f, 100.0f));
-        camera.SetForwardVector(glm::vec3(0.0f, 0.0f, -1.0f));
-        camera.SetInterocularDistance(interocularDistance);
-        camera.SetConvergencePlaneDistance(convergencePlaneDist);
-        camera.SetShear(false);
+        camera.setAspectRatio(1.0f);
+        camera.setFarPlane(1000.0f);
+        camera.setNearPlane(1.0f);
+        camera.setFov(45.0f);
+        camera.setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
+        camera.setPosition(glm::vec3(0.0f, 0.0f, 100.0f));
+        camera.setForwardVector(glm::vec3(0.0f, 0.0f, -1.0f));
+        camera.setInterocularDistance(interocularDistance);
+        camera.setConvergencePlaneDistance(convergencePlaneDist);
+        camera.setShear(false);
 
         // THEN
-        CHECK(camera.GetAspectRatio() == 1.0f);
-        CHECK(camera.GetFarPlane() == 1000.0f);
-        CHECK(camera.GetNearPlane() == 1.0f);
-        CHECK(camera.GetFov() == 45.0f);
-        COMPARE_VEC3(camera.GetUpVector(), glm::vec3(0.0f, 1.0f, 0.0f));
-        COMPARE_VEC3(camera.GetPosition(), glm::vec3(0.0f, 0.0f, 100.0f));
-        COMPARE_VEC3(camera.GetForwardVector(), glm::vec3(0.0f, 0.0f, -1.0f));
-        CHECK(camera.GetInterocularDistance() == interocularDistance);
-        CHECK(camera.GetConvergencePlaneDistance() == convergencePlaneDist);
+        CHECK(camera.aspectRatio() == 1.0f);
+        CHECK(camera.farPlane() == 1000.0f);
+        CHECK(camera.nearPlane() == 1.0f);
+        CHECK(camera.fov() == 45.0f);
+        COMPARE_VEC3(camera.upVector(), glm::vec3(0.0f, 1.0f, 0.0f));
+        COMPARE_VEC3(camera.position(), glm::vec3(0.0f, 0.0f, 100.0f));
+        COMPARE_VEC3(camera.forwardVector(), glm::vec3(0.0f, 0.0f, -1.0f));
+        CHECK(camera.interocularDistance() == interocularDistance);
+        CHECK(camera.convergencePlaneDistance() == convergencePlaneDist);
 
-        COMPARE_VEC3(glm::vec3(camera.GetViewLeft() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)), glm::vec3(5.0f, 0.0f, -100.0f));
-        COMPARE_VEC3(glm::vec3(camera.GetViewRight() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)), glm::vec3(-5.0f, 0.0f, -100.0f));
+        COMPARE_VEC3(glm::vec3(camera.viewLeft() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)), glm::vec3(5.0f, 0.0f, -100.0f));
+        COMPARE_VEC3(glm::vec3(camera.viewRight() * glm::vec4(0.0f, 0.0f, 0.0f, 1.0f)), glm::vec3(-5.0f, 0.0f, -100.0f));
 
         {
             // If we are looking in the -Z dir and our up vector is +Y
             // The the right vector is +X
-            const glm::vec3 right = glm::normalize(glm::cross(camera.GetForwardVector(), camera.GetUpVector()));
+            const glm::vec3 right = glm::normalize(glm::cross(camera.forwardVector(), camera.upVector()));
             COMPARE_VEC3(right, glm::vec3(1.0f, 0.0f, 0.0f));
         }
 
@@ -207,11 +206,11 @@ TEST_SUITE("StereoCamera")
         COMPARE_VEC3(qtCamera.viewCenter(), QVector3D(0.0f, 0.0f, 70.0f));
 
         // WHEN
-        const glm::mat4x4 projMatrix = camera.GetProjection();
-        const glm::mat4x4 shearingLeft = StereoCamera::StereoShear(camera.ShearCoefficient());
-        const glm::mat4x4 shearingRight = StereoCamera::StereoShear(-camera.ShearCoefficient());
-        const glm::mat4x4 leftViewMatrix = camera.GetViewLeft();
-        const glm::mat4x4 rightViewMatrix = camera.GetViewRight();
+        const glm::mat4x4 projMatrix = camera.projection();
+        const glm::mat4x4 shearingLeft = StereoCamera::stereoShear(camera.shearCoefficient());
+        const glm::mat4x4 shearingRight = StereoCamera::stereoShear(-camera.shearCoefficient());
+        const glm::mat4x4 leftViewMatrix = camera.viewLeft();
+        const glm::mat4x4 rightViewMatrix = camera.viewRight();
         const glm::mat4x4 leftProjectionMatrix = projMatrix * shearingLeft;
         const glm::mat4x4 rightProjectionMatrix = projMatrix * shearingRight;
 
@@ -255,7 +254,7 @@ TEST_SUITE("StereoCamera")
 
             qDebug() << "allegiance stereo Left View" << glmToMat4(leftViewMatrix);
             qDebug() << "allegiance stereo Right View" << glmToMat4(rightViewMatrix);
-            qDebug() << "Shear Coefficient" << camera.ShearCoefficient();
+            qDebug() << "Shear Coefficient" << camera.shearCoefficient();
             qDebug() << "allegiance Center Projection " << glmToMat4(projMatrix);
             qDebug() << "allegiance Left Proj Shearing" << glmToMat4(shearingLeft) << glmToMat4(leftProjectionMatrix);
             qDebug() << "allegiance Right Proj Shearing" << glmToMat4(shearingRight) << glmToMat4(rightProjectionMatrix);
@@ -288,9 +287,9 @@ TEST_SUITE("StereoCamera")
 
         // THEN
         const glm::vec3 viewCenter{ 0.0f, 0.0f, 70.0f };
-        COMPARE_VEC3(projectStereoCameraPoint(camera.GetProjection() * shearingLeft, camera.GetViewLeft(), viewCenter),
+        COMPARE_VEC3(projectStereoCameraPoint(camera.projection() * shearingLeft, camera.viewLeft(), viewCenter),
                      projectQtStereoCameraPoint(&leftEyeCamera, glmToVec3(viewCenter)));
-        COMPARE_VEC3(projectStereoCameraPoint(camera.GetProjection() * shearingRight, camera.GetViewRight(), viewCenter),
+        COMPARE_VEC3(projectStereoCameraPoint(camera.projection() * shearingRight, camera.viewRight(), viewCenter),
                      projectQtStereoCameraPoint(&rightEyeCamera, glmToVec3(viewCenter)));
     }
 }

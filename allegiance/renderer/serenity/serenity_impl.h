@@ -27,8 +27,8 @@ public:
     virtual ~SerenityImpl() = default;
 
 public:
-    void ViewChanged();
-    void ProjectionChanged();
+    void viewChanged();
+    void projectionChanged();
     void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
     void LoadModel(std::filesystem::path file);
@@ -86,9 +86,9 @@ protected:
     std::shared_ptr<all::ModelNavParameters> m_navParams;
 
     // Camera
-    all::serenity::StereoProxyCamera* m_camera{nullptr};
-    all::serenity::PickingApplicationLayer* m_pickingLayer{nullptr};
-    all::serenity::StereoRenderAlgorithm* m_renderAlgorithm{nullptr};
+    all::serenity::StereoProxyCamera* m_camera{ nullptr };
+    all::serenity::PickingApplicationLayer* m_pickingLayer{ nullptr };
+    all::serenity::StereoRenderAlgorithm* m_renderAlgorithm{ nullptr };
 
     std::optional<all::serenity::Cursor> m_cursor;
     float scale_factor = 1.0f;

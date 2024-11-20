@@ -32,8 +32,8 @@ public:
     ~Qt3DImpl();
 
 public:
-    void ViewChanged();
-    void ProjectionChanged();
+    void viewChanged();
+    void projectionChanged();
     void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
     void LoadModel(std::filesystem::path path = "assets/motorbike.fbx");

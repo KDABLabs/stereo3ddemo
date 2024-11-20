@@ -78,39 +78,39 @@ all::qt3d::Qt3DImpl::~Qt3DImpl()
 {
 }
 
-void all::qt3d::Qt3DImpl::ViewChanged()
+void all::qt3d::Qt3DImpl::viewChanged()
 {
     switch (m_cameraMode) {
     case CameraMode::Stereo:
-        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewLeft()), toQMatrix4x4(m_stereoCamera->GetViewRight()));
+        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewLeft()), toQMatrix4x4(m_stereoCamera->viewRight()));
         break;
     case CameraMode::Right:
-        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewRight()), toQMatrix4x4(m_stereoCamera->GetViewRight()));
+        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewRight()), toQMatrix4x4(m_stereoCamera->viewRight()));
         break;
     case CameraMode::Left:
-        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewLeft()), toQMatrix4x4(m_stereoCamera->GetViewLeft()));
+        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewLeft()), toQMatrix4x4(m_stereoCamera->viewLeft()));
         break;
     case CameraMode::Mono:
-        m_camera->SetMatrices(toQMatrix4x4(m_stereoCamera->GetViewCenter()), toQMatrix4x4(m_stereoCamera->GetViewCenter()));
+        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewCenter()), toQMatrix4x4(m_stereoCamera->viewCenter()));
         break;
     }
-    ProjectionChanged();
+    projectionChanged();
 }
 
-void all::qt3d::Qt3DImpl::ProjectionChanged()
+void all::qt3d::Qt3DImpl::projectionChanged()
 {
     switch (m_cameraMode) {
     case CameraMode::Mono:
-        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), 0);
+        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), 0);
         break;
     case CameraMode::Stereo:
-        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), m_stereoCamera->ShearCoefficient());
+        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), m_stereoCamera->shearCoefficient());
         break;
     case CameraMode::Right:
-        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), m_stereoCamera->ShearCoefficient(), true);
+        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), m_stereoCamera->shearCoefficient(), true);
         break;
     case CameraMode::Left:
-        m_camera->SetProjection(toQMatrix4x4(m_stereoCamera->GetProjection()), -m_stereoCamera->ShearCoefficient(), true);
+        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), -m_stereoCamera->shearCoefficient(), true);
         break;
     }
 }
@@ -176,7 +176,7 @@ void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
 
-    m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->GetLeftCamera(), &m_view, m_stereoCamera);
+    m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->leftCamera(), &m_view, m_stereoCamera);
     m_cursor->setObjectName("CursorEntity");
     m_cursor->addComponent(m_renderer->cursorLayer());
     m_cursor->setType(CursorType::Ball);
@@ -225,7 +225,7 @@ void all::qt3d::Qt3DImpl::OnPropertyChanged(std::string_view name, std::any valu
         m_cursor->setType(std::any_cast<CursorType>(value));
     } else if (name == "camera_mode") {
         m_cameraMode = std::any_cast<CameraMode>(value);
-        ViewChanged();
+        viewChanged();
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->setCursorTintColor(QColor::fromRgbF(color[0], color[1], color[2], color[3]));
@@ -348,10 +348,10 @@ void all::qt3d::Qt3DImpl::LoadModel(std::filesystem::path path)
     auto s = QVector3D{ 8, 8, 8 } / k;
     auto centerpoint = ext.min + k / 2;
 
-    auto modelViewProjection = m_stereoCamera->GetViewCenter() * m_stereoCamera->GetProjection();
+    auto modelViewProjection = m_stereoCamera->viewCenter() * m_stereoCamera->projection();
     auto size = ext.max - ext.min;
     glm::vec4 dimensions(size.x(), size.y(), size.z(), 1.0f);
-    glm::vec4 dimensionsClip = m_stereoCamera->GetProjection() * m_stereoCamera->GetViewCenter() * dimensions;
+    glm::vec4 dimensionsClip = m_stereoCamera->projection() * m_stereoCamera->viewCenter() * dimensions;
     dimensionsClip /= dimensionsClip.w;
     float scaleFactor = 1 / std::max(std::abs(dimensionsClip.x), std::abs(dimensionsClip.y));
 
@@ -367,8 +367,8 @@ void all::qt3d::Qt3DImpl::LoadModel(std::filesystem::path path)
     // set rotation point
     auto cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
     if (cam) {
-        cam->SetTarget(toGlmVec3((ext.min + k / 2) * scaleFactor));
-        cam->Rotate(0, 0);
+        cam->setTarget(toGlmVec3((ext.min + k / 2) * scaleFactor));
+        cam->rotate(0, 0);
     }
 }
 
@@ -480,5 +480,5 @@ void all::qt3d::Qt3DImpl::OnModelExtentChanged(const QVector3D& min, const QVect
 }
 void all::qt3d::Qt3DImpl::UpdateMouse()
 {
-    m_cursor->onMouseMoveEvent(toQVector3D(m_stereoCamera->GetPosition()), m_view.mapFromGlobal(m_view.cursor().pos()));
+    m_cursor->onMouseMoveEvent(toQVector3D(m_stereoCamera->position()), m_view.mapFromGlobal(m_view.cursor().pos()));
 }

@@ -26,7 +26,7 @@ all::qt3d::QStereoProxyCamera::QStereoProxyCamera(Qt3DCore::QNode* parent)
     m_rightCamera->addComponent(m_rightCameraLens);
 }
 
-void all::qt3d::QStereoProxyCamera::SetPositionAndForward(const QVector3D& position, const QQuaternion& rotation)
+void all::qt3d::QStereoProxyCamera::setPositionAndForward(const QVector3D& position, const QQuaternion& rotation)
 {
     m_leftTransform->setTranslation(position);
     m_leftTransform->setRotation(rotation);
@@ -34,13 +34,13 @@ void all::qt3d::QStereoProxyCamera::SetPositionAndForward(const QVector3D& posit
     m_rightTransform->setRotation(rotation);
 }
 
-void all::qt3d::QStereoProxyCamera::SetMatrices(const QMatrix4x4& left, const QMatrix4x4& right)
+void all::qt3d::QStereoProxyCamera::setMatrices(const QMatrix4x4& left, const QMatrix4x4& right)
 {
     m_leftTransform->setMatrix(left.inverted());
     m_rightTransform->setMatrix(right.inverted());
 }
 
-void all::qt3d::QStereoProxyCamera::SetProjection(const QMatrix4x4& proj, qreal skew, bool same)
+void all::qt3d::QStereoProxyCamera::setProjection(const QMatrix4x4& proj, qreal skew, bool same)
 {
     QMatrix4x4 m;
     m(0, 2) = same ? skew : -skew;

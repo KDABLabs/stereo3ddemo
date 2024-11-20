@@ -24,181 +24,181 @@ public:
     explicit StereoCamera(API api)
         : m_api(api)
     {
-        UpdateViewMatrix();
-        UpdateProjectionMatrix();
+        updateViewMatrix();
+        updateProjectionMatrix();
     }
 
 public:
-    glm::mat4x4 GetProjection() const noexcept { return projection; }
-    glm::mat4x4 GetViewLeft() const noexcept { return view_left; }
-    glm::mat4x4 GetViewRight() const noexcept { return view_right; }
-    glm::mat4x4 GetViewCenter() const noexcept { return view_center; }
-    glm::mat4x4 GetCameraMatrix() const noexcept { return camera_matrix; }
+    const glm::mat4x4& projection() const noexcept { return m_projection; }
+    const glm::mat4x4& viewLeft() const noexcept { return m_viewLeft; }
+    const glm::mat4x4& viewRight() const noexcept { return m_viewRight; }
+    const glm::mat4x4& viewCenter() const noexcept { return m_viewCenter; }
+    const glm::mat4x4& cameraMatrix() const noexcept { return m_cameraMatrix; }
 
-    void SetInterocularDistance(float distance) noexcept
+    void setInterocularDistance(float distance) noexcept
     {
-        interocular_distance = distance;
-        UpdateViewMatrix();
+        m_interocularDistance = distance;
+        updateViewMatrix();
     }
-    float GetInterocularDistance() const noexcept { return interocular_distance; }
+    float interocularDistance() const noexcept { return m_interocularDistance; }
 
-    void SetConvergencePlaneDistance(float distance) noexcept
+    void setConvergencePlaneDistance(float distance) noexcept
     {
-        convergence_plane_distance = distance;
-        UpdateViewMatrix();
+        m_convergencePlaneDistance = distance;
+        updateViewMatrix();
     }
-    float GetConvergencePlaneDistance() const noexcept { return convergence_plane_distance; }
+    float convergencePlaneDistance() const noexcept { return m_convergencePlaneDistance; }
 
-    void SetFlipped(bool flipped) noexcept
+    void setFlipped(bool flipped) noexcept
     {
-        this->flipped = flipped;
-        UpdateViewMatrix();
+        this->m_flipped = flipped;
+        updateViewMatrix();
     }
 
-    void SetNearPlane(float distance) noexcept
+    void setNearPlane(float distance) noexcept
     {
-        near_plane = distance;
-        UpdateProjectionMatrix();
+        m_nearPlane = distance;
+        updateProjectionMatrix();
     }
-    float GetNearPlane() const noexcept { return near_plane; }
+    float nearPlane() const noexcept { return m_nearPlane; }
 
-    void SetFarPlane(float distance) noexcept
+    void setFarPlane(float distance) noexcept
     {
-        far_plane = distance;
-        UpdateProjectionMatrix();
+        m_farPlane = distance;
+        updateProjectionMatrix();
     }
-    float GetFarPlane() const noexcept { return far_plane; }
+    float farPlane() const noexcept { return m_farPlane; }
 
-    void SetAspectRatio(float aspect_ratio) noexcept
+    void setAspectRatio(float aspect_ratio) noexcept
     {
-        this->aspect_ratio = aspect_ratio;
-        UpdateProjectionMatrix();
+        this->m_aspectRatio = aspect_ratio;
+        updateProjectionMatrix();
     }
-    float GetAspectRatio() const noexcept { return aspect_ratio; }
+    float aspectRatio() const noexcept { return m_aspectRatio; }
 
-    void SetConvergeOnNear(bool converge) noexcept
+    void setConvergeOnNear(bool converge) noexcept
     {
-        converge_on_near = converge;
-        UpdateViewMatrix();
+        m_convergeOnNear = converge;
+        updateViewMatrix();
     }
-    bool GetConvergeOnNear() const noexcept { return converge_on_near; }
+    bool convergeOnNear() const noexcept { return m_convergeOnNear; }
 
-    void SetPosition(const glm::vec3& pos) noexcept
+    void setPosition(const glm::vec3& pos) noexcept
     {
-        camera_matrix[3] = glm::vec4{ pos, 1 };
-        UpdateViewMatrix();
+        m_cameraMatrix[3] = glm::vec4{ pos, 1 };
+        updateViewMatrix();
     }
-    glm::vec3 GetPosition() const noexcept { return camera_matrix[3]; }
+    glm::vec3 position() const noexcept { return m_cameraMatrix[3]; }
 
-    void SetForwardVector(const glm::vec3& dir) noexcept
+    void setForwardVector(const glm::vec3& dir) noexcept
     {
         if (dir == glm::vec3(0.0f, 0.0f, 0.0f))
             return;
 
         auto r = glm::lookAt({ 0, 0, 0 }, dir, { 0, 1, 0 });
         r = glm::inverse(r);
-        camera_matrix[0] = r[0];
-        camera_matrix[1] = r[1];
-        camera_matrix[2] = r[2];
-        UpdateViewMatrix();
+        m_cameraMatrix[0] = r[0];
+        m_cameraMatrix[1] = r[1];
+        m_cameraMatrix[2] = r[2];
+        updateViewMatrix();
     }
-    glm::vec3 GetForwardVector() const noexcept { return -camera_matrix[2]; }
+    glm::vec3 forwardVector() const noexcept { return -m_cameraMatrix[2]; }
 
-    void SetUpVector(const glm::vec3& up) noexcept
+    void setUpVector(const glm::vec3& up) noexcept
     {
         if (up == glm::vec3(0.0f, 0.0f, 0.0f))
             return;
 
-        camera_matrix[1] = glm::vec4{ glm::normalize(up), 0 };
-        UpdateViewMatrix();
+        m_cameraMatrix[1] = glm::vec4{ glm::normalize(up), 0 };
+        updateViewMatrix();
     }
-    glm::vec3 GetUpVector() const noexcept { return camera_matrix[1]; }
+    glm::vec3 upVector() const noexcept { return m_cameraMatrix[1]; }
 
-    float ShearCoefficient() const noexcept
+    float shearCoefficient() const noexcept
     {
-        if (!converge_on_near)
+        if (!m_convergeOnNear)
             return 0.0f;
-        float coef = interocular_distance * 0.5f / convergence_plane_distance;
-        return flipped ? -coef : coef;
+        float coef = m_interocularDistance * 0.5f / m_convergencePlaneDistance;
+        return m_flipped ? -coef : coef;
     }
-    void SetShear(bool shear) noexcept
+    void setShear(bool shear) noexcept
     {
-        this->shear = shear;
-        UpdateViewMatrix();
+        this->m_shear = shear;
+        updateViewMatrix();
     }
 
 public:
-    static glm::mat4 StereoShear(float x) noexcept
+    static glm::mat4 stereoShear(float x) noexcept
     {
         glm::mat4 i{ 1.0f };
         i[2][0] = x;
         return i;
     }
 
-    virtual void UpdateViewMatrix() noexcept
+    virtual void updateViewMatrix() noexcept
     {
         // we can do that, since right is unit length
-        auto position = GetPosition();
-        auto forward = GetForwardVector();
-        auto up = GetUpVector();
-        auto right = glm::normalize(glm::cross(forward, up)) * interocular_distance * 0.5f;
-        view_left = shear
-                ? StereoShear(ShearCoefficient()) * glm::lookAt(position - right, position - right + forward, up)
-                : glm::lookAt(position - right, position - right + forward, up);
-        view_right = shear
-                ? StereoShear(-ShearCoefficient()) * glm::lookAt(position + right, position + right + forward, up)
-                : glm::lookAt(position + right, position + right + forward, up);
-        view_center = glm::lookAt(position, position + forward, up);
+        auto pos = position();
+        auto forward = forwardVector();
+        auto up = upVector();
+        auto right = glm::normalize(glm::cross(forward, up)) * m_interocularDistance * 0.5f;
+        m_viewLeft = m_shear
+                ? stereoShear(shearCoefficient()) * glm::lookAt(pos - right, pos - right + forward, up)
+                : glm::lookAt(pos - right, pos - right + forward, up);
+        m_viewRight = m_shear
+                ? stereoShear(-shearCoefficient()) * glm::lookAt(pos + right, pos + right + forward, up)
+                : glm::lookAt(pos + right, pos + right + forward, up);
+        m_viewCenter = glm::lookAt(pos, pos + forward, up);
     }
-    virtual void UpdateProjectionMatrix() noexcept
+    virtual void updateProjectionMatrix() noexcept
     {
         // Note: for OpenGL depth range is expected to be in [-1, 1] perspectiveRH_NO
         // Unlike Vulkan which expects depth range to be in [0, 1] perspectiveRH_ZO
         if (m_api == API::OpenGL) {
-            projection = glm::perspectiveRH_NO(glm::radians(fov_y), aspect_ratio, near_plane, far_plane);
+            m_projection = glm::perspectiveRH_NO(glm::radians(m_fovY), m_aspectRatio, m_nearPlane, m_farPlane);
         } else {
-            projection = glm::perspectiveRH_ZO(glm::radians(fov_y), aspect_ratio, near_plane, far_plane);
+            m_projection = glm::perspectiveRH_ZO(glm::radians(m_fovY), m_aspectRatio, m_nearPlane, m_farPlane);
         }
     }
 
-    void SetCameraMatrix(const glm::mat4x4& viewMatrix)
+    void setCameraMatrix(const glm::mat4x4& viewMatrix)
     {
-        camera_matrix = viewMatrix;
-        UpdateViewMatrix();
+        m_cameraMatrix = viewMatrix;
+        updateViewMatrix();
     }
 
-    float GetFov() const
+    float fov() const
     {
-        return fov_y;
+        return m_fovY;
     }
-    void SetFov(float fov)
+    void setFov(float fov)
     {
-        fov_y = fov;
-        UpdateProjectionMatrix();
+        m_fovY = fov;
+        updateProjectionMatrix();
     }
 
-    float GetHorizontalFov() const
+    float horizontalFov() const
     {
-        return glm::degrees(2.0f * std::atan(std::tan(glm::radians(fov_y / 2.0f)) * aspect_ratio));
+        return glm::degrees(2.0f * std::atan(std::tan(glm::radians(m_fovY / 2.0f)) * m_aspectRatio));
     }
 
 private:
-    glm::mat4x4 view_left;
-    glm::mat4x4 view_right;
-    glm::mat4x4 view_center;
-    glm::mat4x4 camera_matrix = glm::identity<glm::mat4x4>();
-    glm::mat4x4 projection;
+    glm::mat4x4 m_viewLeft;
+    glm::mat4x4 m_viewRight;
+    glm::mat4x4 m_viewCenter;
+    glm::mat4x4 m_cameraMatrix = glm::identity<glm::mat4x4>();
+    glm::mat4x4 m_projection;
 
 private:
-    float fov_y{ 45 };
-    float interocular_distance = 0.06f;
-    float convergence_plane_distance = 10.0f;
-    float near_plane = 0.1f;
-    float far_plane = 1000.0f;
-    float aspect_ratio = 1.0f;
-    bool converge_on_near = true;
-    bool shear = true;
-    bool flipped = false;
+    float m_fovY{ 45 };
+    float m_interocularDistance{ 0.06f };
+    float m_convergencePlaneDistance{ 10.0f };
+    float m_nearPlane{ 0.1f };
+    float m_farPlane{ 1000.0f };
+    float m_aspectRatio{ 1.0f };
+    bool m_convergeOnNear{ true };
+    bool m_shear{ true };
+    bool m_flipped{ false };
     const API m_api;
 };
 
@@ -208,80 +208,81 @@ public:
     OrbitalStereoCamera(StereoCamera::API api)
         : StereoCamera(api)
     {
-        UpdateViewMatrix2();
+        updateViewMatrix2();
     }
 
 public:
-    void Zoom(float d)
+    void zoom(float d)
     {
-        SetPosition(GetPosition() + GetForwardVector() * d);
+        setPosition(position() + forwardVector() * d);
     }
 
     // return true, if Up Vector got flipped
-    bool Rotate(float dx, float dy)
+    bool rotate(float dx, float dy)
     {
-        auto up = GetUpVector();
-        glm::mat4 translateToPivot = glm::translate(glm::mat4(1.0f), target);
+        auto up = upVector();
+        glm::mat4 translateToPivot = glm::translate(glm::mat4(1.0f), m_target);
         glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), -dx, glm::vec3(0.0f, 1.0f, 0.0f));
-        rotation = rotation * glm::rotate(glm::mat4(1.0f), dy, glm::cross(GetUpVector(), GetForwardVector()));
-        glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), -target);
+        rotation = rotation * glm::rotate(glm::mat4(1.0f), dy, glm::cross(upVector(), forwardVector()));
+        glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), -m_target);
         glm::mat4 finalTransform = translateToPivot * rotation * translateBack;
-        glm::vec3 newPosition = glm::vec3(finalTransform * glm::vec4(GetPosition(), 1.0f));
-        SetPosition(newPosition);
-        SetForwardVector(target - newPosition);
-        return glm::dot(up, GetUpVector()) < 0;
+        glm::vec3 newPosition = glm::vec3(finalTransform * glm::vec4(position(), 1.0f));
+        setPosition(newPosition);
+        setForwardVector(m_target - newPosition);
+        return glm::dot(up, upVector()) < 0;
     }
 
-    void Translate(float dx, float dy)
+    void translate(float dx, float dy)
     {
-        glm::vec3 forward = glm::normalize(GetForwardVector());
-        glm::vec3 lateralTranslation = dx * glm::normalize(glm::cross(forward, GetUpVector()));
-        glm::vec3 verticalTranslation = -dy * GetUpVector();
-        glm::vec3 newPosition = GetPosition() + lateralTranslation + verticalTranslation;
+        glm::vec3 forward = glm::normalize(forwardVector());
+        glm::vec3 lateralTranslation = dx * glm::normalize(glm::cross(forward, upVector()));
+        glm::vec3 verticalTranslation = -dy * upVector();
+        glm::vec3 newPosition = position() + lateralTranslation + verticalTranslation;
 
-        SetPosition(newPosition);
+        setPosition(newPosition);
     }
 
-    void SetRadius(float radius) noexcept
+    void setRadius(float radius) noexcept
     {
-        this->radius = radius;
-        UpdateViewMatrix2();
+        m_radius = radius;
+        updateViewMatrix2();
     }
-    float GetRadius() const noexcept { return radius; }
+    float radius() const noexcept { return m_radius; }
 
-    void SetPhi(float phi) noexcept
+    void setPhi(float phi) noexcept
     {
-        this->phi = phi;
-        UpdateViewMatrix2();
+        m_phi = phi;
+        updateViewMatrix2();
     }
-    float GetPhi() const noexcept { return phi; }
+    float phi() const noexcept { return m_phi; }
 
-    void SetTheta(float theta) noexcept
+    void setTheta(float theta) noexcept
     {
-        this->theta = std::clamp(theta, 0.001f, glm::pi<float>() - 0.001f);
-        UpdateViewMatrix2();
+        m_theta = std::clamp(theta, 0.001f, glm::pi<float>() - 0.001f);
+        updateViewMatrix2();
     }
-    float GetTheta() const noexcept { return theta; }
+    float theta() const noexcept { return m_theta; }
 
-    void SetTarget(const glm::vec3& target) noexcept
+    void setTarget(const glm::vec3& target) noexcept
     {
-        this->target = target;
-        UpdateViewMatrix2();
+        m_target = target;
+        updateViewMatrix2();
     }
-    glm::vec3 GetTarget() const noexcept { return target; }
+    glm::vec3 target() const noexcept { return m_target; }
 
 protected:
-    void UpdateViewMatrix2() noexcept
+    void updateViewMatrix2() noexcept
     {
-        auto pos = target + glm::vec3(radius * sin(theta) * cos(phi), radius * cos(theta), radius * sin(theta) * sin(phi));
-        SetPosition(pos);
-        SetForwardVector(target - pos);
+        const float sinTheta = sin(m_theta);
+        auto pos = m_target + glm::vec3(m_radius * sinTheta * cos(m_phi), m_radius * cos(m_theta), m_radius * sinTheta * sin(m_phi));
+        setPosition(pos);
+        setForwardVector(m_target - pos);
     }
 
 private:
-    float radius = 20.0f;
-    float phi = 0.0f;
-    float theta = 0.001f;
-    glm::vec3 target = glm::vec3(0.0f, 0.0f, 0.0f);
+    float m_radius = 20.0f;
+    float m_phi = 0.0f;
+    float m_theta = 0.001f;
+    glm::vec3 m_target = glm::vec3(0.0f, 0.0f, 0.0f);
 };
 } // namespace all
