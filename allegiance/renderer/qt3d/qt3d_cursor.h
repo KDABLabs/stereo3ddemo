@@ -28,8 +28,7 @@ namespace all::qt3d {
 class CursorBillboard : public Qt3DCore::QEntity
 {
 public:
-    enum class CursorTexture
-    {
+    enum class CursorTexture {
         Default,
         CrossHair,
         Dot
@@ -87,7 +86,7 @@ public:
     void setCursorTintColor(const QColor& color);
 
 public:
-    void onMouseMoveEvent(QVector3D pos, QPoint  cursorPosition);
+    void onMouseMoveEvent(QVector3D pos, QPoint cursorPosition);
 
     void onProjectionMatrixChanged(const QMatrix4x4& matrix)
     {
@@ -107,7 +106,8 @@ public:
         m_scale_factor = scale_factor;
         updateSize();
     }
-    float getScaleFactor() const noexcept {
+    float scaleFactor() const noexcept
+    {
         return m_scale_factor;
     }
 
@@ -122,7 +122,7 @@ protected:
     CursorCross* m_cross;
     CursorBillboard* m_billboard;
 
-    Qt3DRender::QScreenRayCaster *m_raycaster;
+    Qt3DRender::QScreenRayCaster* m_raycaster;
 
     Qt3DCore::QTransform* m_transform;
     const Qt3DCore::QEntity* m_camera;

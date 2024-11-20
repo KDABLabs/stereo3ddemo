@@ -21,10 +21,10 @@ void all::serenity::PickingApplicationLayer::update()
         return;
     }
 
-    const auto viewportRect = m_window->GetViewportRect();
+    const auto viewportRect = m_window->viewportRect();
 
     // Perform ray cast
-    const auto cursorPos = m_window->GetCursorPos();
+    const auto cursorPos = m_window->cursorPos();
     const auto hits = m_spatialAspect->screenCast(cursorPos, viewportRect, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix());
 
     auto unv = glm::unProject(glm::vec3(cursorPos.x, cursorPos.y, 1.0f), m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix(), viewportRect);
@@ -43,7 +43,7 @@ void all::serenity::PickingApplicationLayer::update()
     }
 }
 
-void all::serenity::PickingApplicationLayer::SetEnabled(bool en)
+void all::serenity::PickingApplicationLayer::setEnabled(bool en)
 {
     enabled = en;
 }

@@ -33,12 +33,12 @@ public:
         switch (ev->type()) {
         case KDFoundation::Event::Type::MouseMove: {
             auto* mouseEvent = static_cast<KDGui::MouseMoveEvent*>(ev);
-            OnMouseMove(mouseEvent);
+            onMouseMove(mouseEvent);
             break;
         }
         case KDFoundation::Event::Type::MouseWheel: {
             auto* wheelEvent = static_cast<KDGui::MouseWheelEvent*>(ev);
-            OnMouseWheel(wheelEvent);
+            onMouseWheel(wheelEvent);
         }
         default:
             break;
@@ -46,19 +46,19 @@ public:
         EventReceiver::event(target, ev);
     }
 
-    void OnMouseMove(KDGui::MouseMoveEvent* event)
+    void onMouseMove(KDGui::MouseMoveEvent* event)
     {
         const auto mousePressed = event->buttons().testFlag(KDGui::MouseButton::LeftButton);
         if (mousePressed) {
             const auto pos = glm::vec2{ event->xPos(), event->yPos() };
             const auto offset = pos - m_lastMousePos;
-            m_camera->SetPhi(m_camera->GetPhi() + offset.x * 0.01f);
-            m_camera->SetTheta(m_camera->GetTheta() - offset.y * 0.01f);
+            m_camera->setPhi(m_camera->phi() + offset.x * 0.01f);
+            m_camera->setTheta(m_camera->theta() - offset.y * 0.01f);
             m_lastMousePos = pos;
         }
     }
 
-    void OnMouseWheel(KDGui::MouseWheelEvent* event)
+    void onMouseWheel(KDGui::MouseWheelEvent* event)
     {
         const auto yDelta = static_cast<float>(event->yDelta());
         m_camera->SetRadius(m_camera->GetRadius() - yDelta * 0.01f);
@@ -99,37 +99,37 @@ public:
         m_surface = m_instance.createSurface(surfaceOptions);
     }
 
-    uint32_t GetWidth() const override
+    uint32_t width() const override
     {
         return m_window->width();
     }
 
-    uint32_t GetHeight() const override
+    uint32_t height() const override
     {
         return m_window->height();
     }
 
-    glm::vec4 GetViewportRect() const override
+    glm::vec4 viewportRect() const override
     {
         return { 0.0f, 0.0f, GetWidth(), GetHeight() };
     }
 
-    glm::vec2 GetCursorPos() const override
+    glm::vec2 cursorPos() const override
     {
         return { m_window->cursorPosition().x, m_window->cursorPosition().y };
     }
 
-    KDGpu::Instance& GetInstance() override
+    KDGpu::Instance& instance() override
     {
         return m_instance;
     }
 
-    KDGpu::Surface& GetSurface() override
+    KDGpu::Surface& surface() override
     {
         return m_surface;
     }
 
-    KDGpu::Device CreateDevice() override
+    KDGpu::Device createDevice() override
     {
         // Enumerate the adapters (physical devices) and select one to use. Here we look for
         // a discrete GPU. In a real app, we could fallback to an integrated one.
@@ -178,7 +178,7 @@ public:
         });
     }
 
-    Window* GetWindow()
+    Window* window()
     {
         return m_window.get();
     }
@@ -199,7 +199,7 @@ public:
     {
     }
 
-    void CreateFlutterOverlay()
+    void createFlutterOverlay()
     {
         m_flutterOverlay = std::make_unique<Flutter::Overlay>();
         GetWindow()->registerEventReceiver(m_flutterOverlay.get());
@@ -233,9 +233,9 @@ public:
                                                  });
     }
 
-    Window* GetWindow()
+    Window* window()
     {
-        return static_cast<SerenityWindowFlutter*>(m_window.get())->GetWindow();
+        return static_cast<SerenityWindowFlutter*>(m_window.get())->window();
     }
 
 private:
@@ -253,7 +253,7 @@ int main(int argc, const char* argv[])
         SerenityImplFlutter impl{ &app };
 
         all::OrbitalStereoCamera camera;
-        impl.CreateAspects(&camera);
+        impl.createAspects(&camera);
 
         auto* window = impl.GetWindow();
         auto* cameraController = window->createChild<CameraController>(&camera);
@@ -265,7 +265,7 @@ int main(int argc, const char* argv[])
         window->width.valueChanged().connect(updateCameraAspectRatio);
         window->height.valueChanged().connect(updateCameraAspectRatio);
 
-        impl.CreateFlutterOverlay();
+        impl.createFlutterOverlay();
 
         ret = app.exec();
     }

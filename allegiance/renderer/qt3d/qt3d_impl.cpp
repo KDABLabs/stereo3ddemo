@@ -68,7 +68,7 @@ all::qt3d::Qt3DImpl::Qt3DImpl(all::StereoCamera& stereoCamera)
     : m_stereoCamera(&stereoCamera)
 {
     QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    if (qgetenv("DISABLE_STEREO") == "")
+    if (!qEnvironmentVariableIsSet("DISABLE_STEREO"))
         format.setStereo(true);
     format.setSamples(8);
     QSurfaceFormat::setDefaultFormat(format);
@@ -115,7 +115,7 @@ void all::qt3d::Qt3DImpl::projectionChanged()
     }
 }
 
-void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
+void all::qt3d::Qt3DImpl::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
 {
     using namespace Qt3DCore;
     using namespace Qt3DRender;
@@ -165,10 +165,10 @@ void all::qt3d::Qt3DImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters>
 
             return toGlmVec3(nearestHitIterator->worldIntersection());
         };
-    CreateScene(m_rootEntity.get());
+    createScene(m_rootEntity.get());
 }
 
-void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
+void all::qt3d::Qt3DImpl::createScene(Qt3DCore::QEntity* root)
 {
     m_sceneEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
     m_sceneEntity->setObjectName("SceneEntity");
@@ -181,7 +181,7 @@ void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
     m_cursor->addComponent(m_renderer->cursorLayer());
     m_cursor->setType(CursorType::Ball);
     m_picker = new Picker(m_sceneEntity, m_cursor);
-    LoadModel();
+    loadModel();
 
     m_view.setRootEntity(m_rootEntity.get());
 
@@ -201,21 +201,21 @@ void all::qt3d::Qt3DImpl::CreateScene(Qt3DCore::QEntity* root)
         le->setParent(m_rootEntity.get());
     }
 
-    LoadImage();
+    loadImage();
 }
 
-void all::qt3d::Qt3DImpl::ShowImage()
+void all::qt3d::Qt3DImpl::showImage()
 {
     m_renderer->setMode(QStereoForwardRenderer::Mode::StereoImage);
 }
 
-void all::qt3d::Qt3DImpl::ShowModel()
+void all::qt3d::Qt3DImpl::showModel()
 {
     m_renderer->setMode(QStereoForwardRenderer::Mode::Scene);
-    LoadModel();
+    loadModel();
 }
 
-void all::qt3d::Qt3DImpl::OnPropertyChanged(std::string_view name, std::any value)
+void all::qt3d::Qt3DImpl::propertyChanged(std::string_view name, std::any value)
 {
     if (name == "scale_factor") {
         m_cursor->setScaleFactor(std::any_cast<float>(value));
@@ -232,12 +232,12 @@ void all::qt3d::Qt3DImpl::OnPropertyChanged(std::string_view name, std::any valu
     }
 }
 
-glm::vec3 all::qt3d::Qt3DImpl::GetCursorWorldPosition() const
+glm::vec3 all::qt3d::Qt3DImpl::cursorWorldPosition() const
 {
     return toGlmVec3(m_picker->cursor_world);
 }
 
-void all::qt3d::Qt3DImpl::LoadImage(QUrl path)
+void all::qt3d::Qt3DImpl::loadImage(QUrl path)
 {
     QImageReader::setAllocationLimit(0);
     // Create entities for the stereo image
@@ -277,7 +277,7 @@ void all::qt3d::Qt3DImpl::LoadImage(QUrl path)
     updateImageMeshes();
 }
 
-void all::qt3d::Qt3DImpl::LoadModel(std::filesystem::path path)
+void all::qt3d::Qt3DImpl::loadModel(std::filesystem::path path)
 {
     delete m_skyBox;
     m_skyBox = nullptr;
@@ -372,12 +372,12 @@ void all::qt3d::Qt3DImpl::LoadModel(std::filesystem::path path)
     }
 }
 
-void all::qt3d::Qt3DImpl::SetCursorEnabled(bool enabled)
+void all::qt3d::Qt3DImpl::setCursorEnabled(bool enabled)
 {
     if (enabled) {
         m_cursor->setScaleFactor(cursor_scale);
     } else {
-        cursor_scale = m_cursor->getScaleFactor();
+        cursor_scale = m_cursor->scaleFactor();
         m_cursor->setScaleFactor(0);
     }
 }
@@ -470,7 +470,7 @@ void all::qt3d::Qt3DImpl::_calculateSceneDimensions(Qt3DCore::QNode* node, QVect
     }
 }
 
-void all::qt3d::Qt3DImpl::OnModelExtentChanged(const QVector3D& min, const QVector3D& max)
+void all::qt3d::Qt3DImpl::modelExtentChanged(const QVector3D& min, const QVector3D& max)
 {
     if (!m_nav_params)
         return;
@@ -478,7 +478,7 @@ void all::qt3d::Qt3DImpl::OnModelExtentChanged(const QVector3D& min, const QVect
     m_nav_params->min_extent = toGlmVec3(min);
     m_nav_params->max_extent = toGlmVec3(max);
 }
-void all::qt3d::Qt3DImpl::UpdateMouse()
+void all::qt3d::Qt3DImpl::updateMouse()
 {
     m_cursor->onMouseMoveEvent(toQVector3D(m_stereoCamera->position()), m_view.mapFromGlobal(m_view.cursor().pos()));
 }

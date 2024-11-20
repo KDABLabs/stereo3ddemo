@@ -7,24 +7,24 @@
 class SceneController : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(float mouseSensitivity READ GetMouseSensitivity WRITE SetMouseSensitivity NOTIFY OnMouseSensitivityChanged)
+    Q_PROPERTY(float mouseSensitivity READ mouseSensitivity WRITE setMouseSensitivity NOTIFY mouseSensitivityChanged)
 public:
-    float GetMouseSensitivity()
+    float mouseSensitivity()
     {
         return m_mouseSensitivity;
     }
-    void SetMouseSensitivity(float sensitivity)
+    void setMouseSensitivity(float sensitivity)
     {
         if (sensitivity == m_mouseSensitivity)
             return;
         m_mouseSensitivity = sensitivity;
-        Q_EMIT OnMouseSensitivityChanged();
+        Q_EMIT mouseSensitivityChanged();
     }
 
 public:
 Q_SIGNALS:
     void OpenLoadModelDialog();
-    void OnMouseSensitivityChanged();
+    void mouseSensitivityChanged();
 
 protected:
     float m_mouseSensitivity = 100;
@@ -42,12 +42,12 @@ public:
     };
     Q_ENUM(CameraMode);
 
-    Q_PROPERTY(float eyeDistance READ EyeDistance WRITE SetEyeDistance NOTIFY OnEyeDistanceChanged)
-    Q_PROPERTY(float focusDistance READ FocusDistance WRITE SetFocusDistance NOTIFY OnFocusDistanceChanged)
-    Q_PROPERTY(float focusAngle READ FocusAngle WRITE SetFocusAngle NOTIFY OnFocusAngleChanged)
-    Q_PROPERTY(float fov READ FOV WRITE SetFOV NOTIFY OnFOVChanged)
-    Q_PROPERTY(bool flipped READ Flipped WRITE SetFlipped NOTIFY OnFlippedChanged)
-    Q_PROPERTY(CameraMode cameraMode READ GetCameraMode WRITE SetCameraMode NOTIFY OnCameraModeChanged)
+    Q_PROPERTY(float eyeDistance READ eyeDistance WRITE setEyeDistance NOTIFY eyeDistanceChanged)
+    Q_PROPERTY(float focusDistance READ focusDistance WRITE setFocusDistance NOTIFY focusDistanceChanged)
+    Q_PROPERTY(float focusAngle READ focusAngle WRITE setFocusAngle NOTIFY focusAngleChanged)
+    Q_PROPERTY(float fov READ fov WRITE setFov NOTIFY fovChanged)
+    Q_PROPERTY(bool flipped READ flipped WRITE setFlipped NOTIFY flippedChanged)
+    Q_PROPERTY(CameraMode cameraMode READ cameraMode WRITE setCameraMode NOTIFY cameraModeChanged)
 public:
     CameraController(QObject* parent = nullptr)
         : QObject(parent)
@@ -55,35 +55,35 @@ public:
     }
 
 public:
-    void SetEyeDistance(float eyeDistance) noexcept
+    void setEyeDistance(float eyeDistance) noexcept
     {
         m_eyeDistance = eyeDistance;
-        OnEyeDistanceChanged(m_eyeDistance);
+        eyeDistanceChanged(m_eyeDistance);
     }
-    float EyeDistance() const noexcept
+    float eyeDistance() const noexcept
     {
         return m_eyeDistance;
     }
-    void SetFocusDistance(float focusDistance) noexcept
+    void setFocusDistance(float focusDistance) noexcept
     {
         if (qFuzzyCompare(m_focusDistance, focusDistance))
             return;
 
         m_focusDistance = focusDistance;
         m_focusAngle = qRadiansToDegrees(std::atan(m_focusDistance / (m_eyeDistance * 0.5)));
-        OnFocusDistanceChanged(m_focusDistance);
-        OnFocusAngleChanged(m_focusAngle);
+        focusDistanceChanged(m_focusDistance);
+        focusAngleChanged(m_focusAngle);
     }
-    float FocusDistance() const noexcept
+    float focusDistance() const noexcept
     {
         return m_focusDistance;
     }
 
-    float FocusAngle() const noexcept
+    float focusAngle() const noexcept
     {
         return m_focusAngle;
     }
-    void SetFocusAngle(float focusAngle) noexcept
+    void setFocusAngle(float focusAngle) noexcept
     {
         if (qFuzzyCompare(m_focusAngle, focusAngle))
             return;
@@ -91,46 +91,46 @@ public:
         m_focusAngle = focusAngle;
         auto rad = qDegreesToRadians(m_focusAngle);
         m_focusDistance = qTan(rad) * m_eyeDistance * 0.5f;
-        OnFocusAngleChanged(m_focusAngle);
-        OnFocusDistanceChanged(m_focusDistance);
+        focusAngleChanged(m_focusAngle);
+        focusDistanceChanged(m_focusDistance);
     }
 
-    void SetFOV(float fov) noexcept
+    void setFov(float fov) noexcept
     {
         m_fov = fov;
-        OnFOVChanged(fov);
+        fovChanged(fov);
     }
-    float FOV() const noexcept
+    float fov() const noexcept
     {
         return m_fov;
     }
 
-    void SetFlipped(bool flipped) noexcept
+    void setFlipped(bool flipped) noexcept
     {
         m_flipped = flipped;
-        OnFlippedChanged(flipped);
+        flippedChanged(flipped);
     }
-    bool Flipped() const noexcept
+    bool flipped() const noexcept
     {
         return m_flipped;
     }
 
-    void SetCameraMode(CameraMode mode) noexcept
+    void setCameraMode(CameraMode mode) noexcept
     {
         m_cameraMode = mode;
-        OnCameraModeChanged(mode);
+        cameraModeChanged(mode);
     }
-    CameraMode GetCameraMode() const noexcept
+    CameraMode cameraMode() const noexcept
     {
         return m_cameraMode;
     }
 Q_SIGNALS:
-    void OnEyeDistanceChanged(float eyeDistance);
-    void OnFocusDistanceChanged(float focusDistance);
-    void OnFocusAngleChanged(float focusAngle);
-    void OnFOVChanged(float fov);
-    void OnFlippedChanged(bool flipped);
-    void OnCameraModeChanged(CameraMode mode);
+    void eyeDistanceChanged(float);
+    void focusDistanceChanged(float);
+    void focusAngleChanged(float);
+    void fovChanged(float);
+    void flippedChanged(bool);
+    void cameraModeChanged(CameraMode);
 
 private:
     CameraMode m_cameraMode = CameraMode::Stereo;
@@ -154,12 +154,12 @@ public:
 
 public:
     Q_OBJECT
-    Q_PROPERTY(float visible READ Visible WRITE SetVisible NOTIFY OnCursorVisibilityChanged)
-    Q_PROPERTY(CursorType cursor READ Cursor WRITE SetCursorType NOTIFY OnCursorChanged)
-    Q_PROPERTY(bool scalingEnabled READ ScalingEnabled WRITE SetScalingEnabled NOTIFY OnCursorScalingEnableChanged)
-    Q_PROPERTY(float scaleFactor READ ScaleFactor WRITE SetScaleFactor NOTIFY OnCursorScaleChanged)
-    Q_PROPERTY(bool cursorFocus READ CursorChangesFocus WRITE SetCursorChangesFocus NOTIFY OnCursorFocusChanged)
-    Q_PROPERTY(QColor cursorTint READ CursorTint WRITE SetCursorTint NOTIFY OnCursorTintChanged)
+    Q_PROPERTY(float visible READ visible WRITE setVisible NOTIFY cursorVisibilityChanged)
+    Q_PROPERTY(CursorType cursor READ cursor WRITE setCursorType NOTIFY cursorChanged)
+    Q_PROPERTY(bool scalingEnabled READ scalingEnabled WRITE setScalingEnabled NOTIFY cursorScalingEnableChanged)
+    Q_PROPERTY(float scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY cursorScaleChanged)
+    Q_PROPERTY(bool cursorFocus READ cursorChangesFocus WRITE setCursorChangesFocus NOTIFY cursorFocusChanged)
+    Q_PROPERTY(QColor cursorTint READ cursorTint WRITE setCursorTint NOTIFY cursorTintChanged)
 public:
     CursorController(QObject* parent = nullptr)
         : QObject(parent)
@@ -167,71 +167,71 @@ public:
     }
 
 public:
-    void SetVisible(bool visible) noexcept
+    void setVisible(bool visible) noexcept
     {
         m_visible = visible;
-        OnCursorVisibilityChanged(visible);
+        cursorVisibilityChanged(visible);
     }
-    bool Visible() const noexcept
+    bool visible() const noexcept
     {
         return m_visible;
     }
-    void SetCursorType(CursorType cursorType) noexcept
+    void setCursorType(CursorType cursorType) noexcept
     {
         m_cursorType = all::CursorType(cursorType);
-        OnCursorChanged(m_cursorType);
+        cursorChanged(m_cursorType);
     }
-    CursorType Cursor() const noexcept
+    CursorType cursor() const noexcept
     {
         return CursorType(m_cursorType);
     }
-    void SetScalingEnabled(bool enabled) noexcept
+    void setScalingEnabled(bool enabled) noexcept
     {
         m_scaling_enabled = enabled;
-        OnCursorScalingEnableChanged(enabled);
+        cursorScalingEnableChanged(enabled);
     }
-    void SetScaleFactor(float scale_factor) noexcept
+    void setScaleFactor(float scale_factor) noexcept
     {
         m_scale_factor = scale_factor;
-        OnCursorScaleChanged(scale_factor);
+        cursorScaleChanged(scale_factor);
     }
 
-    bool ScalingEnabled() const noexcept
+    bool scalingEnabled() const noexcept
     {
         return m_scaling_enabled;
     }
-    float ScaleFactor() const noexcept
+    float scaleFactor() const noexcept
     {
         return m_scale_factor;
     }
 
-    bool CursorChangesFocus() const noexcept
+    bool cursorChangesFocus() const noexcept
     {
         return m_cursor_focus;
     }
-    void SetCursorChangesFocus(bool focus) noexcept
+    void setCursorChangesFocus(bool focus) noexcept
     {
         m_cursor_focus = focus;
-        OnCursorFocusChanged(focus);
+        cursorFocusChanged(focus);
     }
 
-    void SetCursorTint(QColor color) noexcept
+    void setCursorTint(QColor color) noexcept
     {
         m_tint = color;
-        OnCursorTintChanged(color);
+        cursorTintChanged(color);
     }
-    QColor CursorTint() const noexcept
+    QColor cursorTint() const noexcept
     {
         return m_tint;
     }
 
 Q_SIGNALS:
-    void OnCursorVisibilityChanged(bool state);
-    void OnCursorChanged(all::CursorType cursorType);
-    void OnCursorScaleChanged(float scale);
-    void OnCursorScalingEnableChanged(bool enabled);
-    void OnCursorFocusChanged(bool focus);
-    void OnCursorTintChanged(QColor color);
+    void cursorVisibilityChanged(bool state);
+    void cursorChanged(all::CursorType cursorType);
+    void cursorScaleChanged(float scale);
+    void cursorScalingEnableChanged(bool enabled);
+    void cursorFocusChanged(bool focus);
+    void cursorTintChanged(QColor color);
 
 private:
     bool m_visible = true;

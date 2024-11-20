@@ -16,14 +16,14 @@ public:
     {
     }
 
-    QWindow* GetWindow()
+    QWindow* window()
     {
-        return static_cast<SerenityWindowQt*>(m_window.get())->GetWindow();
+        return static_cast<SerenityWindowQt*>(m_window.get())->window();
     }
 
-    void UpdateMouse() {}
+    void updateMouse() { }
 
-    void OnMouseEvent(::QMouseEvent* event)
+    void onMouseEvent(::QMouseEvent* event)
     {
         KDGui::MouseButtons buttons = KDGui::NoButton;
         KDGui::MouseButton button = KDGui::NoButton;
@@ -46,11 +46,11 @@ public:
 
         switch (event->type()) {
         case QEvent::MouseButtonPress:
-            return SerenityImpl::OnMouseEvent(KDGui::MousePressEvent(timestamp, button, buttons, event->pos().x(), event->pos().y()));
+            return SerenityImpl::onMouseEvent(KDGui::MousePressEvent(timestamp, button, buttons, event->pos().x(), event->pos().y()));
         case QEvent::MouseButtonRelease:
-            return SerenityImpl::OnMouseEvent(KDGui::MouseReleaseEvent(timestamp, button, buttons, event->pos().x(), event->pos().y()));
+            return SerenityImpl::onMouseEvent(KDGui::MouseReleaseEvent(timestamp, button, buttons, event->pos().x(), event->pos().y()));
         case QEvent::MouseMove:
-            return SerenityImpl::OnMouseEvent(KDGui::MouseMoveEvent(timestamp, buttons, event->pos().x(), event->pos().y()));
+            return SerenityImpl::onMouseEvent(KDGui::MouseMoveEvent(timestamp, buttons, event->pos().x(), event->pos().y()));
         default:
             break;
         }

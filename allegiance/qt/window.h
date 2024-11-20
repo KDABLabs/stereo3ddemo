@@ -14,21 +14,21 @@ public:
         : window(window)
     {
         resize(size);
-        CreateDockWidget();
+        createDockWidget();
 
         QWidget* widget = QWidget::createWindowContainer(window);
         setCentralWidget(widget);
     }
 
 public:
-    auto* GetGraphicsWindow() const noexcept
+    auto* graphicsWindow() const noexcept
     {
         return window;
     }
-    auto* GetCameraControl() { return camera_control; }
+    auto* cameraControl() { return camera_control; }
 
     // Issue: unstable focus on camera control widget resizing
-    void OnKeyPress(QKeyEvent* e)
+    void onKeyPress(QKeyEvent* e)
     {
         switch (e->key()) {
         case Qt::Key_F11:
@@ -47,16 +47,16 @@ public:
             setCursor(cursor ? Qt::ArrowCursor : Qt::BlankCursor);
             break;
         case Qt::Key_F1:
-            camera_control->Reload();
+            camera_control->reload();
             break;
         case Qt::Key_F3:
-            OnEyeSeparation(false);
+            onEyeSeparation(false);
             break;
         case Qt::Key_F12:
-            OnEyeSeparation(true);
+            onEyeSeparation(true);
             break;
         case Qt::Key_F2:
-            Q_EMIT OnScreenshot();
+            Q_EMIT onScreenshot();
             break;
 
         default:
@@ -65,7 +65,7 @@ public:
     }
 
 private:
-    void CreateDockWidget()
+    void createDockWidget()
     {
         QDockWidget* dock = new QDockWidget("Camera", this);
         camera_control = new CameraControl(dock);
@@ -75,9 +75,9 @@ private:
     }
 
 Q_SIGNALS:
-    void OnClose();
-    void OnEyeSeparation(bool increase);
-    void OnScreenshot();
+    void onClose();
+    void onEyeSeparation(bool increase);
+    void onScreenshot();
 
 private:
     QWindow* window;

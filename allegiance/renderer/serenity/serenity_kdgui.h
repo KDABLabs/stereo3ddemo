@@ -48,33 +48,33 @@ public:
 
     ~SerenityWindowKDGui() override = default;
 
-    uint32_t GetWidth() const final
+    uint32_t width() const final
     {
         return m_window->width();
     }
 
-    uint32_t GetHeight() const final
+    uint32_t height() const final
     {
         return m_window->height();
     }
 
-    glm::vec4 GetViewportRect() const final
+    glm::vec4 viewportRect() const final
     {
         return glm::vec4(0.0f, 0.0f, m_window->width(), m_window->height());
     }
 
-    glm::vec2 GetCursorPos() const final
+    glm::vec2 cursorPos() const final
     {
         const KDGui::Position pos = m_window->cursorPosition();
         return glm::vec2(pos.x, pos.y);
     }
 
-    KDGpu::Instance& GetInstance() final
+    KDGpu::Instance& instance() final
     {
         return m_instance;
     }
 
-    KDGpu::Surface& GetSurface() final
+    KDGpu::Surface& surface() final
     {
         return m_surface;
     }
@@ -86,7 +86,7 @@ public:
         return std::move(defaultDevice.device);
     }
 
-    KDGui::Window* GetWindow() const
+    KDGui::Window* window() const
     {
         return m_window.get();
     }

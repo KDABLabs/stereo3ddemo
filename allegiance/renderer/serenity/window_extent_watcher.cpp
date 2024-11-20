@@ -10,12 +10,12 @@ SerenityWindowExtentWatcher::SerenityWindowExtentWatcher(SerenityWindow* window)
 
 uint32_t SerenityWindowExtentWatcher::width() const
 {
-    return m_window->GetWidth();
+    return m_window->width();
 }
 
 uint32_t SerenityWindowExtentWatcher::height() const
 {
-    return m_window->GetHeight();
+    return m_window->height();
 }
 
 } // namespace all::serenity

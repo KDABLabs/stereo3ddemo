@@ -34,5 +34,5 @@ int main(int argc, char** argv)
         qputenv("QT3D_RENDERER", "opengl");
     }
 
-    return all::qt::App{ argc, argv }.Start();
+    return all::qt::App{ argc, argv }.start();
 }

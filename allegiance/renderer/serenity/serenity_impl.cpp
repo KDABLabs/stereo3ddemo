@@ -61,7 +61,7 @@ Serenity::Flutter::Overlay* createFlutterOverlay(all::serenity::SerenityWindow* 
 
 } // namespace
 
-void all::serenity::SerenityImpl::LoadModel(std::filesystem::path file)
+void all::serenity::SerenityImpl::loadModel(std::filesystem::path file)
 {
     setMode(Mode::Scene);
     auto entity = MeshLoader::load(file);
@@ -80,44 +80,44 @@ void all::serenity::SerenityImpl::LoadModel(std::filesystem::path file)
     }
 }
 
-void all::serenity::SerenityImpl::OnPropertyChanged(std::string_view name, std::any value)
+void all::serenity::SerenityImpl::propertyChanged(std::string_view name, std::any value)
 {
     if (name == "scale_factor") {
-        m_pickingLayer->SetScaleFactor(std::any_cast<float>(value));
+        m_pickingLayer->setScaleFactor(std::any_cast<float>(value));
     } else if (name == "scaling_enabled") {
-        m_pickingLayer->SetScalingEnabled(std::any_cast<bool>(value));
+        m_pickingLayer->setScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
-        m_pickingLayer->SetTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->GetTransform());
+        m_pickingLayer->setTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->transform());
     } else if (name == "camera_mode") {
         m_cameraMode = std::any_cast<CameraMode>(value);
         viewChanged();
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
-        m_cursor->SetColor(CursorBase::ColorData{
+        m_cursor->setColor(CursorBase::ColorData{
                 .ambient = { color[0], color[1], color[2], color[3] },
         });
     }
 }
 
-void all::serenity::SerenityImpl::SetCursorEnabled(bool enabled)
+void all::serenity::SerenityImpl::setCursorEnabled(bool enabled)
 {
     if (enabled) {
-        m_cursor->GetTransform()->scale = glm::vec3(scale_factor);
+        m_cursor->transform()->scale = glm::vec3(scale_factor);
     } else {
-        scale_factor = m_cursor->GetTransform()->scale().x;
-        m_cursor->GetTransform()->scale = glm::vec3(0.0f);
+        scale_factor = m_cursor->transform()->scale().x;
+        m_cursor->transform()->scale = glm::vec3(0.0f);
     }
 
-    m_pickingLayer->SetEnabled(enabled);
+    m_pickingLayer->setEnabled(enabled);
 }
 
-void all::serenity::SerenityImpl::Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
+void all::serenity::SerenityImpl::screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
 {
     assert(m_renderAlgorithm != nullptr);
     m_renderAlgorithm->Screenshot(in);
 }
 
-glm::vec3 all::serenity::SerenityImpl::GetCursorWorldPosition() const
+glm::vec3 all::serenity::SerenityImpl::cursorWorldPosition() const
 {
     return glm::vec3();
 }
@@ -148,7 +148,7 @@ void all::serenity::SerenityImpl::projectionChanged()
                                                camera.farPlane());
 }
 
-void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
+void all::serenity::SerenityImpl::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
 {
     m_navParams = std::move(nav_params);
     KDGpu::Device device = m_window->CreateDevice();
@@ -157,7 +157,7 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     for (auto&& layerName : { "Alpha", "Opaque", "StereoImage" })
         m_layerManager->addLayer(layerName);
 
-    std::unique_ptr<Serenity::Entity> rootEntity = CreateScene(*m_layerManager);
+    std::unique_ptr<Serenity::Entity> rootEntity = createScene(*m_layerManager);
     m_scene_root = rootEntity.get();
 
     // Add Camera into the Scene
@@ -167,11 +167,11 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     auto algo = std::make_unique<all::serenity::StereoRenderAlgorithm>();
     m_renderAlgorithm = algo.get();
 
-    const uint32_t maxSupportedSwapchainArrayLayers = device.adapter()->swapchainProperties(m_window->GetSurface().handle()).capabilities.maxImageArrayLayers;
+    const uint32_t maxSupportedSwapchainArrayLayers = device.adapter()->swapchainProperties(m_window->surface().handle()).capabilities.maxImageArrayLayers;
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
 
     m_cursor->ChangeCursor(m_scene_root, CursorType::Ball);
-    m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window.get(), spatialAspect, m_cursor->GetTransform());
+    m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window.get(), spatialAspect, m_cursor->transform());
 
     m_renderAspect = m_engine.createAspect<Serenity::RenderAspect>(std::move(device));
     auto logicAspect = m_engine.createAspect<Serenity::LogicAspect>();
@@ -180,7 +180,7 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
 
     Serenity::RenderTargetRef windowRenderTargetRef{
         .type = Serenity::RenderTargetRef::Type::Surface,
-        .surfaceHandle = m_window->GetSurface().handle(),
+        .surfaceHandle = m_window->surface().handle(),
         .extentWatcher = std::make_shared<SerenityWindowExtentWatcher>(m_window.get()),
         .arrayLayers = std::min(2u, maxSupportedSwapchainArrayLayers), // Request 2 array layers for stereo (if possible)
         .additionalUsageFlags = Serenity::RenderTargetUsageFlagBits::ShaderReadable | Serenity::RenderTargetUsageFlagBits::Capture,
@@ -235,7 +235,7 @@ void all::serenity::SerenityImpl::CreateAspects(std::shared_ptr<all::ModelNavPar
     m_engine.running = true;
 }
 
-std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::CreateScene(Serenity::LayerManager& layers)
+std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::createScene(Serenity::LayerManager& layers)
 {
     auto rootEntity = std::make_unique<Entity>();
     rootEntity->setObjectName("Root Entity");
@@ -297,7 +297,7 @@ std::unique_ptr<Serenity::Entity> all::serenity::SerenityImpl::CreateScene(Seren
 
         const Material::UboDataBuilder materialDataBuilder = [this, texture](uint32_t set, uint32_t binding) {
             const ViewportData data = {
-                .viewportSize = { static_cast<float>(m_window->GetWidth()), static_cast<float>(m_window->GetHeight()) },
+                .viewportSize = { static_cast<float>(m_window->width()), static_cast<float>(m_window->height()) },
                 .textureSize = { static_cast<float>(texture->width()), static_cast<float>(texture->height()) }
             };
             std::vector<uint8_t> rawData(sizeof(ViewportData));
@@ -446,7 +446,7 @@ Serenity::StereoForwardAlgorithm::RenderPhase all::serenity::SerenityImpl::creat
     return phase;
 }
 
-void all::serenity::SerenityImpl::OnMouseEvent(const KDFoundation::Event& event)
+void all::serenity::SerenityImpl::onMouseEvent(const KDFoundation::Event& event)
 {
     auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
 

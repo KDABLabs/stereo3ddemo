@@ -34,28 +34,28 @@ public:
 public:
     void viewChanged();
     void projectionChanged();
-    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
+    void createAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
-    void LoadModel(std::filesystem::path path = "assets/motorbike.fbx");
-    void SetCursorEnabled(bool /* enabled */);
+    void loadModel(std::filesystem::path path = "assets/motorbike.fbx");
+    void setCursorEnabled(bool /* enabled */);
 
-    QWindow* GetWindow() { return &m_view; }
+    QWindow* window() { return &m_view; }
 
-    void UpdateMouse();
-    void ShowImage();
-    void ShowModel();
-    void Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
+    void updateMouse();
+    void showImage();
+    void showModel();
+    void screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
     { /*tbd*/
     }
 
-    void OnPropertyChanged(std::string_view name, std::any value);
-    glm::vec3 GetCursorWorldPosition() const;
+    void propertyChanged(std::string_view name, std::any value);
+    glm::vec3 cursorWorldPosition() const;
 
 private:
-    static void AddDirectionalLight(Qt3DCore::QNode* node, QVector3D position);
+    static void addDirectionalLight(Qt3DCore::QNode* node, QVector3D position);
 
-    void CreateScene(Qt3DCore::QEntity* root);
-    void LoadImage(QUrl path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"));
+    void createScene(Qt3DCore::QEntity* root);
+    void loadImage(QUrl path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"));
 
     QVector2D calculateSceneDimensions(Qt3DCore::QEntity* scene) const;
 
@@ -71,7 +71,7 @@ private:
 
 protected:
     void _calculateSceneDimensions(Qt3DCore::QNode* node, QVector3D& minBounds, QVector3D& maxBounds) const;
-    void OnModelExtentChanged(const QVector3D& min, const QVector3D& max);
+    void modelExtentChanged(const QVector3D& min, const QVector3D& max);
 
 private:
     Qt3DExtras::Qt3DWindow m_view;

@@ -104,7 +104,7 @@ all::serenity::Cursor::Cursor(Serenity::LayerManager& layers)
     m_cursors.push_back(std::make_unique<CrossCursor>(layers));
 
     m_currentCursor = (CursorBase*)m_cursors[0].get();
-    SetColor(m_colorData);
+    setColor(m_colorData);
 }
 
 void all::serenity::BallCursor::MakeBall(Serenity::Entity* ec, Serenity::LayerManager& layers)
@@ -166,13 +166,13 @@ void all::serenity::BallCursor::MakeBillboard(Serenity::Entity* ec, Serenity::La
     ec->layerMask = layers.layerMask({ "Alpha" });
 }
 
-void all::serenity::BallCursor::SetColor(const ColorData& colorData)
+void all::serenity::BallCursor::setColor(const ColorData& colorData)
 {
     m_cbuf->data = std::vector<uint8_t>{ (uint8_t*)&colorData, (uint8_t*)&colorData + sizeof(colorData) };
     m_bb_cbuf->data = std::vector<uint8_t>{ (uint8_t*)&colorData, (uint8_t*)&colorData + sizeof(colorData) };
 }
 
-void all::serenity::CrossCursor::SetColor(const ColorData& colorData)
+void all::serenity::CrossCursor::setColor(const ColorData& colorData)
 {
     m_cbuf->data = std::vector<uint8_t>{ (uint8_t*)&colorData, (uint8_t*)&colorData + sizeof(colorData) };
 }

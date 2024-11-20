@@ -10,15 +10,15 @@ public:
     virtual ~SerenityWindow() = default;
 
 public:
-    virtual uint32_t GetWidth() const = 0;
-    virtual uint32_t GetHeight() const = 0;
+    virtual uint32_t width() const = 0;
+    virtual uint32_t height() const = 0;
 
-    virtual glm::vec4 GetViewportRect() const = 0;
+    virtual glm::vec4 viewportRect() const = 0;
 
-    virtual glm::vec2 GetCursorPos() const = 0;
+    virtual glm::vec2 cursorPos() const = 0;
 
-    virtual KDGpu::Instance& GetInstance() = 0;
-    virtual KDGpu::Surface& GetSurface() = 0;
+    virtual KDGpu::Instance& instance() = 0;
+    virtual KDGpu::Surface& surface() = 0;
 
     virtual KDGpu::Device CreateDevice() = 0;
 };

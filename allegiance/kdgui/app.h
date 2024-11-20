@@ -32,7 +32,7 @@ public:
         : app()
         , impl(std::in_place, camera)
     {
-        KDGui::Window* window = impl->GetWindow();
+        KDGui::Window* window = impl->window();
         windowEventWatcher = window->createChild<WindowEventWatcher>();
 
         // Forward Window events to WindowEventWatcher
@@ -54,7 +54,7 @@ public:
         // SpaceMouse
         auto nav_params = std::make_shared<all::ModelNavParameters>();
         spacemouse.emplace(&camera, nav_params);
-        spacemouse->SetUseUserPivot(true);
+        spacemouse->setUseUserPivot(true);
         auto* pnav_params = nav_params.get();
 
         // Mouse Events
@@ -63,16 +63,16 @@ public:
                 input.is_pressed = true;
                 input.skip_first = true;
                 if (input.cursor_changes_focus) {
-                    auto pos = impl->GetCursorWorldPosition();
-                    // camera.SetFocusDistance(std::clamp(glm::length(pos - camera.GetPosition()), 0.5f, 100.f));
+                    auto pos = impl->cursorWorldPosition();
+                    // camera.setFocusDistance(std::clamp(glm::length(pos - camera.position()), 0.5f, 100.f));
                 }
             } else if (e->buttons() & KDGui::MouseButton::RightButton) {
-                auto pos = impl->GetCursorWorldPosition();
+                auto pos = impl->cursorWorldPosition();
                 SPDLOG_WARN(" setting pivot {},{},{}", pos.x, pos.y, pos.z);
                 pnav_params->pivot_point = { pos.x, pos.y, pos.z };
             }
 
-            impl->OnMouseEvent(*e);
+            impl->onMouseEvent(*e);
         });
         windowEventWatcher->mouseMoveEvent.connect([this](const KDGui::MouseMoveEvent* e) {
             static bool flipped = false;
@@ -100,18 +100,18 @@ public:
             input.last_x_pos = e->xPos();
             input.last_y_pos = e->yPos();
 
-            impl->OnMouseEvent(*e);
+            impl->onMouseEvent(*e);
         });
         windowEventWatcher->mouseReleaseEvent.connect([this](const KDGui::MouseReleaseEvent* e) {
             if (e->button() == KDGui::MouseButton::LeftButton)
                 input.is_pressed = false;
 
-            impl->OnMouseEvent(*e);
+            impl->onMouseEvent(*e);
         });
         windowEventWatcher->mouseWheelEvent.connect([this](const KDGui::MouseWheelEvent* e) {
             camera.zoom(e->yDelta() / mouseSensitivity);
 
-            impl->OnMouseEvent(*e);
+            impl->onMouseEvent(*e);
         });
 
         // TODO: CameraController
@@ -120,17 +120,17 @@ public:
 
         // TODO: SceneController
 
-        impl->CreateAspects(nav_params);
-        ResetCamera();
+        impl->createAspects(nav_params);
+        resetCamera();
         window->visible = true;
     }
 
-    int Start() noexcept
+    int start() noexcept
     {
         return app.exec();
     }
 
-    void ResetCamera() noexcept
+    void resetCamera() noexcept
     {
         camera.setPosition({ 0.2, 5, -10 });
         camera.setForwardVector({ 0, -.5, 1 });

@@ -38,7 +38,7 @@ class App
 {
 public:
     App(int& argc, char** argv)
-        : app(argc, argv), impl(std::in_place, camera), wnd(impl->GetWindow(), { 1920, 1080 })
+        : app(argc, argv), impl(std::in_place, camera), wnd(impl->window(), { 1920, 1080 })
     {
         // Basic setup of the application
         QApplication::setApplicationName(QStringLiteral("Schneider Demo - " ALLEGIANCE_BUILD_STR));
@@ -59,49 +59,49 @@ public:
             impl->projectionChanged();
         });
 
-        auto* cc = wnd.GetCameraControl();
-        auto& qwin = *impl->GetWindow();
+        auto* cc = wnd.cameraControl();
+        auto& qwin = *impl->window();
 
         auto nav_params = std::make_shared<all::ModelNavParameters>();
         spacemouse.emplace(&camera, nav_params);
-        spacemouse->SetUseUserPivot(true);
+        spacemouse->setUseUserPivot(true);
         auto* pnav_params = nav_params.get();
 
-        QObject::connect(&watcher, &WindowEventWatcher::OnClose,
+        QObject::connect(&watcher, &WindowEventWatcher::onClose,
                          [this]() {
                              impl.reset();
                              app.quit();
                          });
-        QObject::connect(&wnd, &Window::OnScreenshot,
+        QObject::connect(&wnd, &Window::onScreenshot,
                          [this]() {
                              auto x = [this](const uint8_t* data, uint32_t width, uint32_t height) {
                                  grabber.CreatePixmap(data, width, height);
                              };
 
-                             impl->Screenshot(x);
+                             impl->screenshot(x);
                          });
-        QObject::connect(&watcher, &WindowEventWatcher::OnScroll,
+        QObject::connect(&watcher, &WindowEventWatcher::onScroll,
                          [this](::QWheelEvent* e) {
-                             camera.zoom(e->angleDelta().y() / qml.scene.GetMouseSensitivity());
+                             camera.zoom(e->angleDelta().y() / qml.scene.mouseSensitivity());
                          });
 
         auto b = new QAction(QIcon{ ":stereo3_contrast.png" }, "Show Image", cc);
-        QObject::connect(cc, &all::qt::CameraControl::OnLoadImage, b, &QAction::trigger);
+        QObject::connect(cc, &all::qt::CameraControl::onLoadImage, b, &QAction::trigger);
         QObject::connect(b, &QAction::triggered,
                          [this]() {
-                             impl->ShowImage();
+                             impl->showImage();
                          });
         auto a = new QAction(QIcon{ ":3D_contrast.png" }, "Load Model", cc);
-        QObject::connect(cc, &all::qt::CameraControl::OnLoadModel, a, &QAction::trigger);
+        QObject::connect(cc, &all::qt::CameraControl::onLoadModel, a, &QAction::trigger);
         QObject::connect(a, &QAction::triggered,
                          [this]() {
-                             impl->ShowModel();
+                             impl->showModel();
                          });
-        QObject::connect(cc, &all::qt::CameraControl::OnClose,
+        QObject::connect(cc, &all::qt::CameraControl::onClose,
                          [this]() {
                              app.postEvent(&wnd, new QCloseEvent);
                          });
-        QObject::connect(&watcher, &WindowEventWatcher::OnMouseEvent,
+        QObject::connect(&watcher, &WindowEventWatcher::onMouseEvent,
                          [this, pnav_params](::QMouseEvent* e) {
                              static bool flipped = false;
 
@@ -111,12 +111,12 @@ public:
                                      input.is_pressed = true;
                                      input.skip_first = true;
                                      if (input.cursor_changes_focus) {
-                                         auto pos = impl->GetCursorWorldPosition();
-                                         qml.camera.SetFocusDistance(std::clamp(glm::length(pos - camera.position()), 0.5f, 100.f));
+                                         auto pos = impl->cursorWorldPosition();
+                                         qml.camera.setFocusDistance(std::clamp(glm::length(pos - camera.position()), 0.5f, 100.f));
                                      }
 
                                  } else if (e->buttons() & Qt::MouseButton::RightButton) {
-                                     auto pos = impl->GetCursorWorldPosition();
+                                     auto pos = impl->cursorWorldPosition();
                                      qDebug() << " setting pivot " << pos.x << pos.y << pos.z;
                                      pnav_params->pivot_point = { pos.x, pos.y, pos.z };
                                  }
@@ -136,8 +136,8 @@ public:
                                      break;
                                  }
 
-                                 float dx = (0.f + pos.x() - input.last_pos.x()) / qml.scene.GetMouseSensitivity();
-                                 float dy = (0.f + pos.y() - input.last_pos.y()) / qml.scene.GetMouseSensitivity();
+                                 float dx = (0.f + pos.x() - input.last_pos.x()) / qml.scene.mouseSensitivity();
+                                 float dy = (0.f + pos.y() - input.last_pos.y()) / qml.scene.mouseSensitivity();
 
                                  switch (e->buttons()) {
                                  case Qt::LeftButton:
@@ -150,7 +150,7 @@ public:
                                      break;
                                  }
                                  input.last_pos = pos;
-                                 impl->UpdateMouse();
+                                 impl->updateMouse();
                              } break;
                              default:
                                  break;
@@ -158,7 +158,7 @@ public:
 
 // Event Forwarding for Serenity
 #ifdef ALLEGIANCE_SERENITY
-                             impl->OnMouseEvent(e);
+                             impl->onMouseEvent(e);
 #endif
                          });
 
@@ -168,56 +168,56 @@ public:
         QObject::connect(&qwin, &QWindow::heightChanged, [this, &qwin](int height) {
             camera.setAspectRatio(float(qwin.width()) / qwin.height());
         });
-        QObject::connect(&qml.camera, &CameraController::OnFocusDistanceChanged, [this](float v) {
+        QObject::connect(&qml.camera, &CameraController::focusDistanceChanged, [this](float v) {
             camera.setConvergencePlaneDistance(v);
         });
-        QObject::connect(&qml.camera, &CameraController::OnFOVChanged, [this](float v) {
+        QObject::connect(&qml.camera, &CameraController::fovChanged, [this](float v) {
             camera.setFov(v);
         });
-        QObject::connect(&qml.camera, &CameraController::OnFlippedChanged, [this](bool v) {
+        QObject::connect(&qml.camera, &CameraController::flippedChanged, [this](bool v) {
             camera.setFlipped(v);
         });
-        QObject::connect(&qml.camera, &CameraController::OnEyeDistanceChanged, [this](float v) {
+        QObject::connect(&qml.camera, &CameraController::eyeDistanceChanged, [this](float v) {
             camera.setInterocularDistance(v);
         });
-        QObject::connect(&qml.camera, &CameraController::OnCameraModeChanged, [this](CameraController::CameraMode v) {
-            impl->OnPropertyChanged("camera_mode", all::CameraMode(v));
+        QObject::connect(&qml.camera, &CameraController::cameraModeChanged, [this](CameraController::CameraMode v) {
+            impl->propertyChanged("camera_mode", all::CameraMode(v));
         });
-        QObject::connect(&qml.cursor, &CursorController::OnCursorVisibilityChanged, [this](bool checked) {
-            impl->SetCursorEnabled(checked);
+        QObject::connect(&qml.cursor, &CursorController::cursorVisibilityChanged, [this](bool checked) {
+            impl->setCursorEnabled(checked);
         });
-        QObject::connect(&qml.cursor, &CursorController::OnCursorChanged, [this](CursorType type) {
-            impl->OnPropertyChanged("cursor_type", type);
+        QObject::connect(&qml.cursor, &CursorController::cursorChanged, [this](CursorType type) {
+            impl->propertyChanged("cursor_type", type);
         });
-        QObject::connect(&qml.cursor, &CursorController::OnCursorScaleChanged, [this](float scale) {
-            impl->OnPropertyChanged("scale_factor", scale);
+        QObject::connect(&qml.cursor, &CursorController::cursorScaleChanged, [this](float scale) {
+            impl->propertyChanged("scale_factor", scale);
         });
-        QObject::connect(&qml.cursor, &CursorController::OnCursorTintChanged, [this](const QColor& color) {
+        QObject::connect(&qml.cursor, &CursorController::cursorTintChanged, [this](const QColor& color) {
             std::array<float, 4> c = { color.redF(), color.greenF(), color.blueF(), color.alphaF() };
-            impl->OnPropertyChanged("cursor_color", c);
+            impl->propertyChanged("cursor_color", c);
         });
-        QObject::connect(&qml.cursor, &CursorController::OnCursorScalingEnableChanged, [this](bool enabled) {
-            impl->OnPropertyChanged("scaling_enabled", enabled);
+        QObject::connect(&qml.cursor, &CursorController::cursorScalingEnableChanged, [this](bool enabled) {
+            impl->propertyChanged("scaling_enabled", enabled);
         });
-        QObject::connect(&qml.cursor, &CursorController::OnCursorFocusChanged, [this](bool enabled) {
+        QObject::connect(&qml.cursor, &CursorController::cursorFocusChanged, [this](bool enabled) {
             input.cursor_changes_focus = enabled;
         });
         QObject::connect(&qml.scene, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(&wnd, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
             if (!fn.isEmpty()) {
-                ResetCamera();
-                impl->LoadModel(fn.toStdString());
+                resetCamera();
+                impl->loadModel(fn.toStdString());
             }
         });
-        QObject::connect(&wnd, &Window::OnEyeSeparation, [this](bool increased) {
-            float distance = qml.camera.EyeDistance() + increased ? 0.05f : -0.05f;
-            qml.camera.SetEyeDistance(std::clamp(distance, 0.01f, 0.5f));
+        QObject::connect(&wnd, &Window::onEyeSeparation, [this](bool increased) {
+            float distance = qml.camera.eyeDistance() + increased ? 0.05f : -0.05f;
+            qml.camera.setEyeDistance(std::clamp(distance, 0.01f, 0.5f));
         });
 
         // #if !ALLEGIANCE_SERENITY
-        //         QObject::connect(&impl.value(), &Qt3DImpl::OnModelExtentChanged, [this](const QVector3D& min, const QVector3D& max) {
+        //         QObject::connect(&impl.value(), &Qt3DImpl::modelExtentChanged, [this](const QVector3D& min, const QVector3D& max) {
         // #ifdef WITH_NAVLIB
-        //             //spacemouse.getModel()->SetModelExtents({ { min.x(), min.y(), min.z() }, { max.x(), max.y(), max.z() } });
+        //             //spacemouse.model()->setModelExtents({ { min.x(), min.y(), min.z() }, { max.x(), max.y(), max.z() } });
         // #endif
         //         });
         // #endif
@@ -230,19 +230,18 @@ public:
         //         }
         // #endif
 
-        impl->CreateAspects(nav_params);
-        ResetCamera();
+        impl->createAspects(nav_params);
+        resetCamera();
         wnd.show();
     }
 
 public:
-    int
-    Start() noexcept
+    int start() noexcept
     {
         return app.exec();
     }
 
-    void ResetCamera() noexcept
+    void resetCamera() noexcept
     {
         camera.setPosition({ 0.2, 5, -10 });
         camera.setForwardVector({ 0, -.5, 1 });

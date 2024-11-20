@@ -20,22 +20,22 @@ public:
             if (obj != m_window)
                 break;
             qApp->removeEventFilter(this);
-            Q_EMIT OnClose();
+            Q_EMIT onClose();
             break;
         case QEvent::Type::KeyPress:
-            m_window->OnKeyPress(static_cast<::QKeyEvent*>(event));
+            m_window->onKeyPress(static_cast<::QKeyEvent*>(event));
             event->accept();
             break;
         case QEvent::Type::Wheel:
-            if (obj == m_window->GetGraphicsWindow()) {
-                Q_EMIT OnScroll(static_cast<::QWheelEvent*>(event));
+            if (obj == m_window->graphicsWindow()) {
+                Q_EMIT onScroll(static_cast<::QWheelEvent*>(event));
             }
             break;
         case QEvent::Type::MouseMove:
         case QEvent::Type::MouseButtonPress:
         case QEvent::Type::MouseButtonRelease:
-            if (obj == m_window->GetGraphicsWindow()) {
-                Q_EMIT OnMouseEvent(static_cast<::QMouseEvent*>(event));
+            if (obj == m_window->graphicsWindow()) {
+                Q_EMIT onMouseEvent(static_cast<::QMouseEvent*>(event));
             }
             break;
         default:
@@ -44,9 +44,9 @@ public:
         return QObject::eventFilter(obj, event);
     }
 Q_SIGNALS:
-    void OnClose();
-    void OnMouseEvent(::QMouseEvent* e);
-    void OnScroll(::QWheelEvent* e);
+    void onClose();
+    void onMouseEvent(::QMouseEvent* e);
+    void onScroll(::QWheelEvent* e);
 
 private:
     Window* m_window;

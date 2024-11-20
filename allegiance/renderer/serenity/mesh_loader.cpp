@@ -56,7 +56,7 @@ std::unique_ptr<Serenity::Entity> all::serenity::MeshLoader::load(std::filesyste
     return pRoot;
 }
 
-std::vector<uint32_t> GetIndices(const aiMesh& mesh)
+std::vector<uint32_t> indices(const aiMesh& mesh)
 {
     std::vector<uint32_t> indices;
     indices.reserve(mesh.mNumFaces * 3);
@@ -102,7 +102,7 @@ std::unique_ptr<Serenity::Mesh> all::serenity::MeshLoader::MakeMesh(const aiMesh
     }
 
     smesh->setVertices(std::move(verts));
-    smesh->setIndices(GetIndices(mesh));
+    smesh->setIndices(indices(mesh));
 
     return smesh;
 }

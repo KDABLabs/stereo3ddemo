@@ -15,7 +15,7 @@ public:
     }
     virtual ~Spacemouse() noexcept = default;
 
-    virtual void SetUseUserPivot(bool)
+    virtual void setUseUserPivot(bool)
     {
     }
 

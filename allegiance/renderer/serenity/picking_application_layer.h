@@ -15,17 +15,17 @@ public:
 
     void update() override;
 
-    void SetEnabled(bool en);
+    void setEnabled(bool en);
 
-    void SetScaleFactor(float scale_factor)
+    void setScaleFactor(float scale_factor)
     {
         m_scale_factor = scale_factor;
     }
-    void SetScalingEnabled(bool enabled)
+    void setScalingEnabled(bool enabled)
     {
         m_scaling_enabled = enabled;
     }
-    void SetTransform(Serenity::SrtTransform* transform)
+    void setTransform(Serenity::SrtTransform* transform)
     {
         m_ctransform = transform;
         update();

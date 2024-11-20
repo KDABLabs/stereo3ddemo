@@ -13,9 +13,9 @@ public:
     {
     }
 
-    KDGui::Window* GetWindow()
+    KDGui::Window* window()
     {
-        return static_cast<SerenityWindowKDGui*>(m_window.get())->GetWindow();
+        return static_cast<SerenityWindowKDGui*>(m_window.get())->window();
     }
 };
 

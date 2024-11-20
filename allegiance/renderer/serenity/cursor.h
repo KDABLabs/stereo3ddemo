@@ -24,11 +24,11 @@ public:
     }
 
 public:
-    auto GetTransform() const noexcept
+    auto transform() const noexcept
     {
         return m_transform;
     }
-    virtual void SetColor(const ColorData& colorData) { }
+    virtual void setColor(const ColorData& colorData) { }
 
 protected:
     Serenity::SrtTransform* m_transform;
@@ -46,7 +46,7 @@ public:
 protected:
     void MakeBall(Serenity::Entity* ec, Serenity::LayerManager& layers);
     void MakeBillboard(Serenity::Entity* ec, Serenity::LayerManager& layers);
-    void SetColor(const ColorData& colorData);
+    void setColor(const ColorData& colorData);
 
 protected:
     std::unique_ptr<Serenity::Mesh> m_bb_mesh;
@@ -65,7 +65,7 @@ public:
     }
 
 public:
-    void SetColor(const ColorData& colorData) override;
+    void setColor(const ColorData& colorData) override;
 
 protected:
     void MakeCross(Serenity::Entity* ec, Serenity::LayerManager& layers);
@@ -105,18 +105,18 @@ public:
 
         m_currentCursor = (CursorBase*)parent->addChildEntity(std::move(m_cursors[index]));
         m_currentType = cursor;
-        m_currentCursor->SetColor(m_colorData);
+        m_currentCursor->setColor(m_colorData);
         return m_currentCursor;
     }
 
-    auto GetTransform() const noexcept
+    auto transform() const noexcept
     {
-        return m_currentCursor->GetTransform();
+        return m_currentCursor->transform();
     }
-    void SetColor(const CursorBase::ColorData& colorData)
+    void setColor(const CursorBase::ColorData& colorData)
     {
         m_colorData = colorData;
-        m_currentCursor->SetColor(colorData);
+        m_currentCursor->setColor(colorData);
     }
 
 private:

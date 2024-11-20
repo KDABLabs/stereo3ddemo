@@ -28,20 +28,20 @@ public:
 
         layout->addWidget(qw);
     }
-    void Reload()
+    void reload()
     {
         // engine->clearComponentCache();
         // qw->setSource(QUrl::fromLocalFile(u"C:/Users/Agrae/source/repos/qt3d/allegiance/resources/camera_control.qml"_qs));
         // return;
     }
 Q_SIGNALS:
-    void OnEyeDisparityChanged(float value);
-    void OnFocusPlaneChanged(float value);
+    void eyeDisparityChanged(float value);
+    void focusPlaneChanged(float value);
 
-    void OnLoadImage();
-    void OnLoadModel();
-    void OnToggleCursor(bool checked);
-    void OnClose();
+    void onLoadImage();
+    void onLoadModel();
+    void onToggleCursor(bool checked);
+    void onClose();
 
 private:
     QQuickWidget* qw;

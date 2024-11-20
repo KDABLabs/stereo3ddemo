@@ -107,19 +107,19 @@ long CNavigationModel::GetViewExtents(navlib::box_t& extents) const
 
 long CNavigationModel::GetViewFOV(double& fov) const
 {
-    fov = glm::radians(m_camera->fov());
+    fov = DegreesToRadians(m_camera->fov());
     // qCDebug(spcms) << "GetViewFoV " << fov;
     return 0;
 }
 
 long CNavigationModel::GetViewFrustum(navlib::frustum_t& frustum) const
 {
-    const float verticalFieldOfView = m_camera->fov(); // in degrees,
-    const float aspectRatio = m_camera->aspectRatio();
-    const float nearPlane = m_camera->nearPlane(), farPlane = m_camera->farPlane();
+    float verticalFieldOfView = m_camera->fov(), // in degrees,
+            aspectRatio = m_camera->aspectRatio(),
+          nearPlane = m_camera->nearPlane(), farPlane = m_camera->farPlane();
 
-    const float halfVerticalFOV = glm::radians(verticalFieldOfView) / 2.0f;
-    const float halfHorizontalFOV = atanf(tanf(halfVerticalFOV) * aspectRatio);
+    float halfVerticalFOV = DegreesToRadians(verticalFieldOfView) / 2.0f;
+    float halfHorizontalFOV = atanf(tanf(halfVerticalFOV) * aspectRatio);
 
     // Calculate frustum parameters
     frustum.top = nearPlane * tanf(halfVerticalFOV);

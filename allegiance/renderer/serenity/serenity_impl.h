@@ -29,29 +29,29 @@ public:
 public:
     void viewChanged();
     void projectionChanged();
-    void CreateAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
+    void createAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
-    void LoadModel(std::filesystem::path file);
+    void loadModel(std::filesystem::path file);
 
-    void OnPropertyChanged(std::string_view name, std::any value);
-    void SetCursorEnabled(bool enabled);
+    void propertyChanged(std::string_view name, std::any value);
+    void setCursorEnabled(bool enabled);
 
-    void ShowModel()
+    void showModel()
     {
         setMode(Mode::Scene);
     }
-    void ShowImage()
+    void showImage()
     {
         setMode(Mode::StereoImage);
     }
-    void Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in);
+    void screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in);
 
-    glm::vec3 GetCursorWorldPosition() const;
+    glm::vec3 cursorWorldPosition() const;
 
-    void OnMouseEvent(const KDFoundation::Event& event);
+    void onMouseEvent(const KDFoundation::Event& event);
 
 protected:
-    std::unique_ptr<Serenity::Entity> CreateScene(Serenity::LayerManager& layers);
+    std::unique_ptr<Serenity::Entity> createScene(Serenity::LayerManager& layers);
 
     enum class Mode {
         Scene,
