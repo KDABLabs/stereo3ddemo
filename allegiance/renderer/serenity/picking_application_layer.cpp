@@ -1,6 +1,5 @@
 #include "picking_application_layer.h"
-
-#include <serenity_impl.h>
+#include "serenity_renderer.h"
 
 using namespace Serenity;
 

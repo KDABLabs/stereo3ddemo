@@ -8,9 +8,9 @@ FetchContent_Declare(
 set(ASSIMP_WARNINGS_AS_ERRORS OFF)
 set(ASSIMP_BUILD_TESTS OFF)
 set(ASSIMP_BUILD_IFC_IMPORTER OFF)
+set(ASSIMP_BUILD_USE_CCACHE OFF)
 set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(assimp)
-
 
 add_library(
     ${PROJECT_NAME} STATIC

@@ -7,9 +7,9 @@ execute_process(
     OUTPUT_VARIABLE GIT_COMMIT_DATE
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-add_definitions(-DALLEGIANCE_PROJECT_VERSION="${PROJECT_VERSION}"
-                -DALLEGIANCE_BUILD_STR="v${PROJECT_VERSION} - ${GIT_COMMIT_DATE}")
-
+add_definitions(
+    -DALLEGIANCE_PROJECT_VERSION="${PROJECT_VERSION}" -DALLEGIANCE_BUILD_STR="v${PROJECT_VERSION} - ${GIT_COMMIT_DATE}"
+)
 
 include(FetchContent)
 include(CMakeDependentOption)
@@ -18,17 +18,37 @@ find_program(FLUTTER_EXE flutter)
 
 option(BUILD_UNIT_TESTS "Build Unit Tests" ON)
 option(BUILD_QT_UI "Build Qt UI" ON)
-cmake_dependent_option(BUILD_QT3D_RENDERER "Build Qt3D renderer" ON "BUILD_QT_UI" OFF)
+cmake_dependent_option(
+    BUILD_QT3D_RENDERER
+    "Build Qt3D renderer"
+    ON
+    "BUILD_QT_UI"
+    OFF
+)
+
+option(BUILD_KDGUI_UI "Build KDGui UI" ON)
 
 option(BUILD_SERENITY_RENDERER "Build Serenity renderer" ON)
-cmake_dependent_option(BUILD_FLUTTER_UI "Build Flutter UI" ON "BUILD_SERENITY_RENDERER;FLUTTER_EXE" OFF)
+cmake_dependent_option(
+    BUILD_FLUTTER_UI
+    "Build Flutter UI"
+    ON
+    "BUILD_SERENITY_RENDERER;FLUTTER_EXE"
+    OFF
+)
 
 if(WIN32 OR APPLE)
     option(WITH_NAVLIB "Compile with support for 3DxWare Navlib" ON)
     set(WITH_SPNAV OFF)
 else()
     find_library(SPNAV_LIB spnav)
-    cmake_dependent_option(WITH_SPNAV "Compile with libspnav for spacemouse support" ON "SPNAV_LIB" OFF)
+    cmake_dependent_option(
+        WITH_SPNAV
+        "Compile with libspnav for spacemouse support"
+        ON
+        "SPNAV_LIB"
+        OFF
+    )
 endif()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -52,7 +72,7 @@ file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/assets)
 add_subdirectory(shared)
 add_subdirectory(allegiance)
 
-if (BUILD_UNIT_TESTS)
+if(BUILD_UNIT_TESTS)
     add_subdirectory(tests)
 endif()
 

@@ -18,7 +18,7 @@
                 "BUILD_QT_UI": "ON",
                 "BUILD_QT3D_RENDERER": "ON",
                 "BUILD_SERENITY_RENDERER_QT": "ON",
-                "BUILD_SERENITY_RENDERER_KDGUI": "OM"
+                "BUILD_SERENITY_RENDERER_KDGUI": "ON"
             }
         },
         {

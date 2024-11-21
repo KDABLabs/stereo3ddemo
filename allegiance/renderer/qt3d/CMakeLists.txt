@@ -1,4 +1,4 @@
-project(qt3d_render)
+project(KDAB_Qt3D_Renderer)
 
 #We need to add Qml here even we dont need it, due to a cpack Qt bug
 find_package(
@@ -15,6 +15,9 @@ find_package(
 add_library(
     ${PROJECT_NAME} STATIC
 )
+add_library(
+    KDAB::Qt3DRenderer ALIAS ${PROJECT_NAME}
+)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC ALLEGIANCE_QT3D)
 target_include_directories(
@@ -24,7 +27,7 @@ target_include_directories(
 
 target_sources(
     ${PROJECT_NAME}
-    PUBLIC "qt3d_impl.h"
+    PUBLIC "qt3d_renderer.h"
            "qt3d_cursor.h"
            "qt3d_materials.h"
            "qt3d_shaders.h"
@@ -36,7 +39,7 @@ target_sources(
            "frame_action.h"
            "mesh_loader.h"
            "scene_mesh.h"
-    PRIVATE "qt3d_impl.cpp"
+    PRIVATE "qt3d_renderer.cpp"
             "mesh_loader.cpp"
             "scene_mesh.cpp"
             "qt3d_materials.cpp"

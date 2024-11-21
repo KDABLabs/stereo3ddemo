@@ -20,6 +20,6 @@ public:
     virtual KDGpu::Instance& instance() = 0;
     virtual KDGpu::Surface& surface() = 0;
 
-    virtual KDGpu::Device CreateDevice() = 0;
+    virtual KDGpu::Device createDevice() = 0;
 };
 } // namespace all::serenity
