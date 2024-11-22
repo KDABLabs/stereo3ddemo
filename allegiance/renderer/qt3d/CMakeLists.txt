@@ -22,32 +22,34 @@ add_library(
 target_compile_definitions(${PROJECT_NAME} PUBLIC ALLEGIANCE_QT3D)
 target_include_directories(
     ${PROJECT_NAME}
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/allegiance/qt
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 target_sources(
     ${PROJECT_NAME}
-    PUBLIC "qt3d_renderer.h"
-           "qt3d_cursor.h"
-           "qt3d_materials.h"
-           "qt3d_shaders.h"
-           "util_qt.h"
-           "stereo_forward_renderer.h"
-           "stereo_proxy_camera.h"
-           "stereo_image_mesh.h"
-           "stereo_image_material.h"
-           "frame_action.h"
-           "mesh_loader.h"
-           "scene_mesh.h"
-    PRIVATE "qt3d_renderer.cpp"
-            "mesh_loader.cpp"
-            "scene_mesh.cpp"
-            "qt3d_materials.cpp"
-            "stereo_image_material.cpp"
-            "stereo_image_mesh.cpp"
-            "qt3d_cursor.cpp"
-            "stereo_forward_renderer.cpp"
-            "stereo_proxy_camera.cpp"
+    PUBLIC qt3d_renderer.h
+           qt3d_cursor.h
+           qt3d_materials.h
+           qt3d_shaders.h
+           util_qt.h
+           stereo_forward_renderer.h
+           stereo_proxy_camera.h
+           stereo_image_mesh.h
+           stereo_image_material.h
+           frame_action.h
+           mesh_loader.h
+           scene_mesh.h
+           frustum.h
+    PRIVATE qt3d_renderer.cpp
+            mesh_loader.cpp
+            scene_mesh.cpp
+            qt3d_materials.cpp
+            stereo_image_material.cpp
+            stereo_image_mesh.cpp
+            qt3d_cursor.cpp
+            stereo_forward_renderer.cpp
+            stereo_proxy_camera.cpp
+            frustum.cpp
 )
 
 target_link_libraries(

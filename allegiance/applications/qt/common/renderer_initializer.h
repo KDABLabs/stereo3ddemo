@@ -195,6 +195,12 @@ public:
         QObject::connect(m_cameraController, &CameraController::cameraModeChanged, [this](CameraController::CameraMode v) {
             m_renderer->propertyChanged("camera_mode", all::CameraMode(v));
         });
+        QObject::connect(m_cameraController, &CameraController::stereoModeChanged, [this](CameraController::StereoMode v) {
+            m_camera.setMode(all::StereoCamera::Mode(v));
+        });
+        QObject::connect(m_cameraController, &CameraController::frustumViewEnabledChanged, [this](bool enabled) {
+            m_renderer->propertyChanged("frustum_view_enabled", enabled);
+        });
         QObject::connect(m_cursorController, &CursorController::cursorVisibilityChanged, [this](bool checked) {
             m_renderer->setCursorEnabled(checked);
         });

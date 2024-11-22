@@ -8,6 +8,7 @@
 #include "frame_action.h"
 #include "qt3d_shaders.h"
 #include "util_qt.h"
+#include "frustum.h"
 
 #include <Qt3DRender/QSceneLoader>
 #include <Qt3DRender/QPickingSettings>
@@ -17,6 +18,8 @@
 #include <Qt3DRender/QTexture>
 #include <Qt3DRender/QDirectionalLight>
 #include <Qt3DRender/QRayCaster>
+#include <Qt3DRender/QCameraLens>
+#include <Qt3DRender/QCamera>
 #include <Qt3DCore/QTransform>
 #include <Qt3DExtras/QDiffuseMapMaterial>
 #include <Qt3DExtras/QPhongMaterial>
@@ -92,6 +95,27 @@ void Qt3DRenderer::viewChanged()
                                  m_stereoCamera->interocularDistance(),
                                  m_stereoCamera->mode());
 
+    m_centerFrustum->setViewMatrix(m_camera->centerCamera()->viewMatrix());
+    m_leftFrustum->setViewMatrix(m_camera->leftCamera()->viewMatrix());
+    m_rightFrustum->setViewMatrix(m_camera->rightCamera()->viewMatrix());
+
+    const float convergenceDist = m_stereoCamera->convergencePlaneDistance();
+    const QVector3D camPosition = toQVector3D(m_stereoCamera->position());
+    const QVector3D viewVector = toQVector3D(m_stereoCamera->forwardVector());
+    const QVector3D upVector = toQVector3D(m_stereoCamera->upVector());
+    const QVector3D sideVec = QVector3D::crossProduct(viewVector, upVector).normalized();
+    const QVector3D realUp = QVector3D::crossProduct(sideVec, viewVector).normalized();
+
+    auto* frustumCamera = m_renderer->frustumCamera();
+    // Place the camera to match the center camera but with a viewCenter placed at the center of the near and far planes
+    frustumCamera->setPosition(camPosition);
+    const float centerPlaneDist = m_stereoCamera->nearPlane() + (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane()) * 0.5f;
+    frustumCamera->setViewCenter(camPosition + viewVector * centerPlaneDist);
+    // frustumCamera->setViewCenter(camPosition + viewVector * convergenceDist);
+    frustumCamera->setUpVector(upVector);
+    // Then Rotate 90 around the X-Axis with rotation origin viewCenter
+    frustumCamera->tiltAboutViewCenter(90.0f);
+
     projectionChanged();
 }
 
@@ -104,6 +128,28 @@ void Qt3DRenderer::projectionChanged()
                                m_stereoCamera->convergencePlaneDistance(),
                                m_stereoCamera->interocularDistance(),
                                m_stereoCamera->mode());
+
+    m_centerFrustum->setProjectionMatrix(m_camera->centerCamera()->projectionMatrix());
+    m_leftFrustum->setProjectionMatrix(m_camera->leftCamera()->projectionMatrix());
+    m_rightFrustum->setProjectionMatrix(m_camera->rightCamera()->projectionMatrix());
+
+    m_centerFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
+    m_leftFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
+    m_rightFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
+
+    // Adjust Ortho Projection so that whole frustum is visible
+    auto* frustumCamera = m_renderer->frustumCamera();
+    const float frustumHalfLength = (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane()) * 0.5f;
+    const float hFov = qDegreesToRadians(m_stereoCamera->fov()) * m_stereoCamera->aspectRatio() * 0.5f;
+    const float frustumHalfWidth = frustumHalfLength * std::tan(hFov);
+    const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumHalfLength);
+
+    frustumCamera->setTop(frustumMaxHalfSize * m_stereoCamera->aspectRatio());
+    frustumCamera->setBottom(-frustumMaxHalfSize * m_stereoCamera->aspectRatio());
+    frustumCamera->setLeft(-frustumMaxHalfSize);
+    frustumCamera->setRight(frustumMaxHalfSize);
+    frustumCamera->setNearPlane(m_stereoCamera->nearPlane());
+    frustumCamera->setFarPlane(m_stereoCamera->farPlane());
 }
 
 void Qt3DRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
@@ -172,6 +218,18 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     m_cursor->addComponent(m_renderer->cursorLayer());
     m_cursor->setType(CursorType::Ball);
     m_picker = new Picker(m_sceneEntity, m_cursor);
+
+    // Frustums
+    {
+        m_centerFrustum = new Frustum(QColor(Qt::white), root);
+        m_leftFrustum = new Frustum(QColor(Qt::red), root);
+        m_rightFrustum = new Frustum(QColor(Qt::blue), root);
+
+        m_centerFrustum->addComponent(m_renderer->frustumLayer());
+        m_leftFrustum->addComponent(m_renderer->frustumLayer());
+        m_rightFrustum->addComponent(m_renderer->frustumLayer());
+    }
+
     loadModel();
 
     m_view->setRootEntity(m_rootEntity.get());
@@ -217,6 +275,11 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "camera_mode") {
         m_cameraMode = std::any_cast<CameraMode>(value);
         viewChanged();
+    } else if (name == "frustum_view_enabled") {
+        const bool frustumEnabled = std::any_cast<bool>(value);
+        m_centerFrustum->setEnabled(frustumEnabled);
+        m_leftFrustum->setEnabled(frustumEnabled);
+        m_rightFrustum->setEnabled(frustumEnabled);
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->setCursorTintColor(QColor::fromRgbF(color[0], color[1], color[2], color[3]));

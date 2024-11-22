@@ -15,6 +15,7 @@
 #include <Qt3DRender/QCullFace>
 #include <Qt3DRender/QDepthTest>
 #include <Qt3DRender/QDebugOverlay>
+#include <Qt3DRender/QCamera>
 
 all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* parent)
     : Qt3DRender::QRenderSurfaceSelector(parent)
@@ -24,11 +25,13 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     , m_stereoImageLayer(new Qt3DRender::QLayer(this))
     , m_sceneLayer(new Qt3DRender::QLayer(this))
     , m_cursorLayer(new Qt3DRender::QLayer(this))
+    , m_frustumLayer(new Qt3DRender::QLayer(this))
 {
     m_sceneLayer->setObjectName(QStringLiteral("SceneLayer"));
     m_sceneLayer->setRecursive(true);
     m_cursorLayer->setObjectName(QStringLiteral("CursorLayer"));
     m_cursorLayer->setRecursive(true);
+    m_frustumLayer->setObjectName(QStringLiteral("FrustumLayer"));
 
     auto vp = new Qt3DRender::QViewport();
 
@@ -58,17 +61,17 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     auto* sortPolicy = new Qt3DRender::QSortPolicy();
     sortPolicy->setSortTypes(QList<Qt3DRender::QSortPolicy::SortType>{ Qt3DRender::QSortPolicy::BackToFront });
 
-    auto makeCameraSelectorForBranch = [&](Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
-        auto makeRenderTarget = [&]() {
-            auto* output = new Qt3DRender::QRenderTargetOutput;
-            output->setAttachmentPoint(attachment);
-            auto* renderTarget = new Qt3DRender::QRenderTarget;
-            renderTarget->addOutput(output);
-            return renderTarget;
-        };
+    auto makeRenderTarget = [&](Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
+        auto* output = new Qt3DRender::QRenderTargetOutput;
+        output->setAttachmentPoint(attachment);
+        auto* renderTarget = new Qt3DRender::QRenderTarget;
+        renderTarget->addOutput(output);
+        renderTarget->setParent(this);
+        return renderTarget;
+    };
 
+    auto makeCameraSelectorForSceneBranch = [&](Qt3DRender::QRenderTarget* rt) {
         auto* cameraSelector = new Qt3DRender::QCameraSelector();
-        Qt3DRender::QRenderTarget* rt = makeRenderTarget();
         auto* rts = new Qt3DRender::QRenderTargetSelector();
         rts->setTarget(rt);
         rts->setParent(cameraSelector);
@@ -97,25 +100,69 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         return cameraSelector;
     };
 
-    m_leftCamera = makeCameraSelectorForBranch(Qt3DRender::QRenderTargetOutput::Left);
-    m_leftCamera->setObjectName("LeftCamera");
-    m_rightCamera = makeCameraSelectorForBranch(Qt3DRender::QRenderTargetOutput::Right);
-    m_rightCamera->setObjectName("RightCamera");
+    Qt3DRender::QRenderTarget* leftRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Left);
+    Qt3DRender::QRenderTarget* rightRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Right);
+
+    m_leftCameraSelector = makeCameraSelectorForSceneBranch(leftRt);
+    m_leftCameraSelector->setObjectName("LeftCamera");
+    m_rightCameraSelector = makeCameraSelectorForSceneBranch(rightRt);
+    m_rightCameraSelector->setObjectName("RightCamera");
+
+    auto makeFrustumBranch = [&](Qt3DRender::QRenderTarget* rt) {
+        auto* cameraSelector = new Qt3DRender::QCameraSelector();
+
+        auto* vp = new Qt3DRender::QViewport();
+        vp->setNormalizedRect(QRectF(0.0f, 0.6f, 0.4f, 0.4f));
+
+        auto* rts = new Qt3DRender::QRenderTargetSelector();
+        rts->setTarget(rt);
+
+        auto* clearBuffers = new Qt3DRender::QClearBuffers();
+        clearBuffers->setBuffers(Qt3DRender::QClearBuffers::DepthBuffer);
+
+        auto* noDraw = new Qt3DRender::QNoDraw();
+        noDraw->setParent(clearBuffers);
+
+        auto* frustumLayerFilter = new Qt3DRender::QLayerFilter();
+        frustumLayerFilter->setObjectName("FrustumLayerFilter");
+        frustumLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAllMatchingLayers);
+        frustumLayerFilter->addLayer(m_frustumLayer);
+
+        frustumLayerFilter->setParent(rts);
+        clearBuffers->setParent(rts);
+        rts->setParent(vp);
+        vp->setParent(cameraSelector);
+
+        return cameraSelector;
+    };
+
+    m_frustumCamera = new Qt3DRender::QCamera;
+    m_frustumCamera->setProjectionType(Qt3DRender::QCameraLens::OrthographicProjection);
+
+    m_frustumCameraSelector = makeFrustumBranch(leftRt);
+    m_frustumCameraSelector->setCamera(m_frustumCamera);
 
     // Hierarchy
     vp->setParent(this);
+
+    // Scene Render Branch
     sortPolicy->setParent(vp);
     renderStateSet->setParent(sortPolicy);
+    // Left Eye
     m_leftLayerFilter->setParent(renderStateSet);
-    m_leftCamera->setParent(m_leftLayerFilter);
+    m_leftCameraSelector->setParent(m_leftLayerFilter);
+    // Right Eye
     m_rightLayerFilter->setParent(renderStateSet);
-    m_rightCamera->setParent(m_rightLayerFilter);
+    m_rightCameraSelector->setParent(m_rightLayerFilter);
+
+    // Frustum Overlay on Left Target
+    m_frustumCameraSelector->setParent(vp);
 
 #ifdef QT_DEBUG
     auto* debugOverlay = new Qt3DRender::QDebugOverlay();
     auto* noDraw = new Qt3DRender::QNoDraw();
     noDraw->setParent(debugOverlay);
-    debugOverlay->setParent(m_rightCamera);
+    debugOverlay->setParent(m_rightCameraSelector);
 
 // To dump out FrameGraph tree to console:
 // CMakeLists.txt:    target_link_libraries(${PROJECT_NAME} PRIVATE Qt6::3DExtras Qt6::3DRenderPrivate)
@@ -149,7 +196,7 @@ void all::qt3d::QStereoForwardRenderer::setCamera(QStereoProxyCamera* newCamera)
     Q_EMIT cameraChanged();
 
     if (m_camera) {
-        m_leftCamera->setCamera(m_camera->leftCamera());
-        m_rightCamera->setCamera(m_camera->rightCamera());
+        m_leftCameraSelector->setCamera(m_camera->leftCamera());
+        m_rightCameraSelector->setCamera(m_camera->rightCamera());
     }
 }

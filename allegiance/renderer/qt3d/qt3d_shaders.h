@@ -425,6 +425,32 @@ void main()
 }
 )";
 
+constexpr std::string_view frustum_vs = R"(
+#version 150
+
+in vec3 vertexPosition;
+
+uniform mat4 mvp;
+
+void main()
+{
+    gl_Position = mvp * vec4(vertexPosition, 1.0);
+}
+)";
+
+constexpr std::string_view frustum_ps = R"(
+#version 150
+
+uniform vec4 color;
+
+out vec4 fragColor;
+
+void main()
+{
+    fragColor = color;
+}
+)";
+
 struct shader_uniforms {
     QVector3D normalScaling{ 1, 1, 1 };
     QVector3D semInner{ 0, 0, 0 };

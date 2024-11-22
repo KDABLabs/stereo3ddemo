@@ -23,6 +23,7 @@ struct StereoCamera;
 namespace all::qt3d {
 class CursorEntity;
 class Picker;
+class Frustum;
 
 class Qt3DRenderer
 {
@@ -90,5 +91,9 @@ private:
 
     Picker* m_picker;
     std::shared_ptr<all::ModelNavParameters> m_nav_params;
+
+    Frustum* m_centerFrustum{ nullptr };
+    Frustum* m_leftFrustum{ nullptr };
+    Frustum* m_rightFrustum{ nullptr };
 };
 } // namespace all::qt3d
