@@ -40,7 +40,7 @@ PageBase {
           Layout.fillWidth: true
           Layout.alignment: Qt.AlignTop
           from: 0.01
-          to: 0.5
+          to: 25
           value: Camera.eyeDistance
           title: "Eye Separation"
 
