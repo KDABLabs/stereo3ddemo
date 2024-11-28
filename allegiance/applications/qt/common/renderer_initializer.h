@@ -77,12 +77,12 @@ public:
         m_spacemouse->setUseUserPivot(true);
         auto* pnav_params = nav_params.get();
 
-        QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::onClose,
+        QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::close,
                          [this]() {
                              m_renderer.reset();
                              qApp->quit();
                          });
-        QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::onScroll,
+        QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::scrollEvent,
                          [this](::QWheelEvent* e) {
                              m_camera.zoom(e->angleDelta().y() / m_sceneController->mouseSensitivity());
                          });
@@ -111,7 +111,7 @@ public:
                          [this]() {
                              qApp->postEvent(m_mainWindow, new QCloseEvent);
                          });
-        QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::onMouseEvent,
+        QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::mouseEvent,
                          [this, pnav_params](::QMouseEvent* e) {
                              static bool flipped = false;
 
