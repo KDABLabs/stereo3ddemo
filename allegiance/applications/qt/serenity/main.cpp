@@ -17,6 +17,7 @@ int main(int argc, char** argv)
 
     // Set embedded surface that holds 3d content window in the MainWindow
     mainWindow.setEmbeddedWindow(serenityRenderSurface.window()); // Note: window ownership is transferred to the MainWindow
+    mainWindow.show();
 
     // Fire off Rendering
     all::qt::RendererInitializer<SerenityWindowQt, SerenityRendererQt> initializer(&mainWindow, &serenityRenderSurface);

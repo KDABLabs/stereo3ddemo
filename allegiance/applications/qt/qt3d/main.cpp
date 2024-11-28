@@ -26,6 +26,7 @@ int main(int argc, char** argv)
 
     // Set embedded surface that holds 3d content window in the MainWindow
     mainWindow.setEmbeddedWindow(renderingSurface); // Note: renderingSurface ownership is transferred to the MainWindow
+    mainWindow.show();
 
     // Fire off Rendering
     all::qt::RendererInitializer<Qt3DExtras::Qt3DWindow, all::qt3d::Qt3DRenderer> initializer(&mainWindow, renderingSurface);

@@ -244,7 +244,6 @@ public:
 
         m_renderer->createAspects(nav_params);
         resetCamera();
-        m_mainWindow->show();
     }
 
     ~RendererInitializer()
