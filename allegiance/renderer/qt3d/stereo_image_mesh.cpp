@@ -4,7 +4,7 @@ using namespace Qt3DCore;
 using namespace Qt3DRender;
 using namespace all::qt3d;
 
-constexpr auto VertexByteStride = (2 + 2) * sizeof(float);
+constexpr auto VertexByteStride = (3 + 2) * sizeof(float);
 constexpr auto VertexCount = 4;
 
 StereoImageGeometry::StereoImageGeometry(StereoImageMesh::Side side, Qt3DCore::QNode* parent)
@@ -16,7 +16,7 @@ StereoImageGeometry::StereoImageGeometry(StereoImageMesh::Side side, Qt3DCore::Q
 {
     m_positionAttribute->setName(QAttribute::defaultPositionAttributeName());
     m_positionAttribute->setVertexBaseType(QAttribute::Float);
-    m_positionAttribute->setVertexSize(2);
+    m_positionAttribute->setVertexSize(3);
     m_positionAttribute->setAttributeType(QAttribute::VertexAttribute);
     m_positionAttribute->setBuffer(m_vertexBuffer);
     m_positionAttribute->setByteStride(VertexByteStride);
@@ -29,7 +29,7 @@ StereoImageGeometry::StereoImageGeometry(StereoImageMesh::Side side, Qt3DCore::Q
     m_texCoordAttribute->setAttributeType(QAttribute::VertexAttribute);
     m_texCoordAttribute->setBuffer(m_vertexBuffer);
     m_texCoordAttribute->setByteStride(VertexByteStride);
-    m_texCoordAttribute->setByteOffset(2 * sizeof(float));
+    m_texCoordAttribute->setByteOffset(3 * sizeof(float));
     m_texCoordAttribute->setCount(VertexCount);
 
     updateVertices();
@@ -82,19 +82,34 @@ void StereoImageGeometry::updateVertices()
         texCoordMax += QVector2D(0.5f, 0.0f);
     }
 
-    QByteArray bufferBytes;
-    bufferBytes.resize(VertexByteStride * VertexCount);
-    auto addVertex = [data = reinterpret_cast<float*>(bufferBytes.data())](const QVector2D& position, const QVector2D& texCoord) mutable {
-        *data++ = position.x();
-        *data++ = position.y();
-
-        *data++ = texCoord.x();
-        *data++ = texCoord.y();
+    struct Vertex {
+        QVector3D pos;
+        QVector2D texCoords;
     };
-    addVertex(QVector2D(-1, 1), QVector2D(texCoordMin.x(), texCoordMin.y()));
-    addVertex(QVector2D(-1, -1), QVector2D(texCoordMin.x(), texCoordMax.y()));
-    addVertex(QVector2D(1, 1), QVector2D(texCoordMax.x(), texCoordMin.y()));
-    addVertex(QVector2D(1, -1), QVector2D(texCoordMax.x(), texCoordMax.y()));
+    static_assert(sizeof(Vertex) == 5 * sizeof(float));
+
+    const std::vector<Vertex> vertices = {
+        Vertex{
+                .pos = QVector3D(-1.0f, 1.0f, 0.0f),
+                .texCoords = QVector2D(texCoordMin.x(), texCoordMin.y()),
+        },
+        Vertex{
+                .pos = QVector3D(-1.0f, -1.0f, 0.0f),
+                .texCoords = QVector2D(texCoordMin.x(), texCoordMax.y()),
+        },
+        Vertex{
+                .pos = QVector3D(1.0f, 1.0f, 0.0f),
+                .texCoords = QVector2D(texCoordMax.x(), texCoordMin.y()),
+        },
+        Vertex{
+                .pos = QVector3D(1.0f, -1.0f, 0.0f),
+                .texCoords = QVector2D(texCoordMax.x(), texCoordMax.y()),
+        },
+    };
+
+    QByteArray bufferBytes;
+    bufferBytes.resize(vertices.size() * sizeof(Vertex));
+    std::memcpy(bufferBytes.data(), vertices.data(), vertices.size() * sizeof(Vertex));
 
     m_vertexBuffer->setData(bufferBytes);
 }
