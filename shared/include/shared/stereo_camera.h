@@ -21,6 +21,11 @@ public:
         Vulkan,
     };
 
+    enum class Mode {
+        ToeIn,
+        AsymmetricFrustum,
+    };
+
     explicit StereoCamera(API api)
         : m_api(api)
     {
@@ -127,7 +132,17 @@ public:
         updateViewMatrix();
     }
 
-public:
+    Mode mode() const noexcept { return m_mode; }
+
+    void setMode(Mode mode)
+    {
+        if (m_mode == mode)
+            return;
+        m_mode = mode;
+        updateViewMatrix();
+        updateProjectionMatrix();
+    }
+
     static glm::mat4 stereoShear(float x) noexcept
     {
         glm::mat4 i{ 1.0f };
@@ -200,6 +215,7 @@ private:
     bool m_shear{ true };
     bool m_flipped{ false };
     const API m_api;
+    Mode m_mode{ Mode::AsymmetricFrustum };
 };
 
 class OrbitalStereoCamera : public StereoCamera

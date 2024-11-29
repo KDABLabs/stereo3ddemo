@@ -80,9 +80,9 @@ PageBase {
           Layout.alignment: Qt.AlignTop
           spacing: 10
           Label {
-            Layout.fillWidth: true 
+            Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
-            text: "Stereo Mode:"
+            text: "Display Mode:"
             font: Style.fontDefault
           }
           ComboBox {
@@ -114,6 +114,29 @@ PageBase {
           initial: Camera.flipped
           onChecked: bchecked => Camera.flipped = bchecked
         }
+
+        RowLayout {
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        spacing: 10
+          Label {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignHCenter
+            text: "Stereo Mode:"
+            font: Style.fontDefault
+          }
+          ComboBox {
+            model: ["ToeIn", "AsymmetricFrustum"]
+            onCurrentIndexChanged: Camera.stereoMode = currentIndex
+          }
+        }
+
+        CheckBoxX {
+          text: "Show Frustum"
+          initial: Camera.frustumViewEnabled
+          onChecked: checkValue => Camera.frustumViewEnabled = checkValue
+        }
+
       }
     }
 
