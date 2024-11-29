@@ -43,7 +43,10 @@ long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 {
     auto m = toGlmMat(matrix);
     // qCDebug(spcmsView) << "setting app camera matrix to " << m;
-    m_camera->setCameraMatrix(m);
+    // TODO: Decompose matrix to pos, forward, up
+    // m_camera->setPosition();
+    // m_camera->setForwardVector();
+    // m_camera->setUpVector();
     return 0;
 }
 

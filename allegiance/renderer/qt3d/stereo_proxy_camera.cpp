@@ -3,48 +3,92 @@
 #include <Qt3DCore/QTransform>
 #include <Qt3DRender/QCameraLens>
 
-all::qt3d::QStereoProxyCamera::QStereoProxyCamera(Qt3DCore::QNode* parent)
+namespace all::qt3d {
+
+QStereoProxyCamera::QStereoProxyCamera(Qt3DCore::QNode* parent)
     : Qt3DCore::QEntity(parent)
 {
-    m_leftCamera = new Qt3DCore::QEntity(this);
-    m_rightCamera = new Qt3DCore::QEntity(this);
-
-    m_leftTransform = new Qt3DCore::QTransform;
-    m_leftTransform->setObjectName("Left Camera Transform");
-    m_leftCamera->addComponent(m_leftTransform);
-
-    m_rightTransform = new Qt3DCore::QTransform;
-    m_rightTransform->setObjectName("Right Camera Transform");
-    m_rightCamera->addComponent(m_rightTransform);
-
-    m_leftCameraLens = new Qt3DRender::QCameraLens;
-    m_leftCameraLens->setObjectName("Left Camera Lens");
-    m_leftCamera->addComponent(m_leftCameraLens);
-
-    m_rightCameraLens = new Qt3DRender::QCameraLens;
-    m_rightCameraLens->setObjectName("Right Camera Lens");
-    m_rightCamera->addComponent(m_rightCameraLens);
+    m_leftCamera = new Qt3DRender::QCamera(this);
+    m_rightCamera = new Qt3DRender::QCamera(this);
+    m_centerCamera = new Qt3DRender::QCamera(this);
 }
 
-void all::qt3d::QStereoProxyCamera::setPositionAndForward(const QVector3D& position, const QQuaternion& rotation)
+void QStereoProxyCamera::updateViewMatrices(const QVector3D& position, const QVector3D& forwardVector,
+                                            const QVector3D& upVector,
+                                            float convergenceDistance, float interocularDistance,
+                                            all::StereoCamera::Mode mode)
 {
-    m_leftTransform->setTranslation(position);
-    m_leftTransform->setRotation(rotation);
-    m_rightTransform->setTranslation(position);
-    m_rightTransform->setRotation(rotation);
+    const QVector3D viewCenter = position + forwardVector * convergenceDistance;
+    const QVector3D rightVector = QVector3D::crossProduct(forwardVector, upVector).normalized();
+    const float halfInterocularDistance = interocularDistance * 0.5f;
+    const QVector3D rightShift = rightVector * halfInterocularDistance;
+
+    m_centerCamera->setPosition(position);
+    m_leftCamera->setPosition(position - rightShift);
+    m_rightCamera->setPosition(position + rightShift);
+
+    m_centerCamera->setUpVector(upVector);
+    m_leftCamera->setUpVector(upVector);
+    m_rightCamera->setUpVector(upVector);
+
+    m_centerCamera->setViewCenter(viewCenter);
+
+    if (mode == all::StereoCamera::Mode::ToeIn) {
+        m_leftCamera->setViewCenter(viewCenter);
+        m_rightCamera->setViewCenter(viewCenter);
+    } else { // all::StereoCamera::Mode::AsymmetricFrustum
+        m_leftCamera->setViewCenter(viewCenter - rightShift);
+        m_rightCamera->setViewCenter(viewCenter + rightShift);
+    }
 }
 
-void all::qt3d::QStereoProxyCamera::setMatrices(const QMatrix4x4& left, const QMatrix4x4& right)
+void QStereoProxyCamera::updateProjection(float nearPlane, float farPlane,
+                                          float fovY, float aspectRatio,
+                                          float convergenceDistance,
+                                          float interocularDistance,
+                                          all::StereoCamera::Mode mode)
 {
-    m_leftTransform->setMatrix(left.inverted());
-    m_rightTransform->setMatrix(right.inverted());
+    m_centerCamera->setAspectRatio(aspectRatio);
+    m_leftCamera->setAspectRatio(aspectRatio);
+    m_rightCamera->setAspectRatio(aspectRatio);
+
+    m_centerCamera->setNearPlane(nearPlane);
+    m_leftCamera->setNearPlane(nearPlane);
+    m_rightCamera->setNearPlane(nearPlane);
+
+    m_centerCamera->setFarPlane(farPlane);
+    m_leftCamera->setFarPlane(farPlane);
+    m_rightCamera->setFarPlane(farPlane);
+
+    m_centerCamera->setProjectionType(Qt3DRender::QCameraLens::PerspectiveProjection);
+    m_centerCamera->setFieldOfView(fovY);
+
+    if (mode == all::StereoCamera::Mode::ToeIn) {
+        m_leftCamera->setProjectionType(Qt3DRender::QCameraLens::PerspectiveProjection);
+        m_rightCamera->setProjectionType(Qt3DRender::QCameraLens::PerspectiveProjection);
+
+        m_leftCamera->setFieldOfView(fovY);
+        m_rightCamera->setFieldOfView(fovY);
+    } else { // all::StereoCamera::Mode::AsymmetricFrustum
+        const float halfInterocularDistance = interocularDistance * 0.5f;
+        const float halfVFov = std::tan(qDegreesToRadians(fovY) * 0.5f);
+        const float halfHeightAtConvergence = halfVFov * nearPlane;
+        const float halfWidthAtConvergence = aspectRatio * halfHeightAtConvergence;
+        const float nearConvergenceRatio = nearPlane / convergenceDistance;
+        const float frustumShift = halfInterocularDistance * nearConvergenceRatio;
+
+        m_leftCamera->setProjectionType(Qt3DRender::QCameraLens::FrustumProjection);
+        m_leftCamera->setTop(halfHeightAtConvergence);
+        m_leftCamera->setBottom(-halfHeightAtConvergence);
+        m_leftCamera->setLeft(-halfWidthAtConvergence + frustumShift);
+        m_leftCamera->setRight(halfWidthAtConvergence + frustumShift);
+
+        m_rightCamera->setProjectionType(Qt3DRender::QCameraLens::FrustumProjection);
+        m_rightCamera->setTop(halfHeightAtConvergence);
+        m_rightCamera->setBottom(-halfHeightAtConvergence);
+        m_rightCamera->setLeft(-halfWidthAtConvergence - frustumShift);
+        m_rightCamera->setRight(halfWidthAtConvergence - frustumShift);
+    }
 }
 
-void all::qt3d::QStereoProxyCamera::setProjection(const QMatrix4x4& proj, qreal skew, bool same)
-{
-    QMatrix4x4 m;
-    m(0, 2) = same ? skew : -skew;
-    m_leftCameraLens->setProjectionMatrix(m * proj);
-    m(0, 2) = skew;
-    m_rightCameraLens->setProjectionMatrix(m * proj);
-}
+} // namespace all::qt3d

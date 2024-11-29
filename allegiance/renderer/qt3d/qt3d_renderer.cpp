@@ -85,39 +85,25 @@ Qt3DRenderer::~Qt3DRenderer()
 
 void Qt3DRenderer::viewChanged()
 {
-    switch (m_cameraMode) {
-    case CameraMode::Stereo:
-        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewLeft()), toQMatrix4x4(m_stereoCamera->viewRight()));
-        break;
-    case CameraMode::Right:
-        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewRight()), toQMatrix4x4(m_stereoCamera->viewRight()));
-        break;
-    case CameraMode::Left:
-        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewLeft()), toQMatrix4x4(m_stereoCamera->viewLeft()));
-        break;
-    case CameraMode::Mono:
-        m_camera->setMatrices(toQMatrix4x4(m_stereoCamera->viewCenter()), toQMatrix4x4(m_stereoCamera->viewCenter()));
-        break;
-    }
+    m_camera->updateViewMatrices(toQVector3D(m_stereoCamera->position()),
+                                 toQVector3D(m_stereoCamera->forwardVector()),
+                                 toQVector3D(m_stereoCamera->upVector()),
+                                 m_stereoCamera->convergencePlaneDistance(),
+                                 m_stereoCamera->interocularDistance(),
+                                 m_stereoCamera->mode());
+
     projectionChanged();
 }
 
 void Qt3DRenderer::projectionChanged()
 {
-    switch (m_cameraMode) {
-    case CameraMode::Mono:
-        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), 0);
-        break;
-    case CameraMode::Stereo:
-        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), m_stereoCamera->shearCoefficient());
-        break;
-    case CameraMode::Right:
-        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), m_stereoCamera->shearCoefficient(), true);
-        break;
-    case CameraMode::Left:
-        m_camera->setProjection(toQMatrix4x4(m_stereoCamera->projection()), -m_stereoCamera->shearCoefficient(), true);
-        break;
-    }
+    m_camera->updateProjection(m_stereoCamera->nearPlane(),
+                               m_stereoCamera->farPlane(),
+                               m_stereoCamera->fov(),
+                               m_stereoCamera->aspectRatio(),
+                               m_stereoCamera->convergencePlaneDistance(),
+                               m_stereoCamera->interocularDistance(),
+                               m_stereoCamera->mode());
 }
 
 void Qt3DRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)

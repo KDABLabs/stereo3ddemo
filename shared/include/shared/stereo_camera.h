@@ -16,6 +16,7 @@ enum class CameraMode {
 class StereoCamera
 {
 public:
+    // TODO: Get Rid of this
     enum class API {
         OpenGL,
         Vulkan,
@@ -34,6 +35,7 @@ public:
     }
 
 public:
+    // TODO: Get Rid of this
     const glm::mat4x4& projection() const noexcept { return m_projection; }
     const glm::mat4x4& viewLeft() const noexcept { return m_viewLeft; }
     const glm::mat4x4& viewRight() const noexcept { return m_viewRight; }
@@ -44,6 +46,7 @@ public:
     {
         m_interocularDistance = distance;
         updateViewMatrix();
+        updateProjectionMatrix();
     }
     float interocularDistance() const noexcept { return m_interocularDistance; }
 
@@ -51,6 +54,7 @@ public:
     {
         m_convergencePlaneDistance = distance;
         updateViewMatrix();
+        updateProjectionMatrix();
     }
     float convergencePlaneDistance() const noexcept { return m_convergencePlaneDistance; }
 
@@ -90,34 +94,30 @@ public:
 
     void setPosition(const glm::vec3& pos) noexcept
     {
-        m_cameraMatrix[3] = glm::vec4{ pos, 1 };
+        m_pos = pos;
         updateViewMatrix();
     }
-    glm::vec3 position() const noexcept { return m_cameraMatrix[3]; }
+    glm::vec3 position() const noexcept { return m_pos; }
 
     void setForwardVector(const glm::vec3& dir) noexcept
     {
         if (dir == glm::vec3(0.0f, 0.0f, 0.0f))
             return;
 
-        auto r = glm::lookAt({ 0, 0, 0 }, dir, { 0, 1, 0 });
-        r = glm::inverse(r);
-        m_cameraMatrix[0] = r[0];
-        m_cameraMatrix[1] = r[1];
-        m_cameraMatrix[2] = r[2];
+        m_forwardVec = glm::normalize(dir);
         updateViewMatrix();
     }
-    glm::vec3 forwardVector() const noexcept { return -m_cameraMatrix[2]; }
+    glm::vec3 forwardVector() const noexcept { return m_forwardVec; }
 
     void setUpVector(const glm::vec3& up) noexcept
     {
         if (up == glm::vec3(0.0f, 0.0f, 0.0f))
             return;
 
-        m_cameraMatrix[1] = glm::vec4{ glm::normalize(up), 0 };
+        m_upVec = glm::normalize(up);
         updateViewMatrix();
     }
-    glm::vec3 upVector() const noexcept { return m_cameraMatrix[1]; }
+    glm::vec3 upVector() const noexcept { return m_upVec; }
 
     float shearCoefficient() const noexcept
     {
@@ -143,6 +143,7 @@ public:
         updateProjectionMatrix();
     }
 
+    // TODO: Get Rid of this
     static glm::mat4 stereoShear(float x) noexcept
     {
         glm::mat4 i{ 1.0f };
@@ -150,6 +151,7 @@ public:
         return i;
     }
 
+    // TODO: Get Rid of this
     virtual void updateViewMatrix() noexcept
     {
         // we can do that, since right is unit length
@@ -165,6 +167,8 @@ public:
                 : glm::lookAt(pos + right, pos + right + forward, up);
         m_viewCenter = glm::lookAt(pos, pos + forward, up);
     }
+
+    // TODO: Get Rid of this
     virtual void updateProjectionMatrix() noexcept
     {
         // Note: for OpenGL depth range is expected to be in [-1, 1] perspectiveRH_NO
@@ -174,12 +178,6 @@ public:
         } else {
             m_projection = glm::perspectiveRH_ZO(glm::radians(m_fovY), m_aspectRatio, m_nearPlane, m_farPlane);
         }
-    }
-
-    void setCameraMatrix(const glm::mat4x4& viewMatrix)
-    {
-        m_cameraMatrix = viewMatrix;
-        updateViewMatrix();
     }
 
     float fov() const
@@ -198,14 +196,18 @@ public:
     }
 
 private:
+    // TODO: Get Rid of the matrices
     glm::mat4x4 m_viewLeft;
     glm::mat4x4 m_viewRight;
     glm::mat4x4 m_viewCenter;
     glm::mat4x4 m_cameraMatrix = glm::identity<glm::mat4x4>();
     glm::mat4x4 m_projection;
 
-private:
-    float m_fovY{ 45 };
+    glm::vec3 m_forwardVec{ 0.0f, 0.0f, 1.0f };
+    glm::vec3 m_upVec{ 0.0f, 1.0f, 0.0f };
+    glm::vec3 m_pos{ 0.0f, 0.0f, 0.0f };
+
+    float m_fovY{ 45.0f };
     float m_interocularDistance{ 0.06f };
     float m_convergencePlaneDistance{ 10.0f };
     float m_nearPlane{ 0.1f };
