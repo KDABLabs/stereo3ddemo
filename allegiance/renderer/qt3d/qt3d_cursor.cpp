@@ -289,7 +289,7 @@ void all::qt3d::CursorEntity::updateSize()
     constexpr float cursor_size = 0.06f;
     int targetSize = 20;
     QMatrix4x4 viewMatrix = m_cameraTransform->matrix();
-    QVector3D cameraPosition = viewMatrix.inverted() * m_transform->matrix() * QVector3D(0, 0, 0); // Apply the transformMatrix to the local origin
+    QVector3D cameraPosition = (viewMatrix.inverted() * m_transform->matrix()).map(QVector3D(0, 0, 0)); // Apply the transformMatrix to the local origin
 
     float distanceToCamera = cameraPosition.length();
 
