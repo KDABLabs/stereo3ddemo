@@ -244,6 +244,16 @@ public:
 
         m_renderer->createAspects(nav_params);
         resetCamera();
+
+        // Set Initial Values
+        m_camera.setAspectRatio(float(qWindow->width()) / qWindow->height());
+        m_camera.setInterocularDistance(m_cameraController->eyeDistance());
+        m_camera.setConvergencePlaneDistance(m_cameraController->focusDistance());
+        m_camera.setFov(m_cameraController->fov());
+        m_camera.setMode(all::StereoCamera::Mode(m_cameraController->stereoMode()));
+        m_camera.setFlipped(m_cameraController->flipped());
+        m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
+        m_renderer->propertyChanged("camera_mode", all::CameraMode(m_cameraController->cameraMode()));
     }
 
     ~RendererInitializer()
