@@ -75,11 +75,6 @@ static void traverseEntities(Qt3DCore::QEntity* entity, QVector3D& minExtents, Q
 Qt3DRenderer::Qt3DRenderer(Qt3DExtras::Qt3DWindow* view, all::StereoCamera& stereoCamera)
     : m_view(view), m_stereoCamera(&stereoCamera)
 {
-    QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-    if (!qEnvironmentVariableIsSet("DISABLE_STEREO"))
-        format.setStereo(true);
-    format.setSamples(8);
-    QSurfaceFormat::setDefaultFormat(format);
 }
 
 Qt3DRenderer::~Qt3DRenderer()

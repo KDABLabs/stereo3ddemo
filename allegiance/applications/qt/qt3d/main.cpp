@@ -18,6 +18,15 @@ int main(int argc, char** argv)
         qputenv("QT3D_RENDERER", "opengl");
     }
 
+    // Setup surface format for stereo
+    {
+        QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+        if (!qEnvironmentVariableIsSet("DISABLE_STEREO"))
+            format.setStereo(true);
+        format.setSamples(8);
+        QSurfaceFormat::setDefaultFormat(format);
+    }
+
     QApplication app(argc, argv);
     QApplication::setApplicationName(QStringLiteral("Schneider Demo Qt3D OpenGL - " ALLEGIANCE_BUILD_STR));
     QApplication::setApplicationVersion(QStringLiteral(ALLEGIANCE_PROJECT_VERSION));
