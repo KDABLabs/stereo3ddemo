@@ -149,6 +149,7 @@ ScrollView {
                     }
                     ComboBox {
                         model: ["ToeIn", "AsymmetricFrustum"]
+                        currentIndex: Camera.stereoMode
                         onCurrentIndexChanged: Camera.stereoMode = currentIndex
                     }
                 }
