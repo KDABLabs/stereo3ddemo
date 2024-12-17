@@ -6,9 +6,12 @@
         <file>camera_control.qml</file>
         <file>CheckBoxX.qml</file>
         <file>MainMenu.qml</file>
+        <file>Logos.qml</file>
         <file>PageBase.qml</file>
         <file>SliderValue.qml</file>
         <file>SectionTitle.qml</file>
         <file>CursorMenu.qml</file>
+        <file>kdab.png</file>
+        <file>schneider_white.svg</file>
     </qresource>
 </RCC>

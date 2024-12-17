@@ -15,9 +15,12 @@ qt_add_qml_module(
     "qml/PageBase.qml"
     "qml/SliderValue.qml"
     "qml/SectionTitle.qml"
+    "qml/Logos.qml"
     RESOURCES
     "qml/checked.svg"
     "qml/unchecked.svg"
+    "qml/kdab.png"
+    "qml/schneider_white.svg"
     RESOURCE_PREFIX
     "/qt/qml" # Set to default prefix for elements to be in a know import path
     STATIC

@@ -18,7 +18,7 @@ ScrollView {
     ScrollBar.vertical.interactive: true
 
     ColumnLayout {
-        width: 320
+        width: root.width - 40
 
         ButtonX {
             Layout.fillWidth: true
