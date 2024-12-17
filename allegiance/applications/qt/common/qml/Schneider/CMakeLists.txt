@@ -14,6 +14,7 @@ qt_add_qml_module(
     "qml/MainMenu.qml"
     "qml/PageBase.qml"
     "qml/SliderValue.qml"
+    "qml/SectionTitle.qml"
     RESOURCES
     "qml/checked.svg"
     "qml/unchecked.svg"

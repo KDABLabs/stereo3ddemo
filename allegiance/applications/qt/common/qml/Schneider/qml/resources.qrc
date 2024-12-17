@@ -8,6 +8,7 @@
         <file>MainMenu.qml</file>
         <file>PageBase.qml</file>
         <file>SliderValue.qml</file>
+        <file>SectionTitle.qml</file>
         <file>CursorMenu.qml</file>
     </qresource>
 </RCC>

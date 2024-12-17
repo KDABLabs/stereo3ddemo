@@ -8,10 +8,6 @@ GroupBox {
   id: cursor
   Layout.fillWidth: true
   Layout.alignment: Qt.AlignTop
-  label: Label {
-    text: "Cursor"
-    font: Style.fontButton
-  }
 
   ColumnLayout {
     anchors.margins: 10
@@ -142,4 +138,4 @@ GroupBox {
       }
     }
   }
-}  
+}
