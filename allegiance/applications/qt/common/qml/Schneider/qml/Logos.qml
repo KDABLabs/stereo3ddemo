@@ -43,6 +43,7 @@ Rectangle {
 
                 source: "schneider_white.svg"
                 fillMode: Image.PreserveAspectFit
+                sourceSize: Qt.size(360, 70)
                 MouseArea {
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
