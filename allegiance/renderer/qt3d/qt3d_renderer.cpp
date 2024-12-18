@@ -140,17 +140,18 @@ void Qt3DRenderer::projectionChanged()
 
     // Adjust Ortho Projection so that whole frustum is visible
     auto* frustumCamera = m_renderer->frustumCamera();
-    const float frustumHalfLength = (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane()) * 0.5f;
-    const float hFov = qDegreesToRadians(m_stereoCamera->fov()) * m_stereoCamera->aspectRatio() * 0.5f;
-    const float frustumHalfWidth = frustumHalfLength * std::tan(hFov);
-    const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumHalfLength);
+    const float frustumLength = (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane());
+    const float vFov = qDegreesToRadians(m_stereoCamera->fov());
+    const float hFov = 2.0f * std::atan(m_stereoCamera->aspectRatio() * tan(vFov * 0.5f));
+    const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f);
+    const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumLength * 0.5f);
 
     frustumCamera->setTop(frustumMaxHalfSize * m_stereoCamera->aspectRatio());
     frustumCamera->setBottom(-frustumMaxHalfSize * m_stereoCamera->aspectRatio());
     frustumCamera->setLeft(-frustumMaxHalfSize);
     frustumCamera->setRight(frustumMaxHalfSize);
     frustumCamera->setNearPlane(m_stereoCamera->nearPlane());
-    frustumCamera->setFarPlane(m_stereoCamera->farPlane());
+    frustumCamera->setFarPlane(m_stereoCamera->farPlane() * 2.0f);
 }
 
 void Qt3DRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
