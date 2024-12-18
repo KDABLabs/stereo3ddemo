@@ -60,9 +60,11 @@ public:
 
     void setFlipped(bool flipped) noexcept
     {
-        this->m_flipped = flipped;
+        m_flipped = flipped;
         updateViewMatrix();
     }
+
+    bool isFlipped() const noexcept { return m_flipped; }
 
     void setNearPlane(float distance) noexcept
     {
@@ -80,7 +82,7 @@ public:
 
     void setAspectRatio(float aspect_ratio) noexcept
     {
-        this->m_aspectRatio = aspect_ratio;
+        m_aspectRatio = aspect_ratio;
         updateProjectionMatrix();
     }
     float aspectRatio() const noexcept { return m_aspectRatio; }

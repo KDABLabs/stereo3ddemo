@@ -83,11 +83,14 @@ Qt3DRenderer::~Qt3DRenderer()
 
 void Qt3DRenderer::viewChanged()
 {
+    const float flippedCorrection = m_stereoCamera->isFlipped() ? -1.0f : 1.0f;
+    const float interocularDistance = flippedCorrection * m_stereoCamera->interocularDistance();
+
     m_camera->updateViewMatrices(toQVector3D(m_stereoCamera->position()),
                                  toQVector3D(m_stereoCamera->forwardVector()),
                                  toQVector3D(m_stereoCamera->upVector()),
                                  m_stereoCamera->convergencePlaneDistance(),
-                                 m_stereoCamera->interocularDistance(),
+                                 interocularDistance,
                                  m_stereoCamera->mode());
 
     m_centerFrustum->setViewMatrix(m_camera->centerCamera()->viewMatrix());
@@ -106,7 +109,6 @@ void Qt3DRenderer::viewChanged()
     frustumCamera->setPosition(camPosition);
     const float centerPlaneDist = m_stereoCamera->nearPlane() + (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane()) * 0.5f;
     frustumCamera->setViewCenter(camPosition + viewVector * centerPlaneDist);
-    // frustumCamera->setViewCenter(camPosition + viewVector * convergenceDist);
     frustumCamera->setUpVector(upVector);
     // Then Rotate 90 around the X-Axis with rotation origin viewCenter
     frustumCamera->tiltAboutViewCenter(90.0f);
@@ -116,12 +118,15 @@ void Qt3DRenderer::viewChanged()
 
 void Qt3DRenderer::projectionChanged()
 {
+    const float flippedCorrection = m_stereoCamera->isFlipped() ? -1.0f : 1.0f;
+    const float interocularDistance = flippedCorrection * m_stereoCamera->interocularDistance();
+
     m_camera->updateProjection(m_stereoCamera->nearPlane(),
                                m_stereoCamera->farPlane(),
                                m_stereoCamera->fov(),
                                m_stereoCamera->aspectRatio(),
                                m_stereoCamera->convergencePlaneDistance(),
-                               m_stereoCamera->interocularDistance(),
+                               interocularDistance,
                                m_stereoCamera->mode());
 
     m_centerFrustum->setProjectionMatrix(m_camera->centerCamera()->projectionMatrix());
