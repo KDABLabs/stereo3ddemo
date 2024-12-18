@@ -11,6 +11,7 @@
 #include <Qt3DRender/QRenderPass>
 #include <Qt3DRender/QShaderProgram>
 #include <Qt3DRender/QTechnique>
+#include <Qt3DRender/QNoDepthMask>
 
 #include <Qt3DCore/QBuffer>
 #include <Qt3DCore/QGeometry>
@@ -69,8 +70,11 @@ FrustumRect::FrustumRect(QNode* parent)
         auto* blendEquation = new Qt3DRender::QBlendEquation();
         blendEquation->setBlendFunction(Qt3DRender::QBlendEquation::Add);
 
+        auto* noDepthMask = new Qt3DRender::QNoDepthMask();
+
         renderPass->addRenderState(blendState);
         renderPass->addRenderState(blendEquation);
+        renderPass->addRenderState(noDepthMask);
 
         auto* technique = new Qt3DRender::QTechnique;
         technique->addRenderPass(renderPass);
