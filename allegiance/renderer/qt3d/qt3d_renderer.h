@@ -59,21 +59,15 @@ private:
     void createScene(Qt3DCore::QEntity* root);
     void loadImage(QUrl path = QUrl::fromLocalFile(":/13_3840x2160_sbs.jpg"));
 
-    QVector2D calculateSceneDimensions(Qt3DCore::QEntity* scene) const;
-
     struct SceneExtent {
         QVector3D min, max;
     };
-    SceneExtent calculateSceneExtent(Qt3DCore::QNode* node)
-    {
-        SceneExtent e;
-        _calculateSceneDimensions(node, e.min, e.max);
-        return e;
-    }
+    SceneExtent calculateSceneExtent(Qt3DCore::QEntity* entity) const;
 
 protected:
-    void _calculateSceneDimensions(Qt3DCore::QNode* node, QVector3D& minBounds, QVector3D& maxBounds) const;
+    void _calculateSceneDimensions(Qt3DCore::QEntity* entity, QVector3D& minBounds, QVector3D& maxBounds) const;
     void modelExtentChanged(const QVector3D& min, const QVector3D& max);
+    void setupCameraBasedOnSceneExtent();
 
 private:
     Qt3DExtras::Qt3DWindow* m_view{ nullptr };

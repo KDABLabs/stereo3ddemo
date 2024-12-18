@@ -398,37 +398,13 @@ void Qt3DRenderer::loadModel(std::filesystem::path path)
         }
     }
 
-    auto ext = calculateSceneExtent(m_userEntity);
-    m_nav_params->min_extent = toGlmVec3(ext.min);
-    m_nav_params->max_extent = toGlmVec3(ext.max);
-
-    // scale model
-    auto k = ext.max - ext.min;
-    auto s = QVector3D{ 8, 8, 8 } / k;
-    auto centerpoint = ext.min + k / 2;
-
-    auto modelViewProjection = m_stereoCamera->viewCenter() * m_stereoCamera->projection();
-    auto size = ext.max - ext.min;
-    glm::vec4 dimensions(size.x(), size.y(), size.z(), 1.0f);
-    glm::vec4 dimensionsClip = m_stereoCamera->projection() * m_stereoCamera->viewCenter() * dimensions;
-    dimensionsClip /= dimensionsClip.w;
-    float scaleFactor = 1 / std::max(std::abs(dimensionsClip.x), std::abs(dimensionsClip.y));
-
-    auto ts = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
-    if (ts.size() > 0) {
-        ts[0]->setScale(ts[0]->scale() * scaleFactor);
-    } else {
-        auto t = new Qt3DCore::QTransform;
-        t->setScale(scaleFactor);
-        m_userEntity->addComponent(t);
-    }
-
-    // set rotation point
-    auto cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
-    if (cam) {
-        cam->setTarget(toGlmVec3((ext.min + k / 2) * scaleFactor));
-        cam->rotate(0, 0);
-    }
+    // Give Qt3D Time to process mesh extents
+    auto* frameAction = new Qt3DLogic::QFrameAction;
+    QObject::connect(frameAction, &Qt3DLogic::QFrameAction::triggered, m_userEntity, [this, frameAction] {
+        setupCameraBasedOnSceneExtent();
+        frameAction->deleteLater();
+    });
+    m_userEntity->addComponent(frameAction);
 }
 
 void Qt3DRenderer::setCursorEnabled(bool enabled)
@@ -441,90 +417,86 @@ void Qt3DRenderer::setCursorEnabled(bool enabled)
     }
 }
 
-QVector2D Qt3DRenderer::calculateSceneDimensions(Qt3DCore::QEntity* scene) const
+Qt3DRenderer::SceneExtent Qt3DRenderer::calculateSceneExtent(Qt3DCore::QEntity* entity) const
 {
-
-    QVector3D minBounds, maxBounds;
-    _calculateSceneDimensions(scene, minBounds, maxBounds);
-    QVector2D res{ qMin(qMin(minBounds.x(), minBounds.y()), minBounds.z()),
-                   qMax(qMax(maxBounds.x(), maxBounds.y()), maxBounds.z()) };
-    return res;
+    SceneExtent e;
+    _calculateSceneDimensions(entity, e.min, e.max);
+    return e;
 }
 
-void Qt3DRenderer::_calculateSceneDimensions(Qt3DCore::QNode* node, QVector3D& minBounds, QVector3D& maxBounds) const
+void Qt3DRenderer::_calculateSceneDimensions(Qt3DCore::QEntity* entity, QVector3D& minBounds, QVector3D& maxBounds) const
 {
-    if (node) {
-        Qt3DCore::QEntity* entity = qobject_cast<Qt3DCore::QEntity*>(node);
+    if (entity == nullptr)
+        return;
 
-        for (Qt3DCore::QNode* childNode : node->childNodes()) {
-            _calculateSceneDimensions(childNode, minBounds, maxBounds);
-        }
-        if (!entity)
+    for (Qt3DCore::QNode* childNode : entity->childNodes()) {
+        auto* childEntity = qobject_cast<Qt3DCore::QEntity*>(childNode);
+        if (childEntity != nullptr)
+            _calculateSceneDimensions(childEntity, minBounds, maxBounds);
+    }
+
+    // Check if the entity has a geometry renderer
+    auto geometryRenderers = entity->componentsOfType<Qt3DRender::QGeometryRenderer>();
+    if (geometryRenderers.size() > 0) {
+        Qt3DRender::QGeometryRenderer* geometryRenderer = geometryRenderers.first();
+        Qt3DCore::QGeometry* geometry = geometryRenderer->geometry();
+
+        if (geometry == nullptr)
             return;
 
-        // Check if the entity has a geometry renderer
-        auto geometryRenderers = entity->componentsOfType<Qt3DRender::QGeometryRenderer>();
-        if (geometryRenderers.size() > 0) {
-            Qt3DRender::QGeometryRenderer* renderer = geometryRenderers.first();
+        const QVector3D& bvMin = geometry->minExtent();
+        const QVector3D& bvMax = geometry->maxExtent();
 
-            Qt3DCore::QGeometry* geometry = renderer->geometry();
-            if (!geometry) {
-                for (auto c : renderer->children()) {
-                    auto a = qobject_cast<Qt3DCore::QGeometryView*>(c);
-                    if (a) {
-                        geometry = a->geometry();
-                        if (geometry)
-                            break;
-                    }
-                }
+        const QVector3D diagonal = bvMax - bvMin;
 
-                if (!geometry)
-                    return;
-            }
+        // Local Coordinates
+        const QVector3D sphereCenter = bvMin + diagonal * 0.5f;
+        const float radius = diagonal.length();
 
-            auto l = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
-            double scale = 1;
-            if (l.size() > 0) {
-                scale = l[0]->scale();
-            }
+        std::function<Qt3DCore::QTransform*(Qt3DCore::QEntity * e)> findNearestParentTransform = [&](Qt3DCore::QEntity* e) -> Qt3DCore::QTransform* {
+            if (e == nullptr)
+                return nullptr;
+            auto transforms = e->componentsOfType<Qt3DCore::QTransform>();
+            if (transforms.size() == 0)
+                return findNearestParentTransform(e->parentEntity());
+            return transforms.first();
+        };
 
-            // You need to specify the correct attribute index for position data
-            const int positionAttributeIndex = 0; // Adjust this index based on your format
-            const Qt3DCore::QAttribute* positionAttribute = geometry->attributes().at(positionAttributeIndex);
-            size_t offset = -1, byteStride;
-            for (auto a : geometry->attributes()) {
-                if (a->name() == "vertexPosition") {
-                    offset = a->byteOffset();
-                    byteStride = a->byteStride();
-                }
-            }
-            if (offset != -1) {
-                if (positionAttribute) {
-                    const QByteArray& rawData = positionAttribute->buffer()->data();
-                    int dataCount;
-                    if (byteStride)
-                        dataCount = rawData.size() / byteStride;
-                    else
-                        dataCount = rawData.size() / sizeof(QVector3D);
+        Qt3DCore::QTransform* transform = findNearestParentTransform(entity);
+        if (transform != nullptr) {
 
-                    for (int i = 0; i < dataCount; i++) {
-                        const QVector3D* position = reinterpret_cast<const QVector3D*>(rawData.data() + byteStride * i + offset);
+            const QMatrix4x4 worldMatrix = transform->worldMatrix();
+            // Transform extremities in x, y, and z directions to find extremities
+            // of the resulting ellipsoid
+            const QVector3D x = worldMatrix.map(sphereCenter + QVector3D(radius, 0.0f, 0.0f));
+            const QVector3D y = worldMatrix.map(sphereCenter + QVector3D(0.0f, radius, 0.0f));
+            const QVector3D z = worldMatrix.map(sphereCenter + QVector3D(0.0f, 0.0f, radius));
 
-                        minBounds.setX(qMin(minBounds.x(), position->x()));
-                        minBounds.setY(qMin(minBounds.y(), position->y()));
-                        minBounds.setZ(qMin(minBounds.z(), position->z()));
-                        maxBounds.setX(qMax(maxBounds.x(), position->x()));
-                        maxBounds.setY(qMax(maxBounds.y(), position->y()));
-                        maxBounds.setZ(qMax(maxBounds.z(), position->z()));
-                    }
-                    minBounds.setX(minBounds.x() * scale);
-                    minBounds.setY(minBounds.y() * scale);
-                    minBounds.setZ(minBounds.z() * scale);
-                    maxBounds.setX(maxBounds.x() * scale);
-                    maxBounds.setY(maxBounds.y() * scale);
-                    maxBounds.setZ(maxBounds.z() * scale);
-                }
-            }
+            // Transform center and find maximum radius of ellipsoid
+            const QVector3D worldCenter = worldMatrix.map(sphereCenter);
+            const float worldRadius = sqrt(qMax(qMax((x - worldCenter).lengthSquared(),
+                                                     (y - worldCenter).lengthSquared()),
+                                                (z - worldCenter).lengthSquared()));
+
+            const QVector3D worldBVMax = worldCenter + QVector3D(worldRadius, worldRadius, worldRadius) * 1.44f;
+            const QVector3D worldBVMin = worldCenter - QVector3D(worldRadius, worldRadius, worldRadius) * 1.44f;
+
+            maxBounds = QVector3D(std::max(worldBVMax.x(), maxBounds.x()),
+                                  std::max(worldBVMax.y(), maxBounds.y()),
+                                  std::max(worldBVMax.z(), maxBounds.z()));
+
+            minBounds = QVector3D(std::min(worldBVMin.x(), minBounds.x()),
+                                  std::min(worldBVMin.y(), minBounds.y()),
+                                  std::min(worldBVMin.z(), minBounds.z()));
+        } else {
+
+            maxBounds = QVector3D(std::max(bvMax.x(), maxBounds.x()),
+                                  std::max(bvMax.y(), maxBounds.y()),
+                                  std::max(bvMax.z(), maxBounds.z()));
+
+            minBounds = QVector3D(std::min(bvMin.x(), minBounds.x()),
+                                  std::min(bvMin.y(), minBounds.y()),
+                                  std::min(bvMin.z(), minBounds.z()));
         }
     }
 }
@@ -536,6 +508,34 @@ void Qt3DRenderer::modelExtentChanged(const QVector3D& min, const QVector3D& max
 
     m_nav_params->min_extent = toGlmVec3(min);
     m_nav_params->max_extent = toGlmVec3(max);
+}
+
+void Qt3DRenderer::setupCameraBasedOnSceneExtent()
+{
+    const SceneExtent ext = calculateSceneExtent(m_userEntity);
+    m_nav_params->min_extent = toGlmVec3(ext.min);
+    m_nav_params->max_extent = toGlmVec3(ext.max);
+
+    const QVector3D viewCenter = (ext.max + ext.min) * 0.5f;
+    const QVector3D extent = ext.max - ext.min;
+    const float radius = std::max(extent.x(), std::max(extent.y(), extent.z())) * 0.5f;
+
+    const QVector3D cameraPosition = viewCenter - QVector3D(0.0f, 0.0f, 1.0f) * radius;
+    const QVector3D viewVector = viewCenter - cameraPosition;
+
+    m_stereoCamera->setPosition(toGlmVec3(cameraPosition));
+    m_stereoCamera->setForwardVector(toGlmVec3(viewVector.normalized()));
+    m_stereoCamera->setConvergencePlaneDistance(viewVector.length());
+    m_stereoCamera->setFarPlane(5 * radius);
+    m_stereoCamera->setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
+
+    // set rotation point
+    auto cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
+    if (cam) {
+        cam->setRadius(viewVector.length());
+        cam->setTarget(toGlmVec3(viewCenter));
+        cam->rotate(glm::radians(45.0f), glm::radians(90.0f));
+    }
 }
 void Qt3DRenderer::updateMouse()
 {
