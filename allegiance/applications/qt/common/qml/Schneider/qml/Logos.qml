@@ -22,6 +22,11 @@ Rectangle {
                 anchors.rightMargin: 5
                 source: "kdab.png"
                 fillMode: Image.PreserveAspectFit
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Qt.openUrlExternally("https://www.kdab.com")
+                }
             }
         }
 
@@ -38,6 +43,11 @@ Rectangle {
 
                 source: "schneider_white.svg"
                 fillMode: Image.PreserveAspectFit
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: Qt.openUrlExternally("https://www.schneider-digital.com/")
+                }
             }
         }
     }
