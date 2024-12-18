@@ -40,6 +40,7 @@ target_sources(
            mesh_loader.h
            scene_mesh.h
            frustum.h
+           frustum_rect.h
     PRIVATE qt3d_renderer.cpp
             mesh_loader.cpp
             scene_mesh.cpp
@@ -50,6 +51,7 @@ target_sources(
             stereo_forward_renderer.cpp
             stereo_proxy_camera.cpp
             frustum.cpp
+            frustum_rect.cpp
 )
 
 target_link_libraries(

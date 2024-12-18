@@ -451,6 +451,69 @@ void main()
 }
 )";
 
+constexpr std::string_view frustum_rect_vs = R"(
+#version 150
+
+in vec3 vertexPosition;
+
+uniform mat4 mvp;
+
+out vec3 uv;
+
+void main()
+{
+    uv = vertexPosition; // -1 to 1 range
+    gl_Position = vec4(vertexPosition, 1.0);
+}
+
+)";
+
+constexpr std::string_view frustum_rect_ps = R"(
+
+#version 150
+
+in vec3 uv;
+
+uniform vec4 backgroundColor;
+uniform vec4 outlineColor;
+uniform float outlineWidth;
+
+uniform vec3 extent;
+
+uniform mat4 viewportMatrix;
+uniform mat4 mvp;
+
+out vec4 fragColor;
+
+vec3 projectFromNDCToViewport(vec4 p)
+{
+    return vec3(viewportMatrix * p);
+}
+
+void main(void)
+{
+    // Screen space position for fragment
+    vec3 pxPos = projectFromNDCToViewport(vec4(vec3(uv.xy, 0.0), 1.0));
+
+    // Compute Screen space distance of fragment against rect edges
+    vec3 top = vec3(uv.x, 1.0, 0.0);
+    vec3 bottom = vec3(uv.x, -1.0, 0.0);
+    vec3 left = vec3(-1.0, uv.y, 0.0);
+    vec3 right = vec3(1.0, uv.y, 0.0);
+
+    float dTop = length(projectFromNDCToViewport(vec4(top, 1.0)) - pxPos);
+    float dBottom = length(projectFromNDCToViewport(vec4(bottom, 1.0)) - pxPos);
+    float dLeft = length(projectFromNDCToViewport(vec4(left, 1.0)) - pxPos);
+    float dRight = length(projectFromNDCToViewport(vec4(right, 1.0)) - pxPos);
+
+    // Find smallest distance to any edge
+    float minDistance = min(dTop, min(dBottom, min(dLeft, dRight)));
+
+    // Blend between  background color and outline color depending on fragment distance to rect edges
+    fragColor = mix(outlineColor, backgroundColor, smoothstep(outlineWidth - 0.5, outlineWidth, minDistance));
+}
+)";
+
 struct shader_uniforms {
     QVector3D normalScaling{ 1, 1, 1 };
     QVector3D semInner{ 0, 0, 0 };

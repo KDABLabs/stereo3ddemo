@@ -9,6 +9,7 @@
 #include "qt3d_shaders.h"
 #include "util_qt.h"
 #include "frustum.h"
+#include "frustum_rect.h"
 
 #include <Qt3DRender/QSceneLoader>
 #include <Qt3DRender/QPickingSettings>
@@ -221,10 +222,12 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
 
     // Frustums
     {
+        m_frustumRect = new FrustumRect(root);
         m_centerFrustum = new Frustum(QColor(Qt::white), root);
         m_leftFrustum = new Frustum(QColor(Qt::red), root);
         m_rightFrustum = new Frustum(QColor(Qt::blue), root);
 
+        m_frustumRect->addComponent(m_renderer->frustumLayer());
         m_centerFrustum->addComponent(m_renderer->frustumLayer());
         m_leftFrustum->addComponent(m_renderer->frustumLayer());
         m_rightFrustum->addComponent(m_renderer->frustumLayer());
@@ -277,6 +280,7 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
         viewChanged();
     } else if (name == "frustum_view_enabled") {
         const bool frustumEnabled = std::any_cast<bool>(value);
+        m_frustumRect->setEnabled(frustumEnabled);
         m_centerFrustum->setEnabled(frustumEnabled);
         m_leftFrustum->setEnabled(frustumEnabled);
         m_rightFrustum->setEnabled(frustumEnabled);

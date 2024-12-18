@@ -1,6 +1,7 @@
 #pragma once
 #include <Qt3DExtras/Qt3DWindow>
 #include <glm/mat4x4.hpp>
+#include "frustum_rect.h"
 #include "stereo_forward_renderer.h"
 #include <QVector3D>
 #include <QVector2D>
@@ -24,6 +25,7 @@ namespace all::qt3d {
 class CursorEntity;
 class Picker;
 class Frustum;
+class FrustumRect;
 
 class Qt3DRenderer
 {
@@ -92,6 +94,7 @@ private:
     Picker* m_picker;
     std::shared_ptr<all::ModelNavParameters> m_nav_params;
 
+    FrustumRect* m_frustumRect{ nullptr };
     Frustum* m_centerFrustum{ nullptr };
     Frustum* m_leftFrustum{ nullptr };
     Frustum* m_rightFrustum{ nullptr };
