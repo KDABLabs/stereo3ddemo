@@ -45,7 +45,8 @@ private:
     Mode m_mode = Mode::Scene;
     Qt3DRender::QCameraSelector* m_leftCameraSelector;
     Qt3DRender::QCameraSelector* m_rightCameraSelector;
-    Qt3DRender::QCameraSelector* m_frustumCameraSelector;
+    Qt3DRender::QCameraSelector* m_leftFrustumCameraSelector;
+    Qt3DRender::QCameraSelector* m_rightFrustumCameraSelector;
     Qt3DRender::QLayer* m_leftLayer;
     Qt3DRender::QLayer* m_rightLayer;
     Qt3DRender::QLayer* m_stereoImageLayer;

@@ -136,11 +136,17 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         return cameraSelector;
     };
 
-    m_frustumCamera = new Qt3DRender::QCamera;
-    m_frustumCamera->setProjectionType(Qt3DRender::QCameraLens::OrthographicProjection);
+    // Frustum
+    {
+        m_frustumCamera = new Qt3DRender::QCamera(this);
+        m_frustumCamera->setProjectionType(Qt3DRender::QCameraLens::OrthographicProjection);
 
-    m_frustumCameraSelector = makeFrustumBranch(leftRt);
-    m_frustumCameraSelector->setCamera(m_frustumCamera);
+        m_leftFrustumCameraSelector = makeFrustumBranch(leftRt);
+        m_leftFrustumCameraSelector->setCamera(m_frustumCamera);
+
+        m_rightFrustumCameraSelector = makeFrustumBranch(rightRt);
+        m_rightFrustumCameraSelector->setCamera(m_frustumCamera);
+    }
 
     // Hierarchy
     vp->setParent(this);
@@ -155,8 +161,9 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     m_rightLayerFilter->setParent(renderStateSet);
     m_rightCameraSelector->setParent(m_rightLayerFilter);
 
-    // Frustum Overlay on Left Target
-    m_frustumCameraSelector->setParent(vp);
+    // Frustum Overlay
+    m_leftFrustumCameraSelector->setParent(vp);
+    m_rightFrustumCameraSelector->setParent(vp);
 
 #ifdef QT_DEBUG
     auto* debugOverlay = new Qt3DRender::QDebugOverlay();
