@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(Allegiance VERSION 0.2.4)
+project(Allegiance VERSION 0.2.5)
 
 execute_process(
     COMMAND git log -1 --format=%cd --date=format:%Y-%m-%d
