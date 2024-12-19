@@ -18,10 +18,10 @@ GroupBox {
       initial: Cursor.visible
       onChecked: bchecked => Cursor.visible = bchecked
     }
-  
+
     // Cursor Settings if visible
     Item{
-      visible: Cursor.visible   
+      visible: Cursor.visible
       implicitWidth: cursorlayout.implicitWidth
       implicitHeight: cursorlayout.implicitHeight
       ColumnLayout {
@@ -37,7 +37,7 @@ GroupBox {
           Layout.alignment: Qt.AlignTop
           spacing: 10
           Label {
-            Layout.fillWidth: true 
+            Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
             text: "Cursor Type:"
             font: Style.fontDefault
@@ -74,7 +74,7 @@ GroupBox {
           Layout.alignment: Qt.AlignTop
           spacing: 10
           Label {
-            //Layout.fillWidth: true 
+            //Layout.fillWidth: true
             Layout.alignment: Qt.AlignHCenter
             text: "Cursor Color:"
             font: Style.fontDefault
@@ -124,7 +124,7 @@ GroupBox {
           to: 2.0
           value: Cursor.scaleFactor
           title: "Scale Factor"
-        
+
           onMoved: current => Cursor.scaleFactor = current
         }
 
