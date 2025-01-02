@@ -122,7 +122,10 @@ public:
                                      m_mouseInputTracker.skip_first = true;
                                      if (m_mouseInputTracker.cursor_changes_focus) {
                                          auto pos = m_renderer->cursorWorldPosition();
-                                         m_cameraController->setFocusDistance(std::clamp(glm::length(pos - m_camera.position()), 0.5f, 100.f));
+                                         const float distanceToCamera = glm::length(pos - m_camera.position());
+                                         // Convert this distance as % or near to far plane distance
+                                         const float zDistanceNormalized = (distanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
+                                         m_cameraController->setFocusDistance(zDistanceNormalized * 100.0f);
                                      }
 
                                  } else if (e->buttons() & Qt::MouseButton::RightButton) {
@@ -181,11 +184,13 @@ public:
             m_camera.setAspectRatio(float(qWindow->width()) / qWindow->height());
         });
         QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, [this](float v) {
-            m_camera.setConvergencePlaneDistance(v);
+            // v is a % of the nearPlane -> farPlane distance
+            m_camera.setConvergencePlaneDistance(m_camera.nearPlane() + (v * 0.01) * (m_camera.farPlane() - m_camera.nearPlane()));
         });
         QObject::connect(m_cameraController, &CameraController::fovChanged, [this](float v) {
             m_camera.setFov(v);
         });
+
         QObject::connect(m_cameraController, &CameraController::flippedChanged, [this](bool v) {
             m_camera.setFlipped(v);
         });

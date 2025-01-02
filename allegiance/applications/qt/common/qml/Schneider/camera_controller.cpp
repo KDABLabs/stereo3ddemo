@@ -18,6 +18,12 @@ void SceneController::setMouseSensitivity(float sensitivity)
 CameraController::CameraController(QObject* parent)
     : QObject(parent)
 {
+    QObject::connect(this, &CameraController::screenHeightChanged, this, &CameraController::updateFovFromDims);
+    QObject::connect(this, &CameraController::viewerDistanceChanged, this, &CameraController::updateFovFromDims);
+    QObject::connect(this, &CameraController::fovByPhysicalDimChanged, [this](bool computeFovFromDims) {
+        if (computeFovFromDims)
+            updateFovFromDims();
+    });
 }
 
 void CameraController::setFov(float fov)
@@ -270,4 +276,13 @@ void CameraController::setFovByPhysicalDim(bool newFovByPhysicalDim)
         return;
     m_fovByPhysicalDim = newFovByPhysicalDim;
     emit fovByPhysicalDimChanged(m_fovByPhysicalDim);
+}
+
+void CameraController::updateFovFromDims()
+{
+    // We have distance to screen and screen height
+    // Given tan = opposite / adjacent <==> screen height / distance
+    // we can compute the vfov as 2 * atan(screen height / distance)
+    const float vFov = 2.0f * qRadiansToDegrees(atan(screenHeight() / viewerDistance()));
+    setFov(vFov);
 }

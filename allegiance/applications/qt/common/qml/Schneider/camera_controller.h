@@ -124,6 +124,8 @@ Q_SIGNALS:
     void viewerDistanceChanged(float);
 
 private:
+    void updateFovFromDims();
+
     float m_eyeDistance = 0.06f;
     bool m_flipped = false;
 

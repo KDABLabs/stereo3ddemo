@@ -168,7 +168,7 @@ ColumnLayout {
             SliderValue {
                 Layout.fillWidth: true
                 from: 0.1
-                to: 10
+                to: 2
                 title: "Screen Height"
                 enabled: fovByPhysicalDimCheckBox.isChecked
                 unit: "m"
@@ -189,8 +189,8 @@ ColumnLayout {
 
             SliderValue {
                 Layout.fillWidth: true
-                from: 30.0
-                to: 89.9
+                from: 10
+                to: 180
                 title: "FOV"
                 unit: "°"
                 value: Camera.fov
