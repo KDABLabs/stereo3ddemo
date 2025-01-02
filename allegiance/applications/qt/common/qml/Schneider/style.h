@@ -42,10 +42,10 @@ public:
 public:
     explicit AppStyle(QObject* parent = nullptr)
         : QObject(parent)
-        , m_fontH1(u"Segoe UI"_qs, kH1FontSize)
-        , m_fontH2(u"Segoe UI"_qs, kH2FontSize)
-        , m_fontDefault(u"Segoe UI"_qs, kDefaultFontSize)
-        , m_fontButton(u"Segoe UI"_qs, kButtonFontSize)
+        , m_fontH1(QStringLiteral("Segoe UI"), kH1FontSize)
+        , m_fontH2(QStringLiteral("Segoe UI"), kH2FontSize)
+        , m_fontDefault(QStringLiteral("Segoe UI"), kDefaultFontSize)
+        , m_fontButton(QStringLiteral("Segoe UI"), kButtonFontSize)
     {
         m_palette.setColor(QPalette::Window, QColor(53, 53, 53));
         m_palette.setColor(QPalette::WindowText, Qt::white);
