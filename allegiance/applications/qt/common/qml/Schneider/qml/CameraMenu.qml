@@ -81,14 +81,14 @@ ColumnLayout {
 
             CheckBoxX {
                 title: "Auto Focus"
-                // initial: Camera.frustumViewEnabled
-                // onChecked: checkValue => Camera.frustumViewEnabled = checkValue
+                initial: Camera.autoFocus
+                onChecked: checkValue => Camera.autoFocus = checkValue
             }
 
             CheckBoxX {
                 title: "Show AF Area"
-                // initial: Camera.frustumViewEnabled
-                // onChecked: checkValue => Camera.frustumViewEnabled = checkValue
+                initial: Camera.showAutoFocusArea
+                onChecked: checkValue => Camera.showAutoFocusArea = checkValue
             }
 
             SliderValue {
@@ -97,8 +97,9 @@ ColumnLayout {
                 to: 100
                 title: "Distance:"
                 unit: "%"
-                // value: Camera.focusAngle
-                // onMoved: current => Camera.focusAngle = current
+                value: Camera.focusDistance
+                onMoved: current => Camera.focusDistance = current
+                enabled: !Camera.autoFocus
             }
 
             SliderValue {
@@ -107,8 +108,8 @@ ColumnLayout {
                 to: 100
                 title: "Pop Out:"
                 unit: "%"
-                // value: Camera.focusAngle
-                // onMoved: current => Camera.focusAngle = current
+                value: Camera.popOut
+                onMoved: current => Camera.popOut = current
             }
         }
     }
@@ -160,6 +161,8 @@ ColumnLayout {
                 id: fovByPhysicalDimCheckBox
                 title: "By Physical Dimension"
                 Layout.fillWidth: true
+                initial: Camera.fovByPhysicalDim
+                onChecked: bchecked => Camera.fovByPhysicalDim = bchecked
             }
 
             SliderValue {
@@ -169,8 +172,8 @@ ColumnLayout {
                 title: "Screen Height"
                 enabled: fovByPhysicalDimCheckBox.isChecked
                 unit: "m"
-                // value: Camera.fov
-                // onMoved: current => Camera.fov = current
+                value: Camera.screenHeight
+                onMoved: current => Camera.screenHeight = current
             }
 
             SliderValue {
@@ -180,8 +183,8 @@ ColumnLayout {
                 title: "Viewer Distance"
                 enabled: fovByPhysicalDimCheckBox.isChecked
                 unit: "m"
-                // value: Camera.fov
-                // onMoved: current => Camera.fov = current
+                value: Camera.viewerDistance
+                onMoved: current => Camera.viewerDistance = current
             }
 
             SliderValue {

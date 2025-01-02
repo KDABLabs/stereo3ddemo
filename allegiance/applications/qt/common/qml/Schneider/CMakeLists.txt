@@ -6,6 +6,7 @@ qt_add_qml_module(
     1.0
     SOURCES
     camera_controller.h
+    camera_controller.cpp
     style.h
     QML_FILES
     "qml/ButtonX.qml"

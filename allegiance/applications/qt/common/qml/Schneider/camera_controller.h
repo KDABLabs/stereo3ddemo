@@ -13,17 +13,8 @@ class SceneController : public QObject
     QML_SINGLETON
     QML_NAMED_ELEMENT(Scene)
 public:
-    float mouseSensitivity()
-    {
-        return m_mouseSensitivity;
-    }
-    void setMouseSensitivity(float sensitivity)
-    {
-        if (sensitivity == m_mouseSensitivity)
-            return;
-        m_mouseSensitivity = sensitivity;
-        Q_EMIT mouseSensitivityChanged();
-    }
+    float mouseSensitivity();
+    void setMouseSensitivity(float sensitivity);
 
 Q_SIGNALS:
     void OpenLoadModelDialog();
@@ -37,13 +28,22 @@ class CameraController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(float eyeDistance READ eyeDistance WRITE setEyeDistance NOTIFY eyeDistanceChanged)
-    Q_PROPERTY(float focusDistance READ focusDistance WRITE setFocusDistance NOTIFY focusDistanceChanged)
-    Q_PROPERTY(float focusAngle READ focusAngle WRITE setFocusAngle NOTIFY focusAngleChanged)
-    Q_PROPERTY(float fov READ fov WRITE setFov NOTIFY fovChanged)
     Q_PROPERTY(bool flipped READ flipped WRITE setFlipped NOTIFY flippedChanged)
+
     Q_PROPERTY(bool frustumViewEnabled READ frustumViewEnabled WRITE setFrustumViewEnabled NOTIFY frustumViewEnabledChanged)
     Q_PROPERTY(CameraMode cameraMode READ cameraMode WRITE setCameraMode NOTIFY cameraModeChanged)
     Q_PROPERTY(StereoMode stereoMode READ stereoMode WRITE setStereoMode NOTIFY stereoModeChanged)
+
+    Q_PROPERTY(bool autoFocus READ autoFocus WRITE setAutoFocus NOTIFY autoFocusChanged)
+    Q_PROPERTY(bool showAutoFocusArea READ showAutoFocusArea WRITE setShowAutoFocusArea NOTIFY showAutoFocusAreaChanged)
+    Q_PROPERTY(float focusDistance READ focusDistance WRITE setFocusDistance NOTIFY focusDistanceChanged)
+    Q_PROPERTY(float popOut READ popOut WRITE setPopOut NOTIFY popOutChanged)
+
+    Q_PROPERTY(float fov READ fov WRITE setFov NOTIFY fovChanged)
+    Q_PROPERTY(bool fovByPhysicalDim READ fovByPhysicalDim WRITE setFovByPhysicalDim NOTIFY fovByPhysicalDimChanged)
+    Q_PROPERTY(float screenHeight READ screenHeight WRITE setScreenHeight NOTIFY screenHeightChanged)
+    Q_PROPERTY(float viewerDistance READ viewerDistance WRITE setViewerDistance NOTIFY viewerDistanceChanged)
+
     QML_SINGLETON
     QML_NAMED_ELEMENT(Camera)
 
@@ -62,124 +62,84 @@ public:
     };
     Q_ENUM(StereoMode)
 
-    CameraController(QObject* parent = nullptr)
-        : QObject(parent)
-    {
-    }
+    CameraController(QObject* parent = nullptr);
 
-    void setEyeDistance(float eyeDistance) noexcept
-    {
-        m_eyeDistance = eyeDistance;
-        Q_EMIT eyeDistanceChanged(m_eyeDistance);
-    }
-    float eyeDistance() const noexcept
-    {
-        return m_eyeDistance;
-    }
-    void setFocusDistance(float focusDistance) noexcept
-    {
-        if (qFuzzyCompare(m_focusDistance, focusDistance))
-            return;
+    void setEyeDistance(float eyeDistance);
+    float eyeDistance() const;
 
-        m_focusDistance = focusDistance;
-        m_focusAngle = qRadiansToDegrees(std::atan(m_focusDistance / (m_eyeDistance * 0.5)));
-        Q_EMIT focusDistanceChanged(m_focusDistance);
-        Q_EMIT focusAngleChanged(m_focusAngle);
-    }
-    float focusDistance() const noexcept
-    {
-        return m_focusDistance;
-    }
+    void setFocusDistance(float focusDistance);
+    float focusDistance() const;
 
-    float focusAngle() const noexcept
-    {
-        return m_focusAngle;
-    }
-    void setFocusAngle(float focusAngle) noexcept
-    {
-        if (qFuzzyCompare(m_focusAngle, focusAngle))
-            return;
+    float focusAngle() const;
 
-        m_focusAngle = focusAngle;
-        auto rad = qDegreesToRadians(m_focusAngle);
-        m_focusDistance = qTan(rad) * m_eyeDistance * 0.5f;
-        Q_EMIT focusAngleChanged(m_focusAngle);
-        Q_EMIT focusDistanceChanged(m_focusDistance);
-    }
+    void setFov(float fov);
+    float fov() const;
 
-    void setFov(float fov) noexcept
-    {
-        m_fov = fov;
-        Q_EMIT fovChanged(fov);
-    }
-    float fov() const noexcept
-    {
-        return m_fov;
-    }
+    void setFlipped(bool flipped);
+    bool flipped() const;
 
-    void setFlipped(bool flipped) noexcept
-    {
-        m_flipped = flipped;
-        Q_EMIT flippedChanged(flipped);
-    }
-    bool flipped() const noexcept
-    {
-        return m_flipped;
-    }
+    void setCameraMode(CameraMode mode);
+    CameraMode cameraMode() const;
 
-    void setCameraMode(CameraMode mode) noexcept
-    {
-        m_cameraMode = mode;
-        Q_EMIT cameraModeChanged(mode);
-    }
-    CameraMode cameraMode() const noexcept
-    {
-        return m_cameraMode;
-    }
+    StereoMode stereoMode() const;
+    void setStereoMode(StereoMode newStereoMode);
 
-    StereoMode stereoMode() const
-    {
-        return m_stereoMode;
-    }
-    void setStereoMode(StereoMode newStereoMode)
-    {
-        if (newStereoMode == m_stereoMode)
-            return;
-        m_stereoMode = newStereoMode;
-        Q_EMIT stereoModeChanged(newStereoMode);
-    }
+    bool frustumViewEnabled() const;
+    void setFrustumViewEnabled(bool newFrustumViewEnabled);
 
-    bool frustumViewEnabled() const
-    {
-        return m_frustumViewEnabled;
-    }
-    void setFrustumViewEnabled(bool newFrustumViewEnabled)
-    {
-        if (newFrustumViewEnabled == m_frustumViewEnabled)
-            return;
-        m_frustumViewEnabled = newFrustumViewEnabled;
-        Q_EMIT frustumViewEnabledChanged(newFrustumViewEnabled);
-    }
+    bool autoFocus() const;
+    void setAutoFocus(bool newAutoFocus);
+
+    bool showAutoFocusArea() const;
+    void setShowAutoFocusArea(bool newShowAutoFocusArea);
+
+    float screenHeight() const;
+    void setScreenHeight(float newScreenHeight);
+
+    float viewerDistance() const;
+    void setViewerDistance(float newViewerDistance);
+
+    float popOut() const;
+    void setPopOut(float newPopOut);
+
+    bool fovByPhysicalDim() const;
+    void setFovByPhysicalDim(bool newFovByPhysicalDim);
 
 Q_SIGNALS:
     void eyeDistanceChanged(float);
-    void focusDistanceChanged(float);
-    void focusAngleChanged(float);
-    void fovChanged(float);
     void flippedChanged(bool);
+
     void cameraModeChanged(CameraMode);
     void stereoModeChanged(StereoMode);
     void frustumViewEnabledChanged(bool);
 
+    void focusDistanceChanged(float);
+    void popOutChanged(float);
+    void autoFocusChanged(bool);
+    void showAutoFocusAreaChanged(bool);
+
+    void fovChanged(float);
+    void fovByPhysicalDimChanged(bool);
+    void screenHeightChanged(float);
+    void viewerDistanceChanged(float);
+
 private:
-    CameraMode m_cameraMode = CameraMode::Stereo;
     float m_eyeDistance = 0.06f;
-    float m_focusDistance = 10.0f;
-    float m_focusAngle = 80.0f;
-    float m_fov = 60.0f;
     bool m_flipped = false;
+
+    CameraMode m_cameraMode = CameraMode::Stereo;
     StereoMode m_stereoMode = StereoMode::AsymmetricFrustum;
     bool m_frustumViewEnabled = true;
+
+    bool m_autoFocus = false;
+    bool m_showAutoFocusArea = false;
+    float m_focusDistance = 10.0f;
+    float m_popOut = 0.0f;
+
+    float m_fov = 60.0f;
+    bool m_fovByPhysicalDim = false;
+    float m_screenHeight = 1.0f;
+    float m_viewerDistance = 1.0f;
 };
 
 class CursorController : public QObject
@@ -203,68 +163,25 @@ public:
     };
     Q_ENUM(CursorType);
 
-    CursorController(QObject* parent = nullptr)
-        : QObject(parent)
-    {
-    }
+    CursorController(QObject* parent = nullptr);
 
-    void setVisible(bool visible) noexcept
-    {
-        m_visible = visible;
-        cursorVisibilityChanged(visible);
-    }
-    bool visible() const noexcept
-    {
-        return m_visible;
-    }
-    void setCursorType(CursorType cursorType) noexcept
-    {
-        m_cursorType = all::CursorType(cursorType);
-        cursorChanged(m_cursorType);
-    }
-    CursorType cursor() const noexcept
-    {
-        return CursorType(m_cursorType);
-    }
-    void setScalingEnabled(bool enabled) noexcept
-    {
-        m_scaling_enabled = enabled;
-        cursorScalingEnableChanged(enabled);
-    }
-    void setScaleFactor(float scale_factor) noexcept
-    {
-        m_scale_factor = scale_factor;
-        cursorScaleChanged(scale_factor);
-    }
+    void setVisible(bool visible);
+    bool visible() const;
 
-    bool scalingEnabled() const noexcept
-    {
-        return m_scaling_enabled;
-    }
-    float scaleFactor() const noexcept
-    {
-        return m_scale_factor;
-    }
+    void setCursorType(CursorType cursorType);
+    CursorType cursor() const;
 
-    bool cursorChangesFocus() const noexcept
-    {
-        return m_cursor_focus;
-    }
-    void setCursorChangesFocus(bool focus) noexcept
-    {
-        m_cursor_focus = focus;
-        cursorFocusChanged(focus);
-    }
+    void setScalingEnabled(bool enabled);
+    void setScaleFactor(float scale_factor);
 
-    void setCursorTint(QColor color) noexcept
-    {
-        m_tint = color;
-        cursorTintChanged(color);
-    }
-    QColor cursorTint() const noexcept
-    {
-        return m_tint;
-    }
+    bool scalingEnabled() const;
+    float scaleFactor() const;
+
+    bool cursorChangesFocus() const;
+    void setCursorChangesFocus(bool focus);
+
+    void setCursorTint(QColor color);
+    QColor cursorTint() const;
 
 Q_SIGNALS:
     void cursorVisibilityChanged(bool state);
