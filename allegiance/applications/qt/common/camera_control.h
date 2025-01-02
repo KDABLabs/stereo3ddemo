@@ -5,6 +5,8 @@
 #include <QQmlEngine>
 #include <QVBoxLayout>
 
+#include <applications/qt/common/qml/Schneider/style.h>
+
 namespace all::qt {
 
 class CameraControl : public QWidget
@@ -14,11 +16,12 @@ public:
     CameraControl(QWidget* parent)
         : QWidget(parent)
     {
-        QQuickStyle::setStyle("Fusion");
+        qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");
+        QQuickStyle::setStyle("Material");
 
         m_layout = new QVBoxLayout(this);
         m_layout->setAlignment(Qt::AlignTop);
-        m_layout->setContentsMargins(20, 20, 20, 20);
+        m_layout->setContentsMargins(5, 5, 5, 5);
 
         m_engine = new QQmlEngine(this);
         m_quickWidget = new QQuickWidget(m_engine, this);
@@ -26,13 +29,11 @@ public:
         m_quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
         m_quickWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
+        AppStyle* style = m_quickWidget->engine()->singletonInstance<AppStyle*>("Schneider", "Style");
+        assert(style);
+        m_quickWidget->setClearColor(style->backgroundColor());
+
         m_layout->addWidget(m_quickWidget);
-    }
-    void reload()
-    {
-        // engine->clearComponentCache();
-        // qw->setSource(QUrl::fromLocalFile(u"C:/Users/Agrae/source/repos/qt3d/allegiance/resources/camera_control.qml"_qs));
-        // return;
     }
 
     QQmlEngine* qmlEngine() const
@@ -41,12 +42,8 @@ public:
     }
 
 Q_SIGNALS:
-    void eyeDisparityChanged(float value);
-    void focusPlaneChanged(float value);
-
     void onLoadImage();
     void onLoadModel();
-    void onToggleCursor(bool checked);
     void onClose();
 
 private:

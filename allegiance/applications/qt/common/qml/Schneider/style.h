@@ -34,7 +34,7 @@ class AppStyle : public QObject
     QML_NAMED_ELEMENT(Style)
 
 public:
-    static constexpr uint32_t kDefaultFontSize = 14;
+    static constexpr uint32_t kDefaultFontSize = 11;
     static constexpr uint32_t kButtonFontSize = 20;
     static constexpr uint32_t kH1FontSize = 40;
     static constexpr uint32_t kH2FontSize = 30;

@@ -11,6 +11,7 @@ qt_add_qml_module(
     "qml/ButtonX.qml"
     "qml/CheckBoxX.qml"
     "qml/CursorMenu.qml"
+    "qml/CameraMenu.qml"
     "qml/MainMenu.qml"
     "qml/PageBase.qml"
     "qml/SliderValue.qml"

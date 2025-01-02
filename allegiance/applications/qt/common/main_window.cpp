@@ -48,9 +48,6 @@ void MainWindow::onKeyPress(QKeyEvent* e)
         m_cursor = !m_cursor;
         setCursor(m_cursor ? Qt::ArrowCursor : Qt::BlankCursor);
         break;
-    case Qt::Key_F1:
-        m_cameraControl->reload();
-        break;
     case Qt::Key_F3:
         onEyeSeparation(false);
         break;

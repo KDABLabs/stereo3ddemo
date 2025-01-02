@@ -3,54 +3,48 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Schneider
 
-Item {
-  id: root
-  implicitWidth: rootLayout.implicitWidth
-  implicitHeight: rootLayout.implicitHeight
+RowLayout {
+    id: root
 
-  property alias title: label.text
-  property alias from: slider.from
-  property alias to: slider.to
-  property alias value: slider.value
-  property alias hovered: slider.hovered
+    property alias title: label.text
+    property alias from: slider.from
+    property alias to: slider.to
+    property alias value: slider.value
+    property alias hovered: slider.hovered
+    property int precision: 2
+    property string unit: ""
 
-  signal moved(real fvalue)
-
-  ColumnLayout {
-    id: rootLayout
-    anchors.fill: parent
-    anchors.margins: 10
+    signal moved(real fvalue)
 
     Label {
-      id: label
-      text: "Slider"
-      font: Style.fontDefault
+        id: label
+        text: "Slider"
+        font: Style.fontDefault
+        Layout.alignment: Qt.AlignLeft
+        enabled: root.enabled
     }
-
-    RowLayout {
-      Layout.fillWidth: true
-      Slider {
+    Slider {
         id: slider
         Layout.fillWidth: true
+        Layout.alignment: Qt.AlignRight
         onMoved: root.moved(value)
-      }
-      TextInput {
+        enabled: root.enabled
+    }
+    TextField {
         id: textBox
+        Layout.alignment: Qt.AlignRight
         validator: DoubleValidator {
-          bottom: slider.from
-          top: slider.to
-          decimals: 4
+            bottom: slider.from
+            top: slider.to
+            decimals: root.precision
         }
-        text: slider.value.toFixed(4)
+        text: slider.value.toFixed(root.precision) + unit
         onTextChanged: {
-          if (textBox.focus) {
-            slider.value = parseFloat(textBox.text);
-            moved(slider.value);
-          }
+            if (textBox.focus) {
+                moved(parseFloat(textBox.text));
+            }
         }
         font: Style.fontDefault
-        color: Style.text
-      }
+        enabled: root.enabled
     }
-  }
 }

@@ -5,12 +5,6 @@ import QtQuick.Dialogs
 import Schneider
 
 ScrollView {
-    Layout.fillWidth: true
-    Layout.fillHeight: true
-    anchors.left: parent.left
-    anchors.right: parent.right
-
-    clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
     ScrollBar.horizontal.interactive: false
 
@@ -18,7 +12,7 @@ ScrollView {
     ScrollBar.vertical.interactive: true
 
     ColumnLayout {
-        width: root.width - 40
+        width: root.width - 10
 
         ButtonX {
             Layout.fillWidth: true
@@ -28,6 +22,8 @@ ScrollView {
                 Scene.OpenLoadModelDialog()
             }
         }
+
+        // Camera
         Pane {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
@@ -44,125 +40,13 @@ ScrollView {
                 }
             }
         }
-
-        GroupBox {
-            id: camera
-            visible: camera_section_title.isVisible
+        CameraMenu {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
-
-            ColumnLayout {
-                anchors.margins: 10
-                anchors.left: parent.left
-                anchors.right: parent.right
-                id: camera_details
-
-                SliderValue {
-                    id: eyesep
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    from: 0.01
-                    to: 25
-                    value: Camera.eyeDistance
-                    title: "Eye Separation"
-
-                    onMoved: current => Camera.eyeDistance = current
-
-                    ToolTip.visible: eyesep.hovered
-                    ToolTip.text: "F3 -  F12 +"
-                }
-
-                SliderValue {
-                    id: focus
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    Layout.bottomMargin: 20
-                    from: 79.0
-                    to: 89.9
-                    value: Camera.focusAngle
-                    title: "Z Focus"
-
-                    onMoved: current => Camera.focusAngle = current
-                }
-
-                SliderValue {
-                    id: fov
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    Layout.bottomMargin: 20
-                    from: 30.0
-                    to: 89.9
-                    value: Camera.fov
-                    title: "FOV"
-
-                    onMoved: current => Camera.fov = current
-                }
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    spacing: 10
-                    Label {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "Display Mode:"
-                        font: Style.fontDefault
-                    }
-                    ComboBox {
-                        model: [{
-                            value: Camera.CameraMode.Stereo,
-                            text: "Stereo"
-                        }, {
-                            value: Camera.CameraMode.Mono,
-                            text: "Mono"
-                        }, {
-                            value: Camera.CameraMode.Left,
-                            text: "Left Eye"
-                        }, {
-                            value: Camera.CameraMode.Right,
-                            text: "Right Eye"
-                        }]
-                        textRole: "text"
-                        valueRole: "value"
-                        currentIndex: Camera.cameraMode
-                        onCurrentIndexChanged: {
-                            if (currentIndex != -1 && Camera.cameraMode != currentIndex) {
-                                Camera.cameraMode = currentIndex;
-                            }
-                        }
-                    }
-                }
-                CheckBoxX {
-                    text: "Eyes Flipped"
-                    initial: Camera.flipped
-                    onChecked: bchecked => Camera.flipped = bchecked
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignTop
-                    spacing: 10
-                    Label {
-                        Layout.fillWidth: true
-                        Layout.alignment: Qt.AlignHCenter
-                        text: "Stereo Mode:"
-                        font: Style.fontDefault
-                    }
-                    ComboBox {
-                        model: ["ToeIn", "AsymmetricFrustum"]
-                        currentIndex: Camera.stereoMode
-                        onCurrentIndexChanged: Camera.stereoMode = currentIndex
-                    }
-                }
-
-                CheckBoxX {
-                    text: "Show Frustum"
-                    initial: Camera.frustumViewEnabled
-                    onChecked: checkValue => Camera.frustumViewEnabled = checkValue
-                }
-
-            }
+            visible: camera_section_title.isVisible
         }
 
+        // Cursor
         Pane {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
@@ -183,6 +67,7 @@ ScrollView {
             visible: cursor_section_title.isVisible
         }
 
+        // Navigation
         Pane {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
@@ -204,17 +89,13 @@ ScrollView {
             id: navigation
             visible: navigation_section_title.isVisible
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
-            label: Label {
-                text: "Navigation"
-                font: Style.fontButton
-            }
+            title: "Navigation"
+            label: CameraMenu.GroupBoxTitleLabel{}
+
 
             ColumnLayout {
-                anchors.margins: 10
                 anchors.left: parent.left
                 anchors.right: parent.right
-                spacing: 10
 
                 SliderValue {
                     id: mousesensitivity

@@ -56,7 +56,7 @@ public:
         m_appStyle = qmlEngine->singletonInstance<AppStyle*>("Schneider", "Style");
 
         // Basic setup of the application
-        qApp->setStyle(QStyleFactory::create(QStringLiteral("Fusion")));
+        qApp->setStyle(QStyleFactory::create(QStringLiteral("Material")));
         qApp->setWindowIcon(QIcon{ QStringLiteral(":/tlr.ico") });
         qApp->setPalette(m_appStyle->palette());
 
