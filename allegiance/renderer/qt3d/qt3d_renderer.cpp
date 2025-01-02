@@ -143,7 +143,13 @@ void Qt3DRenderer::projectionChanged()
     const float frustumLength = (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane());
     const float vFov = qDegreesToRadians(m_stereoCamera->fov());
     const float hFov = 2.0f * std::atan(m_stereoCamera->aspectRatio() * tan(vFov * 0.5f));
-    const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f);
+
+    float frustumShiftAtFarPlane = 0.0f;
+    if (m_stereoCamera->mode() == StereoCamera::Mode::AsymmetricFrustum) {
+        frustumShiftAtFarPlane = 2.0f * std::fabs(interocularDistance);
+    }
+
+    const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f) + frustumShiftAtFarPlane;
     const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumLength * 0.5f);
 
     frustumCamera->setTop(frustumMaxHalfSize * m_stereoCamera->aspectRatio());
