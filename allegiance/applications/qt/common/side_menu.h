@@ -25,7 +25,7 @@ public:
 
         m_engine = new QQmlEngine(this);
         m_quickWidget = new QQuickWidget(m_engine, this);
-        m_quickWidget->setSource(QUrl(QStringLiteral("qrc:/qt/qml/common/qml/camera_control.qml")));
+        m_quickWidget->setSource(QUrl(QStringLiteral("qrc:/qt/qml/common/qml/side_menu.qml")));
         m_quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
         m_quickWidget->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 

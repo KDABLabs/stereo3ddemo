@@ -44,7 +44,7 @@ qt_add_qml_module(
     URI
     common
     QML_FILES
-    "qml/camera_control.qml"
+    "qml/side_menu.qml"
     RESOURCE_PREFIX
     "/qt/qml" # Set to default prefix for elements to be in a know import path
 )
