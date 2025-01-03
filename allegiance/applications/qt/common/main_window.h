@@ -21,7 +21,7 @@ public:
 
     SideMenu* sideMenu();
 
-    void onKeyPress(QKeyEvent* e);
+    bool onKeyPress(QKeyEvent* e);
 
 private:
     void createDockWidget();

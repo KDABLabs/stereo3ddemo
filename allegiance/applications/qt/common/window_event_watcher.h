@@ -18,13 +18,13 @@ public:
         switch (event->type()) {
         case QEvent::Type::Close:
             if (obj != m_window)
-                break;
+                return false;
             qApp->removeEventFilter(this);
             Q_EMIT close();
-            break;
+            return true;
         case QEvent::Type::KeyPress:
-            m_window->onKeyPress(static_cast<::QKeyEvent*>(event));
-            event->accept();
+            if (m_window->onKeyPress(static_cast<::QKeyEvent*>(event)))
+                return true;
             break;
         case QEvent::Type::Wheel:
             if (obj == m_window->embeddedWindow()) {

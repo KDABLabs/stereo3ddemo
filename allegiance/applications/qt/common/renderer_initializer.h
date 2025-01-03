@@ -250,8 +250,9 @@ public:
             }
         });
         QObject::connect(m_mainWindow, &MainWindow::onEyeSeparation, [this](bool increased) {
-            float distance = m_cameraController->eyeDistance() + increased ? 0.05f : -0.05f;
-            m_cameraController->setEyeDistance(std::clamp(distance, 0.01f, 0.5f));
+            const float incr = increased ? 0.01f : -0.01f;
+            const float distance = m_cameraController->eyeDistance() + incr;
+            m_cameraController->setEyeDistance(std::clamp(distance, 0.001f, 0.5f));
         });
 
         // #if !ALLEGIANCE_SERENITY

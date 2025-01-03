@@ -30,37 +30,37 @@ SideMenu* MainWindow::sideMenu()
 }
 
 // Issue: unstable focus on camera control widget resizing
-void MainWindow::onKeyPress(QKeyEvent* e)
+bool MainWindow::onKeyPress(QKeyEvent* e)
 {
     switch (e->key()) {
     case Qt::Key_F11:
         setWindowState(isFullScreen() ? Qt::WindowNoState : Qt::WindowFullScreen);
-        break;
+        return true;
     case Qt::Key_Return:
         if (e->modifiers() & Qt::AltModifier)
             setWindowState(isFullScreen() ? Qt::WindowNoState : Qt::WindowFullScreen);
-        break;
+        return true;
     case Qt::Key_Escape:
         if (isFullScreen())
             setWindowState(Qt::WindowNoState);
-        break;
+        return true;
     case Qt::Key_Space:
         m_cursor = !m_cursor;
         setCursor(m_cursor ? Qt::ArrowCursor : Qt::BlankCursor);
-        break;
+        return true;
     case Qt::Key_F3:
         onEyeSeparation(false);
-        break;
+        return true;
     case Qt::Key_F12:
         onEyeSeparation(true);
-        break;
+        return true;
     case Qt::Key_F2:
         Q_EMIT onScreenshot();
-        break;
-
+        return true;
     default:
         break;
     }
+    return false;
 }
 
 void MainWindow::createDockWidget()
