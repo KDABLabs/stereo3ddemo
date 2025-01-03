@@ -183,10 +183,22 @@ public:
         QObject::connect(qWindow, &QWindow::heightChanged, [this, qWindow](int height) {
             m_camera.setAspectRatio(float(qWindow->width()) / qWindow->height());
         });
-        QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, [this](float v) {
-            // v is a % of the nearPlane -> farPlane distance
-            m_camera.setConvergencePlaneDistance(m_camera.nearPlane() + (v * 0.01) * (m_camera.farPlane() - m_camera.nearPlane()));
-        });
+
+        auto updateFocusDistance = [this]() {
+            // focusDistancePercentage is a % of the nearPlane -> farPlane distance
+            const float focusDistancePercentage = m_cameraController->focusDistance();
+            const float popOut = m_cameraController->popOut();
+            const float focusDistanceFromNearPlane = m_camera.nearPlane() + (focusDistancePercentage * 0.01) * (m_camera.farPlane() - m_camera.nearPlane());
+
+            // popOut == 0 -> focusDistanceFromNearPlane
+            // popOut == 100 -> 1.5f * focusDistanceFromNearPlane
+            // popOut == -100 -> 0.5f focusDistanceFromNearPlane
+            const float popOutCorrectionFactor = (popOut * 0.01) * 0.5f + 1.0f; // [0.5, 1.5]
+            m_camera.setConvergencePlaneDistance(popOutCorrectionFactor * focusDistanceFromNearPlane);
+        };
+
+        QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, updateFocusDistance);
+        QObject::connect(m_cameraController, &CameraController::popOutChanged, updateFocusDistance);
         QObject::connect(m_cameraController, &CameraController::fovChanged, [this](float v) {
             m_camera.setFov(v);
         });
