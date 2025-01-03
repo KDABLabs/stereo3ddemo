@@ -7,13 +7,27 @@ RowLayout {
     id: root
 
     property alias title: label.text
-    property alias from: slider.from
-    property alias to: slider.to
-    property alias value: slider.value
+    property real from
+    property real mid
+    property real to
+    property real value
     property alias hovered: slider.hovered
-    property alias stepSize: slider.stepSize
     property int precision: 2
     property string unit: ""
+
+    readonly property real cA: ((from * to - mid * mid) / (from - 2 * mid + to))
+    readonly property real cB: ((mid - from) * (mid - from) / (from - 2 * mid + to))
+    readonly property real cC: (2.0 * Math.log((to - mid) / (mid - from)))
+
+    function fromSliderValue(sliderValue)
+    {
+        return cA + cB * Math.exp(cC * sliderValue);
+    }
+
+    function toSliderValue(displayValue)
+    {
+        return Math.log((displayValue - cA) / cB) / cC;
+    }
 
     signal moved(real fvalue)
 
@@ -26,20 +40,23 @@ RowLayout {
     }
     Slider {
         id: slider
+        from: 0
+        to: 1
+        value: toSliderValue(root.value)
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
-        onMoved: root.moved(value)
+        onMoved: root.moved(fromSliderValue(value))
         enabled: root.enabled
     }
     TextField {
         id: textBox
         Layout.alignment: Qt.AlignRight
         validator: DoubleValidator {
-            bottom: slider.from
-            top: slider.to
+            bottom: from
+            top: to
             decimals: root.precision
         }
-        text: slider.value.toFixed(root.precision) + unit
+        text: fromSliderValue(slider.value).toFixed(root.precision) + unit
         onTextChanged: {
             if (textBox.focus) {
                 moved(parseFloat(textBox.text));

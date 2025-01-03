@@ -123,17 +123,18 @@ ColumnLayout {
             anchors.left: parent.left
             anchors.right: parent.right
 
-            SliderValue {
+            NonLinearSliderValue {
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignTop
-                from: 0.01
+                from: 0.1
+                mid: 6.5
                 to: 25
-                value: Camera.eyeDistance
+                value: Camera.eyeDistance * 100
                 title: "Separation"
-                precision: 4
-                unit: "m"
+                precision: 2
+                unit: "cm"
 
-                onMoved: current => Camera.eyeDistance = current
+                onMoved: current => Camera.eyeDistance = current * 0.01
 
                 ToolTip.visible: hovered
                 ToolTip.text: "F3 -  F12 +"
@@ -190,9 +191,11 @@ ColumnLayout {
             SliderValue {
                 Layout.fillWidth: true
                 from: 10
-                to: 180
+                to: 170
                 title: "FOV"
                 unit: "°"
+                precision: 1
+                stepSize: 1
                 value: Camera.fov
                 onMoved: current => Camera.fov = current
                 enabled: !fovByPhysicalDimCheckBox.isChecked

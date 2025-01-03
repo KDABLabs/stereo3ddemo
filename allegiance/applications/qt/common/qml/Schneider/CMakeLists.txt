@@ -16,6 +16,7 @@ qt_add_qml_module(
     "qml/MainMenu.qml"
     "qml/PageBase.qml"
     "qml/SliderValue.qml"
+    "qml/NonLinearSliderValue.qml"
     "qml/SectionTitle.qml"
     "qml/Logos.qml"
     RESOURCES
