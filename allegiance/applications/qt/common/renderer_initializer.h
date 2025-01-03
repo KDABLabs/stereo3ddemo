@@ -6,8 +6,8 @@
 #include "window_event_watcher.h"
 
 #include <applications/qt/common/window_event_watcher.h>
-#include <applications/qt/common/camera_control.h>
-#include <applications/qt/common/qml/Schneider/camera_controller.h>
+#include <applications/qt/common/side_menu.h>
+#include <applications/qt/common/qml/Schneider/controllers.h>
 #include <applications/qt/common/qml/Schneider/style.h>
 
 #include <QStyleFactory>
@@ -47,9 +47,9 @@ public:
         , m_renderer(std::make_unique<Renderer>(rendererSurface, m_camera))
     {
         // Retrieve QML Singleton instances
-        auto* cameraControlPanel = m_mainWindow->cameraControl();
+        auto* sideMenu = m_mainWindow->sideMenu();
 
-        QQmlEngine* qmlEngine = cameraControlPanel->qmlEngine();
+        QQmlEngine* qmlEngine = sideMenu->qmlEngine();
         m_sceneController = qmlEngine->singletonInstance<SceneController*>("Schneider", "Scene");
         m_cameraController = qmlEngine->singletonInstance<CameraController*>("Schneider", "Camera");
         m_cursorController = qmlEngine->singletonInstance<CursorController*>("Schneider", "Cursor");
@@ -95,19 +95,19 @@ public:
                              m_renderer->screenshot(x);
                          });
 
-        auto b = new QAction(QIcon{ ":stereo3_contrast.png" }, "Show Image", cameraControlPanel);
-        QObject::connect(cameraControlPanel, &all::qt::CameraControl::onLoadImage, b, &QAction::trigger);
+        auto b = new QAction(QIcon{ ":stereo3_contrast.png" }, "Show Image", sideMenu);
+        QObject::connect(sideMenu, &all::qt::SideMenu::onLoadImage, b, &QAction::trigger);
         QObject::connect(b, &QAction::triggered,
                          [this]() {
                              m_renderer->showImage();
                          });
-        auto a = new QAction(QIcon{ ":3D_contrast.png" }, "Load Model", cameraControlPanel);
-        QObject::connect(cameraControlPanel, &all::qt::CameraControl::onLoadModel, a, &QAction::trigger);
+        auto a = new QAction(QIcon{ ":3D_contrast.png" }, "Load Model", sideMenu);
+        QObject::connect(sideMenu, &all::qt::SideMenu::onLoadModel, a, &QAction::trigger);
         QObject::connect(a, &QAction::triggered,
                          [this]() {
                              m_renderer->showModel();
                          });
-        QObject::connect(cameraControlPanel, &all::qt::CameraControl::onClose,
+        QObject::connect(sideMenu, &all::qt::SideMenu::onClose,
                          [this]() {
                              qApp->postEvent(m_mainWindow, new QCloseEvent);
                          });

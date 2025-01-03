@@ -6,7 +6,7 @@
 
 namespace all::qt {
 
-class CameraControl;
+class SideMenu;
 
 class MainWindow : public QMainWindow
 {
@@ -19,7 +19,7 @@ public:
     QWindow* embeddedWindow() const noexcept;
     void setEmbeddedWindow(QWindow* embeddedWindow); // Takes ownership of embeddedWindow;
 
-    CameraControl* cameraControl();
+    SideMenu* sideMenu();
 
     void onKeyPress(QKeyEvent* e);
 
@@ -33,7 +33,7 @@ Q_SIGNALS:
 
 private:
     QWindow* m_embeddedWindow{ nullptr };
-    CameraControl* m_cameraControl;
+    SideMenu* m_sideMenu;
     bool m_cursor = true;
 };
 } // namespace all::qt

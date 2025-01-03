@@ -1,5 +1,5 @@
 #include <applications/qt/common/main_window.h>
-#include <applications/qt/common/camera_control.h>
+#include <applications/qt/common/side_menu.h>
 
 namespace all::qt {
 
@@ -24,9 +24,9 @@ QWindow* MainWindow::embeddedWindow() const noexcept
     return m_embeddedWindow;
 }
 
-CameraControl* MainWindow::cameraControl()
+SideMenu* MainWindow::sideMenu()
 {
-    return m_cameraControl;
+    return m_sideMenu;
 }
 
 // Issue: unstable focus on camera control widget resizing
@@ -66,8 +66,8 @@ void MainWindow::onKeyPress(QKeyEvent* e)
 void MainWindow::createDockWidget()
 {
     QDockWidget* dock = new QDockWidget("Camera", this);
-    m_cameraControl = new CameraControl(dock);
-    dock->setWidget(m_cameraControl);
+    m_sideMenu = new SideMenu(dock);
+    dock->setWidget(m_sideMenu);
     addDockWidget(Qt::RightDockWidgetArea, dock);
     dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
 }

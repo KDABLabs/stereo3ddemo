@@ -9,11 +9,11 @@
 
 namespace all::qt {
 
-class CameraControl : public QWidget
+class SideMenu : public QWidget
 {
     Q_OBJECT
 public:
-    CameraControl(QWidget* parent)
+    SideMenu(QWidget* parent)
         : QWidget(parent)
     {
         qputenv("QT_QUICK_CONTROLS_MATERIAL_VARIANT", "Dense");

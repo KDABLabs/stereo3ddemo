@@ -23,7 +23,7 @@ qt_add_library(
     STATIC
     stereo_camera.h
     util_qt.h
-    camera_control.h
+    side_menu.h
     main_window.h
     main_window.cpp
     renderer_initializer.h

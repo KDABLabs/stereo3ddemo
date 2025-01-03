@@ -1,4 +1,4 @@
-#include "camera_controller.h"
+#include "controllers.h"
 
 ////////// Screen Controller //////////
 float SceneController::mouseSensitivity()
