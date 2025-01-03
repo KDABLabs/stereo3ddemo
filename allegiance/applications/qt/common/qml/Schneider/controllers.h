@@ -10,18 +10,27 @@ class SceneController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(float mouseSensitivity READ mouseSensitivity WRITE setMouseSensitivity NOTIFY mouseSensitivityChanged)
+    Q_PROPERTY(bool shiftPressed READ shiftPressed WRITE setShiftPressed NOTIFY shiftPressedChanged)
     QML_SINGLETON
     QML_NAMED_ELEMENT(Scene)
 public:
     float mouseSensitivity();
     void setMouseSensitivity(float sensitivity);
 
+    bool shiftPressed() const;
+    void setShiftPressed(bool newShiftPressed);
+
 Q_SIGNALS:
     void OpenLoadModelDialog();
     void mouseSensitivityChanged();
 
+    void shiftPressedChanged();
+
 protected:
     float m_mouseSensitivity = 100;
+
+private:
+    bool m_shiftPressed;
 };
 
 class CameraController : public QObject
@@ -109,6 +118,12 @@ public:
     bool fovByPhysicalDim() const;
     void setFovByPhysicalDim(bool newFovByPhysicalDim);
 
+    inline static float MinEyeDistance = 0.01f;
+    inline static float MaxEyeDistance = 0.5f;
+
+    inline static float MinFocusDistance = 0.1f;
+    inline static float MaxFocusDistance = 100.0f;
+
 Q_SIGNALS:
     void eyeDistanceChanged(float);
     void flippedChanged(bool);
@@ -157,7 +172,6 @@ class CursorController : public QObject
     Q_PROPERTY(CursorType cursor READ cursor WRITE setCursorType NOTIFY cursorChanged)
     Q_PROPERTY(bool scalingEnabled READ scalingEnabled WRITE setScalingEnabled NOTIFY cursorScalingEnableChanged)
     Q_PROPERTY(float scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY cursorScaleChanged)
-    Q_PROPERTY(bool cursorFocus READ cursorChangesFocus WRITE setCursorChangesFocus NOTIFY cursorFocusChanged)
     Q_PROPERTY(QColor cursorTint READ cursorTint WRITE setCursorTint NOTIFY cursorTintChanged)
     QML_SINGLETON
     QML_NAMED_ELEMENT(Cursor)
@@ -185,9 +199,6 @@ public:
     bool scalingEnabled() const;
     float scaleFactor() const;
 
-    bool cursorChangesFocus() const;
-    void setCursorChangesFocus(bool focus);
-
     void setCursorTint(QColor color);
     QColor cursorTint() const;
 
@@ -196,13 +207,11 @@ Q_SIGNALS:
     void cursorChanged(all::CursorType cursorType);
     void cursorScaleChanged(float scale);
     void cursorScalingEnableChanged(bool enabled);
-    void cursorFocusChanged(bool focus);
     void cursorTintChanged(QColor color);
 
 private:
     bool m_visible = true;
     all::CursorType m_cursorType = all::CursorType::Ball;
-    bool m_cursor_focus = false;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
     QColor m_tint = QColor(255, 255, 255);

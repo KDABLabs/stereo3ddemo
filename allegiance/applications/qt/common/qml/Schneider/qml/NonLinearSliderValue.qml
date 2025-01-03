@@ -11,7 +11,7 @@ RowLayout {
     property real mid
     property real to
     property real value
-    property alias hovered: slider.hovered
+    readonly property bool hovered: slider.hovered || label.hovered
     property int precision: 2
     property string unit: ""
 
@@ -31,12 +31,22 @@ RowLayout {
 
     signal moved(real fvalue)
 
+    ToolTip.visible: hovered && ToolTip.text.length > 0
+    ToolTip.timeout: 5000
+    ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
+
     Label {
         id: label
         text: "Slider"
         font: Style.fontDefault
         Layout.alignment: Qt.AlignLeft
         enabled: root.enabled
+        readonly property bool hovered: labelMa.containsMouse
+        MouseArea {
+            id: labelMa
+            anchors.fill: parent
+            hoverEnabled: true
+        }
     }
     Slider {
         id: slider

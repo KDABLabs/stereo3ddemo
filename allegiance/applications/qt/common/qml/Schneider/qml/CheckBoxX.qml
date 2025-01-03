@@ -9,14 +9,24 @@ RowLayout {
     property alias title: label.text
     property bool initial: false
     readonly property bool isChecked: checkbox.checked
+    readonly property bool hovered: checkbox.hovered || label.hovered
 
-    Layout.fillWidth: true
+    ToolTip.visible: hovered && ToolTip.text.length > 0
+    ToolTip.timeout: 5000
+    ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
+
     spacing: 5
     Label {
         id: label
         text: "Slider"
         font: Style.fontDefault
         Layout.alignment: Qt.AlignLeft
+        readonly property bool hovered: labelMa.containsMouse
+        MouseArea {
+            id: labelMa
+            anchors.fill: parent
+            hoverEnabled: true
+        }
     }
     Item { Layout.fillWidth: true }
     CheckBox {

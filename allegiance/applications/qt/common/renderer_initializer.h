@@ -7,8 +7,6 @@
 
 #include <applications/qt/common/window_event_watcher.h>
 #include <applications/qt/common/side_menu.h>
-#include <applications/qt/common/qml/Schneider/controllers.h>
-#include <applications/qt/common/qml/Schneider/style.h>
 
 #include <QStyleFactory>
 #include <QFileDialog>
@@ -46,14 +44,13 @@ public:
         , m_windowEventWatcher(std::make_unique<WindowEventWatcher>(m_mainWindow))
         , m_renderer(std::make_unique<Renderer>(rendererSurface, m_camera))
     {
-        // Retrieve QML Singleton instances
         auto* sideMenu = m_mainWindow->sideMenu();
-
-        QQmlEngine* qmlEngine = sideMenu->qmlEngine();
-        m_sceneController = qmlEngine->singletonInstance<SceneController*>("Schneider", "Scene");
-        m_cameraController = qmlEngine->singletonInstance<CameraController*>("Schneider", "Camera");
-        m_cursorController = qmlEngine->singletonInstance<CursorController*>("Schneider", "Cursor");
-        m_appStyle = qmlEngine->singletonInstance<AppStyle*>("Schneider", "Style");
+        {
+            m_sceneController = sideMenu->sceneController();
+            m_cameraController = sideMenu->cameraController();
+            m_cursorController = sideMenu->cursorController();
+            m_appStyle = sideMenu->appStyle();
+        }
 
         // Basic setup of the application
         qApp->setStyle(QStyleFactory::create(QStringLiteral("Material")));
@@ -95,15 +92,15 @@ public:
                              m_renderer->screenshot(x);
                          });
 
-        auto b = new QAction(QIcon{ ":stereo3_contrast.png" }, "Show Image", sideMenu);
-        QObject::connect(sideMenu, &all::qt::SideMenu::onLoadImage, b, &QAction::trigger);
-        QObject::connect(b, &QAction::triggered,
+        auto* showImageAction = new QAction(QIcon{ ":stereo3_contrast.png" }, "Show Image", sideMenu);
+        QObject::connect(sideMenu, &all::qt::SideMenu::onLoadImage, showImageAction, &QAction::trigger);
+        QObject::connect(showImageAction, &QAction::triggered,
                          [this]() {
                              m_renderer->showImage();
                          });
-        auto a = new QAction(QIcon{ ":3D_contrast.png" }, "Load Model", sideMenu);
-        QObject::connect(sideMenu, &all::qt::SideMenu::onLoadModel, a, &QAction::trigger);
-        QObject::connect(a, &QAction::triggered,
+        auto* loadModelAction = new QAction(QIcon{ ":3D_contrast.png" }, "Load Model", sideMenu);
+        QObject::connect(sideMenu, &all::qt::SideMenu::onLoadModel, loadModelAction, &QAction::trigger);
+        QObject::connect(loadModelAction, &QAction::triggered,
                          [this]() {
                              m_renderer->showModel();
                          });
@@ -120,18 +117,17 @@ public:
                                  if (e->buttons() & Qt::MouseButton::LeftButton) {
                                      m_mouseInputTracker.is_pressed = true;
                                      m_mouseInputTracker.skip_first = true;
-                                     if (m_mouseInputTracker.cursor_changes_focus) {
-                                         auto pos = m_renderer->cursorWorldPosition();
-                                         const float distanceToCamera = glm::length(pos - m_camera.position());
-                                         // Convert this distance as % or near to far plane distance
-                                         const float zDistanceNormalized = (distanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
-                                         m_cameraController->setFocusDistance(zDistanceNormalized * 100.0f);
-                                     }
 
                                  } else if (e->buttons() & Qt::MouseButton::RightButton) {
                                      auto pos = m_renderer->cursorWorldPosition();
                                      qDebug() << " setting pivot " << pos.x << pos.y << pos.z;
                                      pnav_params->pivot_point = { pos.x, pos.y, pos.z };
+                                     if (m_mouseInputTracker.cursor_changes_focus && e->modifiers() & Qt::ControlModifier) {
+                                         const float distanceToCamera = glm::length(pos - m_camera.position());
+                                         // Convert this distance as % or near to far plane distance
+                                         const float zDistanceNormalized = (distanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
+                                         m_cameraController->setFocusDistance(zDistanceNormalized * 100.0f);
+                                     }
                                  }
                                  break;
 
@@ -198,7 +194,7 @@ public:
 
             if (m_cameraController->separationBasedOnFocusDistance()) {
                 // Set Eye Separation to 1/30th of focus distance if enabled
-                m_cameraController->setEyeDistance(std::clamp(m_camera.convergencePlaneDistance() / 30.0f, 0.001f, 0.5f));
+                m_cameraController->setEyeDistance(m_camera.convergencePlaneDistance() / 30.0f);
             }
         };
 
@@ -239,8 +235,8 @@ public:
         QObject::connect(m_cursorController, &CursorController::cursorScalingEnableChanged, [this](bool enabled) {
             m_renderer->propertyChanged("scaling_enabled", enabled);
         });
-        QObject::connect(m_cursorController, &CursorController::cursorFocusChanged, [this](bool enabled) {
-            m_mouseInputTracker.cursor_changes_focus = enabled;
+        QObject::connect(m_cameraController, &CameraController::autoFocusChanged, [this](bool afEnabled) {
+            m_mouseInputTracker.cursor_changes_focus = !afEnabled;
         });
         QObject::connect(m_sceneController, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(m_mainWindow, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
@@ -248,11 +244,6 @@ public:
                 resetCamera();
                 m_renderer->loadModel(fn.toStdString());
             }
-        });
-        QObject::connect(m_mainWindow, &MainWindow::onEyeSeparation, [this](bool increased) {
-            const float incr = increased ? 0.01f : -0.01f;
-            const float distance = m_cameraController->eyeDistance() + incr;
-            m_cameraController->setEyeDistance(std::clamp(distance, 0.001f, 0.5f));
         });
 
         // #if !ALLEGIANCE_SERENITY
@@ -283,6 +274,7 @@ public:
         m_camera.setFlipped(m_cameraController->flipped());
         m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
         m_renderer->propertyChanged("camera_mode", all::CameraMode(m_cameraController->cameraMode()));
+        m_mouseInputTracker.cursor_changes_focus = !m_cameraController->autoFocus();
     }
 
     ~RendererInitializer()

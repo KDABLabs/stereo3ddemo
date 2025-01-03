@@ -78,6 +78,7 @@ public:
 
 public:
     void setPosition(const QVector3D& positionInScene);
+    QVector3D position() const;
 
     void setCamera(const QEntity* camera);
 
@@ -137,21 +138,6 @@ private:
     QMatrix4x4 m_projectionMatrix;
 
     Qt3DExtras::Qt3DWindow* m_window;
-};
-
-class Picker : public Qt3DRender::QObjectPicker
-{
-    Q_OBJECT
-public:
-    Q_PROPERTY(bool hidden MEMBER hidden)
-public:
-    Picker(Qt3DCore::QEntity* parent, CursorEntity* cursor);
-
-public:
-    Qt3DRender::QObjectPicker* picker;
-    bool hidden = false;
-    CursorEntity* m_cursor;
-    QVector3D cursor_world;
 };
 
 } // namespace all::qt3d

@@ -5,6 +5,7 @@ import QtQuick.Dialogs
 import Schneider
 
 ScrollView {
+    id: mainMenuRoot
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
     ScrollBar.horizontal.interactive: false
 

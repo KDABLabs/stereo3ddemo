@@ -225,7 +225,6 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     m_cursor->setObjectName("CursorEntity");
     m_cursor->addComponent(m_renderer->cursorLayer());
     m_cursor->setType(CursorType::Ball);
-    m_picker = new Picker(m_sceneEntity, m_cursor);
 
     // Frustums
     {
@@ -299,7 +298,7 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
 
 glm::vec3 Qt3DRenderer::cursorWorldPosition() const
 {
-    return toGlmVec3(m_picker->cursor_world);
+    return toGlmVec3(m_cursor->position());
 }
 
 void Qt3DRenderer::loadImage(QUrl path)

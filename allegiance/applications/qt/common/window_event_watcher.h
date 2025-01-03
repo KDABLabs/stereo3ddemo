@@ -26,6 +26,10 @@ public:
             if (m_window->onKeyPress(static_cast<::QKeyEvent*>(event)))
                 return true;
             break;
+        case QEvent::Type::KeyRelease:
+            if (m_window->onKeyRelease(static_cast<::QKeyEvent*>(event)))
+                return true;
+            break;
         case QEvent::Type::Wheel:
             if (obj == m_window->embeddedWindow()) {
                 Q_EMIT scrollEvent(static_cast<::QWheelEvent*>(event));

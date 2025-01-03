@@ -48,18 +48,21 @@ bool MainWindow::onKeyPress(QKeyEvent* e)
         m_cursor = !m_cursor;
         setCursor(m_cursor ? Qt::ArrowCursor : Qt::BlankCursor);
         return true;
-    case Qt::Key_F3:
-        onEyeSeparation(false);
-        return true;
     case Qt::Key_F12:
-        onEyeSeparation(true);
-        return true;
-    case Qt::Key_F2:
         Q_EMIT onScreenshot();
         return true;
     default:
         break;
     }
+    if (m_sideMenu != nullptr)
+        return m_sideMenu->onKeyPress(e);
+    return false;
+}
+
+bool MainWindow::onKeyRelease(QKeyEvent* e)
+{
+    if (m_sideMenu != nullptr)
+        return m_sideMenu->onKeyRelease(e);
     return false;
 }
 

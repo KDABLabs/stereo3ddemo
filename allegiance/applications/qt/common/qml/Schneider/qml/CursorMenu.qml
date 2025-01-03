@@ -110,15 +110,6 @@ GroupBox {
 
                 onMoved: current => Cursor.scaleFactor = current
             }
-
-            // Cursor Focus
-            CheckBoxX {
-                Layout.fillWidth: true
-                visible: Cursor.visible
-                title: "Focus on Click"
-                initial: Cursor.cursorFocus
-                onChecked: bchecked => Cursor.cursorFocus = bchecked
-            }
         }
     }
 }

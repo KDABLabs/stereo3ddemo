@@ -262,6 +262,11 @@ void all::qt3d::CursorEntity::setPosition(const QVector3D& positionInScene)
     updateSize();
 }
 
+QVector3D CursorEntity::position() const
+{
+    return m_transform->translation();
+}
+
 void all::qt3d::CursorEntity::setCamera(const QEntity* camera)
 {
     m_camera = camera;
@@ -308,30 +313,4 @@ void all::qt3d::CursorEntity::updateSize()
 void CursorEntity::onMouseMoveEvent(QVector3D pos, QPoint cursorPosition)
 {
     this->m_raycaster->trigger(cursorPosition);
-}
-
-all::qt3d::Picker::Picker(Qt3DCore::QEntity* parent, CursorEntity* cursor)
-    : Qt3DRender::QObjectPicker(parent), m_cursor(cursor)
-{
-    parent->addComponent(this);
-
-    setHoverEnabled(true);
-    setDragEnabled(true);
-
-    QObject::connect(this, &Qt3DRender::QObjectPicker::moved, this, [this](Qt3DRender::QPickEvent* pick) {
-        // qDebug() << "move" << parentNode()->objectName();
-        m_cursor->setPosition(pick->worldIntersection());
-        cursor_world = pick->worldIntersection();
-    });
-
-    connect(this, &Qt3DRender::QObjectPicker::entered, []() {
-    });
-
-    connect(this, &Qt3DRender::QObjectPicker::pressed, this, [this]() {
-        hidden = true;
-    });
-
-    QObject::connect(this, &Qt3DRender::QObjectPicker::released, this, [this]() {
-        hidden = false;
-    });
 }

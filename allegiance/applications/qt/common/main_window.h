@@ -22,13 +22,13 @@ public:
     SideMenu* sideMenu();
 
     bool onKeyPress(QKeyEvent* e);
+    bool onKeyRelease(QKeyEvent* e);
 
 private:
     void createDockWidget();
 
 Q_SIGNALS:
     void onClose();
-    void onEyeSeparation(bool increase);
     void onScreenshot();
 
 private:

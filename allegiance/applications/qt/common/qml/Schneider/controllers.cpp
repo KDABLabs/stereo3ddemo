@@ -14,6 +14,19 @@ void SceneController::setMouseSensitivity(float sensitivity)
     Q_EMIT mouseSensitivityChanged();
 }
 
+bool SceneController::shiftPressed() const
+{
+    return m_shiftPressed;
+}
+
+void SceneController::setShiftPressed(bool newShiftPressed)
+{
+    if (m_shiftPressed == newShiftPressed)
+        return;
+    m_shiftPressed = newShiftPressed;
+    emit shiftPressedChanged();
+}
+
 ////////// CameraController //////////
 CameraController::CameraController(QObject* parent)
     : QObject(parent)
@@ -41,9 +54,10 @@ float CameraController::fov() const
 
 void CameraController::setEyeDistance(float eyeDistance)
 {
-    if (m_eyeDistance == eyeDistance)
+    const float safeEyeDistance = std::clamp(eyeDistance, CameraController::MinEyeDistance, CameraController::MaxEyeDistance);
+    if (m_eyeDistance == safeEyeDistance)
         return;
-    m_eyeDistance = eyeDistance;
+    m_eyeDistance = safeEyeDistance;
     Q_EMIT eyeDistanceChanged(m_eyeDistance);
 }
 
@@ -67,10 +81,11 @@ void CameraController::setSeparationBasedOnFocusDistance(bool newSeparationBased
 
 void CameraController::setFocusDistance(float focusDistance)
 {
-    if (qFuzzyCompare(m_focusDistance, focusDistance))
-        return;
+    const float safeFocusDistance = std::clamp(focusDistance, CameraController::MinFocusDistance, CameraController::MaxFocusDistance);
 
-    m_focusDistance = focusDistance;
+    if (qFuzzyCompare(m_focusDistance, safeFocusDistance))
+        return;
+    m_focusDistance = safeFocusDistance;
     Q_EMIT focusDistanceChanged(m_focusDistance);
 }
 
@@ -159,9 +174,10 @@ float CameraController::popOut() const
 
 void CameraController::setPopOut(float newPopOut)
 {
-    if (m_popOut == newPopOut)
+    const float safePopOut = std::clamp(newPopOut, -100.0f, 100.0f);
+    if (m_popOut == safePopOut)
         return;
-    m_popOut = newPopOut;
+    m_popOut = safePopOut;
     Q_EMIT popOutChanged(m_popOut);
 }
 
@@ -193,6 +209,28 @@ void CameraController::setCameraMode(CameraMode mode)
 CameraController::CameraMode CameraController::cameraMode() const
 {
     return m_cameraMode;
+}
+
+bool CameraController::fovByPhysicalDim() const
+{
+    return m_fovByPhysicalDim;
+}
+
+void CameraController::setFovByPhysicalDim(bool newFovByPhysicalDim)
+{
+    if (m_fovByPhysicalDim == newFovByPhysicalDim)
+        return;
+    m_fovByPhysicalDim = newFovByPhysicalDim;
+    emit fovByPhysicalDimChanged(m_fovByPhysicalDim);
+}
+
+void CameraController::updateFovFromDims()
+{
+    // We have distance to screen and screen height
+    // Given tan = opposite / adjacent <==> screen height / distance
+    // we can compute the vfov as 2 * atan(screen height / distance)
+    const float vFov = 2.0f * qRadiansToDegrees(atan(screenHeight() / viewerDistance()));
+    setFov(vFov);
 }
 
 ////////// Cursor Controller //////////
@@ -233,25 +271,12 @@ void CursorController::setScaleFactor(float scale_factor)
     cursorScaleChanged(scale_factor);
 }
 
-void CursorController::setCursorChangesFocus(bool focus)
-{
-    if (m_cursor_focus == focus)
-        return;
-    m_cursor_focus = focus;
-    cursorFocusChanged(focus);
-}
-
 void CursorController::setCursorTint(QColor color)
 {
     if (m_tint == color)
         return;
     m_tint = color;
     cursorTintChanged(color);
-}
-
-bool CursorController::cursorChangesFocus() const
-{
-    return m_cursor_focus;
 }
 
 float CursorController::scaleFactor() const
@@ -276,26 +301,4 @@ bool CursorController::visible() const
 QColor CursorController::cursorTint() const
 {
     return m_tint;
-}
-
-bool CameraController::fovByPhysicalDim() const
-{
-    return m_fovByPhysicalDim;
-}
-
-void CameraController::setFovByPhysicalDim(bool newFovByPhysicalDim)
-{
-    if (m_fovByPhysicalDim == newFovByPhysicalDim)
-        return;
-    m_fovByPhysicalDim = newFovByPhysicalDim;
-    emit fovByPhysicalDimChanged(m_fovByPhysicalDim);
-}
-
-void CameraController::updateFovFromDims()
-{
-    // We have distance to screen and screen height
-    // Given tan = opposite / adjacent <==> screen height / distance
-    // we can compute the vfov as 2 * atan(screen height / distance)
-    const float vFov = 2.0f * qRadiansToDegrees(atan(screenHeight() / viewerDistance()));
-    setFov(vFov);
 }

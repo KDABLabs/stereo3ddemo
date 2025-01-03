@@ -11,16 +11,41 @@ ColumnLayout {
         text: parent.title
     }
 
+    component ToolTipLabel: Label {
+        ToolTip.visible: hovered && ToolTip.text.length > 0
+        ToolTip.timeout: 5000
+        ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
+
+        readonly property bool hovered: labelMa.containsMouse
+        font: Style.fontDefault
+        MouseArea {
+            id: labelMa
+            anchors.fill: parent
+            hoverEnabled: true
+        }
+    }
+
+    function join(textStrs)
+    {
+        let str = "";
+        for (let idx in textStrs) {
+            str += textStrs[idx] + "\n";
+        }
+        return str
+    }
+
     GridLayout {
         Layout.fillWidth: true
         columnSpacing: 10
 
         // Camera Model
-        Label {
+        ToolTipLabel {
             Layout.alignment: Qt.AlignLeft
             text: "Camera Model"
-            font: Style.fontDefault
             Layout.column: 0
+            ToolTip.text: join(["Select the camera model:",
+                                " - Asymmetric Frustum: Accurate stereo projection with sheared frustums.",
+                                " - Toe-In: Simplistic method with two perspective cameras."])
         }
         ComboBox {
             Layout.fillWidth: true
@@ -32,12 +57,16 @@ ColumnLayout {
         }
 
         // Display Mode
-        Label {
+        ToolTipLabel {
             Layout.alignment: Qt.AlignLeft
             text: "Display Mode"
-            font: Style.fontDefault
             Layout.column: 0
             Layout.row: 1
+            ToolTip.text:  join(["Select the display mode:",
+                                 "- Stereo: renders in stereo with left and right eye cameras.",
+                                 "- Mono: render using a centered camera between left and right eyes.",
+                                 "- Left Eye: render using the left eye camera only.",
+                                 "- Right Eye: render using the right eye camera only."])
         }
         ComboBox {
             Layout.fillWidth: true
@@ -67,6 +96,7 @@ ColumnLayout {
             Layout.column: 0
             Layout.columnSpan: 3
             Layout.row: 2
+            ToolTip.text: "Display the Camera Frustum Overlay."
         }
     }
 
@@ -83,12 +113,17 @@ ColumnLayout {
                 title: "Auto Focus"
                 initial: Camera.autoFocus
                 onChecked: checkValue => Camera.autoFocus = checkValue
+                ToolTip.text: join(["Automatically adjusts focus within the auto focus area.",
+                                    "Use Ctrl+RMB to focus manually, when switched off.",
+                                    "F2"])
             }
 
             CheckBoxX {
                 title: "Show AF Area"
                 initial: Camera.showAutoFocusArea
                 onChecked: checkValue => Camera.showAutoFocusArea = checkValue
+                ToolTip.text: join(["Shows the auto focus area handle.",
+                                    "Shift + F2"]);
             }
 
             SliderValue {
@@ -100,6 +135,9 @@ ColumnLayout {
                 value: Camera.focusDistance
                 onMoved: current => Camera.focusDistance = current
                 enabled: !Camera.autoFocus
+                ToolTip.text: join(["Sets the focus plane distance as a % of the camera near and far planes.",
+                                    "(Shift) F3 -",
+                                    "(Shift) F4 +"])
             }
 
             SliderValue {
@@ -110,6 +148,9 @@ ColumnLayout {
                 unit: "%"
                 value: Camera.popOut
                 onMoved: current => Camera.popOut = current
+                ToolTip.text: join(["Controls if the object appears inside the screen or pops out of the screen.",
+                                    "(Shift) F5 -",
+                                    "(Shift) F6 +"])
             }
         }
     }
@@ -137,8 +178,9 @@ ColumnLayout {
 
                 onMoved: current => Camera.eyeDistance = current * 0.01
 
-                ToolTip.visible: hovered
-                ToolTip.text: "F3 -  F12 +"
+                ToolTip.text: join(["Sets the virtual distance between the cameras for the left and the right eye.",
+                                    "(Shift) F7 -",
+                                    "(Shift) F8 +"])
             }
 
             CheckBoxX {
@@ -146,6 +188,8 @@ ColumnLayout {
                 title: "Flipped"
                 initial: Camera.flipped
                 onChecked: bchecked => Camera.flipped = bchecked
+
+                ToolTip.text: "Flip the Right and Left eyes."
             }
 
             CheckBoxX {
@@ -154,6 +198,8 @@ ColumnLayout {
                 title: "Set to 1/30th of Focus Distance"
                 initial: Camera.separationBasedOnFocusDistance
                 onChecked: bchecked => Camera.separationBasedOnFocusDistance = bchecked
+
+                ToolTip.text: "Automatically set the separation as 1/30th of the focus distance."
             }
         }
     }
@@ -173,6 +219,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 initial: Camera.fovByPhysicalDim
                 onChecked: bchecked => Camera.fovByPhysicalDim = bchecked
+                ToolTip.text: "Set FOV by physical dimension of projection area and viewer distance."
             }
 
             SliderValue {
@@ -184,6 +231,7 @@ ColumnLayout {
                 unit: "m"
                 value: Camera.screenHeight
                 onMoved: current => Camera.screenHeight = current
+                ToolTip.text: "The physical HEIGHT of the screen or projection area respectively in meters."
             }
 
             SliderValue {
@@ -195,6 +243,7 @@ ColumnLayout {
                 unit: "m"
                 value: Camera.viewerDistance
                 onMoved: current => Camera.viewerDistance = current
+                ToolTip.text: "The physical viewer distance to the screenin meters."
             }
 
             SliderValue {
@@ -204,10 +253,10 @@ ColumnLayout {
                 title: "FOV"
                 unit: "°"
                 precision: 1
-                stepSize: 1
                 value: Camera.fov
                 onMoved: current => Camera.fov = current
                 enabled: !fovByPhysicalDimCheckBox.isChecked
+                ToolTip.text: "Set field of view (vertical angle) directly."
             }
         }
     }
