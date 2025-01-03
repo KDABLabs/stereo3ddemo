@@ -124,11 +124,12 @@ ColumnLayout {
             anchors.right: parent.right
 
             NonLinearSliderValue {
+                enabled: !_1_30th_separation_mode_checkbox.isChecked
                 Layout.fillWidth: true
                 Layout.alignment: Qt.AlignTop
                 from: 0.1
                 mid: 6.5
-                to: 25
+                to: 50
                 value: Camera.eyeDistance * 100
                 title: "Separation"
                 precision: 2
@@ -145,6 +146,14 @@ ColumnLayout {
                 title: "Flipped"
                 initial: Camera.flipped
                 onChecked: bchecked => Camera.flipped = bchecked
+            }
+
+            CheckBoxX {
+                id: _1_30th_separation_mode_checkbox
+                Layout.fillWidth: true
+                title: "Set to 1/30th of Focus Distance"
+                initial: Camera.separationBasedOnFocusDistance
+                onChecked: bchecked => Camera.separationBasedOnFocusDistance = bchecked
             }
         }
     }

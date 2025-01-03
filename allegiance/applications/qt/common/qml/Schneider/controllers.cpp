@@ -52,6 +52,19 @@ float CameraController::eyeDistance() const
     return m_eyeDistance;
 }
 
+bool CameraController::separationBasedOnFocusDistance() const
+{
+    return m_separationBasedOnFocusDistance;
+}
+
+void CameraController::setSeparationBasedOnFocusDistance(bool newSeparationBasedOnFocusDistance)
+{
+    if (m_separationBasedOnFocusDistance == newSeparationBasedOnFocusDistance)
+        return;
+    m_separationBasedOnFocusDistance = newSeparationBasedOnFocusDistance;
+    emit separationBasedOnFocusDistanceChanged(m_separationBasedOnFocusDistance);
+}
+
 void CameraController::setFocusDistance(float focusDistance)
 {
     if (qFuzzyCompare(m_focusDistance, focusDistance))

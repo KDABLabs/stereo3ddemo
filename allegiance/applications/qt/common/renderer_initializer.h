@@ -195,6 +195,11 @@ public:
             // popOut == -100 -> 0.5f focusDistanceFromNearPlane
             const float popOutCorrectionFactor = (popOut * 0.01) * 0.5f + 1.0f; // [0.5, 1.5]
             m_camera.setConvergencePlaneDistance(popOutCorrectionFactor * focusDistanceFromNearPlane);
+
+            if (m_cameraController->separationBasedOnFocusDistance()) {
+                // Set Eye Separation to 1/30th of focus distance if enabled
+                m_cameraController->setEyeDistance(std::clamp(m_camera.convergencePlaneDistance() / 30.0f, 0.001f, 0.5f));
+            }
         };
 
         QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, updateFocusDistance);

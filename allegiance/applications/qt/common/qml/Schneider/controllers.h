@@ -29,6 +29,7 @@ class CameraController : public QObject
     Q_OBJECT
     Q_PROPERTY(float eyeDistance READ eyeDistance WRITE setEyeDistance NOTIFY eyeDistanceChanged)
     Q_PROPERTY(bool flipped READ flipped WRITE setFlipped NOTIFY flippedChanged)
+    Q_PROPERTY(bool separationBasedOnFocusDistance READ separationBasedOnFocusDistance WRITE setSeparationBasedOnFocusDistance NOTIFY separationBasedOnFocusDistanceChanged)
 
     Q_PROPERTY(bool frustumViewEnabled READ frustumViewEnabled WRITE setFrustumViewEnabled NOTIFY frustumViewEnabledChanged)
     Q_PROPERTY(CameraMode cameraMode READ cameraMode WRITE setCameraMode NOTIFY cameraModeChanged)
@@ -66,6 +67,9 @@ public:
 
     void setEyeDistance(float eyeDistance);
     float eyeDistance() const;
+
+    bool separationBasedOnFocusDistance() const;
+    void setSeparationBasedOnFocusDistance(bool newSeparationBasedOnFocusDistance);
 
     void setFocusDistance(float focusDistance);
     float focusDistance() const;
@@ -108,6 +112,7 @@ public:
 Q_SIGNALS:
     void eyeDistanceChanged(float);
     void flippedChanged(bool);
+    void separationBasedOnFocusDistanceChanged(bool);
 
     void cameraModeChanged(CameraMode);
     void stereoModeChanged(StereoMode);
@@ -142,6 +147,7 @@ private:
     bool m_fovByPhysicalDim = false;
     float m_screenHeight = 1.0f;
     float m_viewerDistance = 1.0f;
+    bool m_separationBasedOnFocusDistance = false;
 };
 
 class CursorController : public QObject
