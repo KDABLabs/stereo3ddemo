@@ -214,6 +214,8 @@ public:
 
         QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, updateFocusDistance);
         QObject::connect(m_cameraController, &CameraController::popOutChanged, updateFocusDistance);
+        QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceChanged, updateFocusDistance);
+
         QObject::connect(m_cameraController, &CameraController::fovChanged, [this](float v) {
             m_camera.setFov(v);
         });
