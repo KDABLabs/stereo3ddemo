@@ -30,7 +30,7 @@ protected:
     float m_mouseSensitivity = 100;
 
 private:
-    bool m_shiftPressed;
+    bool m_shiftPressed{ false };
 };
 
 class CameraController : public QObject
