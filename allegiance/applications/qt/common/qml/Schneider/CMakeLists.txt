@@ -19,6 +19,7 @@ qt_add_qml_module(
     "qml/NonLinearSliderValue.qml"
     "qml/SectionTitle.qml"
     "qml/Logos.qml"
+    "qml/CustomSlider.qml"
     RESOURCES
     "qml/checked.svg"
     "qml/unchecked.svg"

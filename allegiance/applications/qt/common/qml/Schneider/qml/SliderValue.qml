@@ -14,31 +14,12 @@ RowLayout {
     readonly property bool hovered: slider.hovered || label.hovered
     property int precision: 2
     property string unit: ""
-    readonly property real distance: (to - from)
 
     signal moved(real fvalue)
 
     ToolTip.visible: hovered && ToolTip.text.length > 0
     ToolTip.timeout: 5000
     ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
-
-    // TODO: Investigate switching to [0, 100] range to handle having a different
-    // value mapping when shift is pressed
-    function fromSliderValue(sliderValue) // [0, 100] -> [from, to]
-    {
-        return from + distance * (sliderValue * 0.01)
-    }
-
-    function toSliderValue(displayValue) // [from, to] -> [0, 100]
-    {
-        return (displayValue - from) / distance * 100.0
-    }
-
-    readonly property bool shiftPressed: Scene.shiftPressed
-    property real valueOnShiftPressed: 0
-    onShiftPressedChanged: {
-        valueOnShiftPressed = (shiftPressed) ? slider.value : 0
-    }
 
     Label {
         id: label
@@ -53,15 +34,11 @@ RowLayout {
             hoverEnabled: true
         }
     }
-
-    Slider {
+    CustomSlider {
         id: slider
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
-
-        onMoved: {
-            root.moved(value)
-        }
+        onMoved: (proposedValue) => root.moved(proposedValue)
         enabled: root.enabled
     }
     TextField {

@@ -118,7 +118,7 @@ public:
     bool fovByPhysicalDim() const;
     void setFovByPhysicalDim(bool newFovByPhysicalDim);
 
-    inline static float MinEyeDistance = 0.01f;
+    inline static float MinEyeDistance = 0.001f;
     inline static float MaxEyeDistance = 0.5f;
 
     inline static float MinFocusDistance = 0.1f;

@@ -48,14 +48,14 @@ RowLayout {
             hoverEnabled: true
         }
     }
-    Slider {
+    CustomSlider {
         id: slider
         from: 0
         to: 1
         value: toSliderValue(root.value)
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
-        onMoved: root.moved(fromSliderValue(value))
+        onMoved: (proposedValue) => root.moved(fromSliderValue(proposedValue))
         enabled: root.enabled
     }
     TextField {
