@@ -1,6 +1,7 @@
 #include "qt3d_renderer.h"
 #include "qt3d_cursor.h"
 #include "qt3d_materials.h"
+#include "qt3d_focusarea.h"
 #include "mesh_loader.h"
 #include "stereo_image_material.h"
 #include "stereo_image_mesh.h"
@@ -94,25 +95,25 @@ void Qt3DRenderer::viewChanged()
                                  interocularDistance,
                                  m_stereoCamera->mode());
 
-    m_centerFrustum->setViewMatrix(m_camera->centerCamera()->viewMatrix());
-    m_leftFrustum->setViewMatrix(m_camera->leftCamera()->viewMatrix());
-    m_rightFrustum->setViewMatrix(m_camera->rightCamera()->viewMatrix());
-
-    const float convergenceDist = m_stereoCamera->convergencePlaneDistance();
     const QVector3D camPosition = toQVector3D(m_stereoCamera->position());
     const QVector3D viewVector = toQVector3D(m_stereoCamera->forwardVector());
     const QVector3D upVector = toQVector3D(m_stereoCamera->upVector());
-    const QVector3D sideVec = QVector3D::crossProduct(viewVector, upVector).normalized();
-    const QVector3D realUp = QVector3D::crossProduct(sideVec, viewVector).normalized();
 
-    auto* frustumCamera = m_renderer->frustumCamera();
-    // Place the camera to match the center camera but with a viewCenter placed at the center of the near and far planes
-    frustumCamera->setPosition(camPosition);
-    const float centerPlaneDist = m_stereoCamera->nearPlane() + (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane()) * 0.5f;
-    frustumCamera->setViewCenter(camPosition + viewVector * centerPlaneDist);
-    frustumCamera->setUpVector(upVector);
-    // Then Rotate 90 around the X-Axis with rotation origin viewCenter
-    frustumCamera->tiltAboutViewCenter(90.0f);
+    // Frustum
+    {
+        m_centerFrustum->setViewMatrix(m_camera->centerCamera()->viewMatrix());
+        m_leftFrustum->setViewMatrix(m_camera->leftCamera()->viewMatrix());
+        m_rightFrustum->setViewMatrix(m_camera->rightCamera()->viewMatrix());
+
+        auto* frustumCamera = m_renderer->frustumCamera();
+        // Place the camera to match the center camera but with a viewCenter placed at the center of the near and far planes
+        frustumCamera->setPosition(camPosition);
+        const float centerPlaneDist = m_stereoCamera->nearPlane() + (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane()) * 0.5f;
+        frustumCamera->setViewCenter(camPosition + viewVector * centerPlaneDist);
+        frustumCamera->setUpVector(upVector);
+        // Then Rotate 90 around the X-Axis with rotation origin viewCenter
+        frustumCamera->tiltAboutViewCenter(90.0f);
+    }
 
     projectionChanged();
 }
@@ -130,34 +131,42 @@ void Qt3DRenderer::projectionChanged()
                                interocularDistance,
                                m_stereoCamera->mode());
 
-    m_centerFrustum->setProjectionMatrix(m_camera->centerCamera()->projectionMatrix());
-    m_leftFrustum->setProjectionMatrix(m_camera->leftCamera()->projectionMatrix());
-    m_rightFrustum->setProjectionMatrix(m_camera->rightCamera()->projectionMatrix());
+    // Frustum
+    {
+        m_centerFrustum->setProjectionMatrix(m_camera->centerCamera()->projectionMatrix());
+        m_leftFrustum->setProjectionMatrix(m_camera->leftCamera()->projectionMatrix());
+        m_rightFrustum->setProjectionMatrix(m_camera->rightCamera()->projectionMatrix());
 
-    m_centerFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
-    m_leftFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
-    m_rightFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
+        m_centerFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
+        m_leftFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
+        m_rightFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
 
-    // Adjust Ortho Projection so that whole frustum is visible
-    auto* frustumCamera = m_renderer->frustumCamera();
-    const float frustumLength = (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane());
-    const float vFov = qDegreesToRadians(m_stereoCamera->fov());
-    const float hFov = 2.0f * std::atan(m_stereoCamera->aspectRatio() * tan(vFov * 0.5f));
+        // Adjust Ortho Projection so that whole frustum is visible
+        auto* frustumCamera = m_renderer->frustumCamera();
+        const float frustumLength = (m_stereoCamera->farPlane() - m_stereoCamera->nearPlane());
+        const float vFov = qDegreesToRadians(m_stereoCamera->fov());
+        const float hFov = 2.0f * std::atan(m_stereoCamera->aspectRatio() * tan(vFov * 0.5f));
 
-    float frustumShiftAtFarPlane = 0.0f;
-    if (m_stereoCamera->mode() == StereoCamera::Mode::AsymmetricFrustum) {
-        frustumShiftAtFarPlane = 2.0f * std::fabs(interocularDistance);
+        float frustumShiftAtFarPlane = 0.0f;
+        if (m_stereoCamera->mode() == StereoCamera::Mode::AsymmetricFrustum) {
+            frustumShiftAtFarPlane = 2.0f * std::fabs(interocularDistance);
+        }
+
+        const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f) + frustumShiftAtFarPlane;
+        const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumLength * 0.5f);
+
+        frustumCamera->setTop(frustumMaxHalfSize * m_stereoCamera->aspectRatio());
+        frustumCamera->setBottom(-frustumMaxHalfSize * m_stereoCamera->aspectRatio());
+        frustumCamera->setLeft(-frustumMaxHalfSize);
+        frustumCamera->setRight(frustumMaxHalfSize);
+        frustumCamera->setNearPlane(m_stereoCamera->nearPlane());
+        frustumCamera->setFarPlane(m_stereoCamera->farPlane() * 2.0f);
     }
 
-    const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f) + frustumShiftAtFarPlane;
-    const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumLength * 0.5f);
-
-    frustumCamera->setTop(frustumMaxHalfSize * m_stereoCamera->aspectRatio());
-    frustumCamera->setBottom(-frustumMaxHalfSize * m_stereoCamera->aspectRatio());
-    frustumCamera->setLeft(-frustumMaxHalfSize);
-    frustumCamera->setRight(frustumMaxHalfSize);
-    frustumCamera->setNearPlane(m_stereoCamera->nearPlane());
-    frustumCamera->setFarPlane(m_stereoCamera->farPlane() * 2.0f);
+    // FocusArea
+    {
+        m_focusArea->update();
+    }
 }
 
 void Qt3DRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
@@ -239,6 +248,20 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
         m_rightFrustum->addComponent(m_renderer->frustumLayer());
     }
 
+    // FocusArea
+    {
+        m_focusArea = new FocusArea(root);
+        m_focusArea->setCamera(m_camera->centerCamera());
+        m_focusArea->addComponent(m_renderer->focusAreaLayer());
+
+        auto updateViewSize = [this] {
+            m_focusArea->setViewSize(QSize(m_view->width(), m_view->height()));
+        };
+        QObject::connect(m_view, &Qt3DExtras::Qt3DWindow::widthChanged, m_focusArea, updateViewSize);
+        QObject::connect(m_view, &Qt3DExtras::Qt3DWindow::heightChanged, m_focusArea, updateViewSize);
+        updateViewSize();
+    }
+
     loadModel();
 
     m_view->setRootEntity(m_rootEntity.get());
@@ -290,6 +313,9 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
         m_centerFrustum->setEnabled(frustumEnabled);
         m_leftFrustum->setEnabled(frustumEnabled);
         m_rightFrustum->setEnabled(frustumEnabled);
+    } else if (name == "show_focus_area") {
+        const bool showFocusArea = std::any_cast<bool>(value);
+        m_focusArea->setEnabled(showFocusArea);
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->setCursorTintColor(QColor::fromRgbF(color[0], color[1], color[2], color[3]));
@@ -370,7 +396,7 @@ void Qt3DRenderer::loadModel(std::filesystem::path path)
             m_userEntity->addComponent(t);
         }
     }
-#define MMat(name) m_materials[u## #name##_qs] = new GlossyMaterial(name##ST, name##SU, m_rootEntity.get())
+#define MMat(name) m_materials[QStringLiteral(#name)] = new GlossyMaterial(name##ST, name##SU, m_rootEntity.get())
     MMat(CarPaint);
     MMat(DarkGlass);
     MMat(DarkGloss);
@@ -420,6 +446,11 @@ void Qt3DRenderer::setCursorEnabled(bool enabled)
         cursor_scale = m_cursor->scaleFactor();
         m_cursor->setScaleFactor(0);
     }
+}
+
+bool Qt3DRenderer::hoversFocusArea(int x, int y) const
+{
+    return m_focusArea->containsMouse();
 }
 
 Qt3DRenderer::SceneExtent Qt3DRenderer::calculateSceneExtent(Qt3DCore::QEntity* entity) const

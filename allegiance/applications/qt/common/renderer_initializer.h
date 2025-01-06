@@ -112,8 +112,15 @@ public:
                          [this, pnav_params](::QMouseEvent* e) {
                              static bool flipped = false;
 
+                             const QPointF mousePos = e->position();
+                             // Let the renderer a chance to steal mouse events
+                             if (m_renderer->hoversFocusArea(mousePos.x(), mousePos.y())) {
+                                 return;
+                             }
+
                              switch (e->type()) {
                              case QEvent::MouseButtonPress:
+
                                  if (e->buttons() & Qt::MouseButton::LeftButton) {
                                      m_mouseInputTracker.is_pressed = true;
                                      m_mouseInputTracker.skip_first = true;
@@ -219,6 +226,9 @@ public:
         QObject::connect(m_cameraController, &CameraController::frustumViewEnabledChanged, [this](bool enabled) {
             m_renderer->propertyChanged("frustum_view_enabled", enabled);
         });
+        QObject::connect(m_cameraController, &CameraController::showAutoFocusAreaChanged, [this](bool enabled) {
+            m_renderer->propertyChanged("show_focus_area", enabled);
+        });
         QObject::connect(m_cursorController, &CursorController::cursorVisibilityChanged, [this](bool checked) {
             m_renderer->setCursorEnabled(checked);
         });
@@ -273,6 +283,7 @@ public:
         m_camera.setMode(all::StereoCamera::Mode(m_cameraController->stereoMode()));
         m_camera.setFlipped(m_cameraController->flipped());
         m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
+        m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea());
         m_renderer->propertyChanged("camera_mode", all::CameraMode(m_cameraController->cameraMode()));
         m_mouseInputTracker.cursor_changes_focus = !m_cameraController->autoFocus();
     }

@@ -124,6 +124,11 @@ glm::vec3 SerenityRenderer::cursorWorldPosition() const
     return glm::vec3();
 }
 
+bool SerenityRenderer::hoversFocusArea(int x, int y) const
+{
+    return false;
+}
+
 void SerenityRenderer::viewChanged()
 {
     switch (m_cameraMode) {

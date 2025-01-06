@@ -31,6 +31,7 @@ target_sources(
            qt3d_cursor.h
            qt3d_materials.h
            qt3d_shaders.h
+           qt3d_focusarea.h
            util_qt.h
            stereo_forward_renderer.h
            stereo_proxy_camera.h
@@ -42,12 +43,13 @@ target_sources(
            frustum.h
            frustum_rect.h
     PRIVATE qt3d_renderer.cpp
+            qt3d_cursor.cpp
+            qt3d_materials.cpp
+            qt3d_focusarea.cpp
             mesh_loader.cpp
             scene_mesh.cpp
-            qt3d_materials.cpp
             stereo_image_material.cpp
             stereo_image_mesh.cpp
-            qt3d_cursor.cpp
             stereo_forward_renderer.cpp
             stereo_proxy_camera.cpp
             frustum.cpp

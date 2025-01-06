@@ -26,12 +26,14 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     , m_sceneLayer(new Qt3DRender::QLayer(this))
     , m_cursorLayer(new Qt3DRender::QLayer(this))
     , m_frustumLayer(new Qt3DRender::QLayer(this))
+    , m_focusAreaLayer(new Qt3DRender::QLayer(this))
 {
     m_sceneLayer->setObjectName(QStringLiteral("SceneLayer"));
     m_sceneLayer->setRecursive(true);
     m_cursorLayer->setObjectName(QStringLiteral("CursorLayer"));
     m_cursorLayer->setRecursive(true);
     m_frustumLayer->setObjectName(QStringLiteral("FrustumLayer"));
+    m_focusAreaLayer->setObjectName(QStringLiteral("FocusAreaLayer"));
 
     auto vp = new Qt3DRender::QViewport();
 
@@ -93,9 +95,22 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         cursorLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
         cursorLayerFilter->addLayer(m_cursorLayer);
 
+        auto* focusAreaLayerFilter = new Qt3DRender::QLayerFilter();
+        {
+            auto* focusAreaStateSet = new Qt3DRender::QRenderStateSet;
+            auto* focusAreaNoDepthTest = new Qt3DRender::QDepthTest;
+            focusAreaNoDepthTest->setDepthFunction(Qt3DRender::QDepthTest::Always);
+            focusAreaStateSet->addRenderState(focusAreaNoDepthTest);
+            focusAreaStateSet->setParent(focusAreaLayerFilter);
+        }
+        focusAreaLayerFilter->setObjectName("FocusAreaLayerFilter");
+        focusAreaLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
+        focusAreaLayerFilter->addLayer(m_focusAreaLayer);
+
         clearBuffers->setParent(rts);
         sceneLayerFilter->setParent(rts);
         cursorLayerFilter->setParent(rts);
+        focusAreaLayerFilter->setParent(rts);
 
         return cameraSelector;
     };

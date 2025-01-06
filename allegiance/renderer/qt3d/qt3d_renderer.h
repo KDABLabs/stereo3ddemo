@@ -26,6 +26,7 @@ class CursorEntity;
 class Picker;
 class Frustum;
 class FrustumRect;
+class FocusArea;
 
 class Qt3DRenderer
 {
@@ -43,6 +44,7 @@ public:
 
     QWindow* window() { return m_view; }
 
+    bool hoversFocusArea(int x, int y) const;
     void updateMouse();
     void showImage();
     void showModel();
@@ -92,5 +94,7 @@ private:
     Frustum* m_centerFrustum{ nullptr };
     Frustum* m_leftFrustum{ nullptr };
     Frustum* m_rightFrustum{ nullptr };
+
+    FocusArea* m_focusArea{ nullptr };
 };
 } // namespace all::qt3d

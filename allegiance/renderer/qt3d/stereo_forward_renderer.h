@@ -33,6 +33,7 @@ public:
     inline Qt3DRender::QLayer* sceneLayer() const { return m_sceneLayer; }
     inline Qt3DRender::QLayer* cursorLayer() const { return m_cursorLayer; }
     inline Qt3DRender::QLayer* frustumLayer() const { return m_frustumLayer; }
+    inline Qt3DRender::QLayer* focusAreaLayer() const { return m_focusAreaLayer; }
 
     void setMode(Mode mode);
 
@@ -47,12 +48,15 @@ private:
     Qt3DRender::QCameraSelector* m_rightCameraSelector;
     Qt3DRender::QCameraSelector* m_leftFrustumCameraSelector;
     Qt3DRender::QCameraSelector* m_rightFrustumCameraSelector;
+
     Qt3DRender::QLayer* m_leftLayer;
     Qt3DRender::QLayer* m_rightLayer;
     Qt3DRender::QLayer* m_stereoImageLayer;
     Qt3DRender::QLayer* m_sceneLayer;
     Qt3DRender::QLayer* m_cursorLayer;
     Qt3DRender::QLayer* m_frustumLayer;
+    Qt3DRender::QLayer* m_focusAreaLayer;
+
     Qt3DRender::QNoDraw* m_sceneNoDraw;
     Qt3DRender::QNoDraw* m_stereoImageNoDraw;
     QStereoProxyCamera* m_camera;

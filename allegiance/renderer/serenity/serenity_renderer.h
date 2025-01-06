@@ -48,6 +48,8 @@ public:
 
     glm::vec3 cursorWorldPosition() const;
 
+    bool hoversFocusArea(int x, int y) const;
+
     void onMouseEvent(const KDFoundation::Event& event);
 
 protected:
