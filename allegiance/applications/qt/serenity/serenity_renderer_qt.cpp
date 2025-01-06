@@ -5,8 +5,10 @@
 
 using namespace all::serenity;
 
-SerenityRendererQt::SerenityRendererQt(SerenityWindowQt* serenityWindow, all::StereoCamera& camera)
-    : SerenityRenderer{ serenityWindow, camera }
+SerenityRendererQt::SerenityRendererQt(SerenityWindowQt* serenityWindow,
+                                       all::StereoCamera& camera,
+                                       std::function<void(std::string_view, std::any)> propertyUpdateNotifier)
+    : SerenityRenderer{ serenityWindow, camera, propertyUpdateNotifier }
 {
 }
 

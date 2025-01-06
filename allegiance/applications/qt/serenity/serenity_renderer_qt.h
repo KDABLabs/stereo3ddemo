@@ -9,7 +9,7 @@ class SerenityWindowQt;
 class SerenityRendererQt : public all::serenity::SerenityRenderer
 {
 public:
-    SerenityRendererQt(SerenityWindowQt* serenityWindow, all::StereoCamera& camera);
+    SerenityRendererQt(SerenityWindowQt* serenityWindow, all::StereoCamera& camera, std::function<void(std::string_view name, std::any value)> = {});
 
     QWindow* window() const;
 

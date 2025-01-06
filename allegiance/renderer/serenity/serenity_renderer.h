@@ -20,7 +20,7 @@ class PickingApplicationLayer;
 class SerenityRenderer
 {
 public:
-    explicit SerenityRenderer(SerenityWindow* window, all::StereoCamera& camera)
+    explicit SerenityRenderer(SerenityWindow* window, all::StereoCamera& camera, std::function<void(std::string_view name, std::any value)> = {})
         : m_window(window), camera(camera)
     {
     }

@@ -144,8 +144,8 @@ void FocusArea::updateMesh()
     const float focusPlaneScreenCoords = viewCenterScreen.z();
 
     auto screenPosToWorldCoords = [&](QVector3D screenPos) {
-        // To OpenGL Y
         screenPos.setZ(focusPlaneScreenCoords);
+        // To OpenGL Y
         screenPos.setY(float(m_viewSize.height()) - screenPos.y());
 
         return screenPos.unproject(m_camera->viewMatrix(), m_camera->projectionMatrix(), QRect(0, 0, m_viewSize.width(), m_viewSize.height()));

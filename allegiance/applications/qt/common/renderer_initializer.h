@@ -13,6 +13,8 @@
 #include <QMouseEvent>
 #include <QClipboard>
 
+#include <any>
+
 namespace all::qt {
 struct MouseTracker {
     QPoint last_pos = {};
@@ -42,7 +44,12 @@ public:
     RendererInitializer(MainWindow* mainWindow, RendererSurface* rendererSurface)
         : m_mainWindow(mainWindow)
         , m_windowEventWatcher(std::make_unique<WindowEventWatcher>(m_mainWindow))
-        , m_renderer(std::make_unique<Renderer>(rendererSurface, m_camera))
+        , m_renderer(std::make_unique<Renderer>(rendererSurface,
+                                                m_camera,
+                                                std::function<void(std::string_view, std::any)>(
+                                                        [this](std::string_view n, std::any v) {
+                                                            propertyChanged(n, v);
+                                                        })))
     {
         auto* sideMenu = m_mainWindow->sideMenu();
         {
@@ -125,7 +132,7 @@ public:
                                      m_mouseInputTracker.is_pressed = true;
                                      m_mouseInputTracker.skip_first = true;
 
-                                 } else if (e->buttons() & Qt::MouseButton::RightButton) {
+                                 } else if (e->buttons() & Qt::MouseButton::RightButton && !m_cameraController->autoFocus()) {
                                      auto pos = m_renderer->cursorWorldPosition();
                                      qDebug() << " setting pivot " << pos.x << pos.y << pos.z;
                                      pnav_params->pivot_point = { pos.x, pos.y, pos.z };
@@ -229,6 +236,9 @@ public:
         QObject::connect(m_cameraController, &CameraController::showAutoFocusAreaChanged, [this](bool enabled) {
             m_renderer->propertyChanged("show_focus_area", enabled);
         });
+        QObject::connect(m_cameraController, &CameraController::autoFocusChanged, [this](bool enabled) {
+            m_renderer->propertyChanged("auto_focus", enabled);
+        });
         QObject::connect(m_cursorController, &CursorController::cursorVisibilityChanged, [this](bool checked) {
             m_renderer->setCursorEnabled(checked);
         });
@@ -284,6 +294,7 @@ public:
         m_camera.setFlipped(m_cameraController->flipped());
         m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
         m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea());
+        m_renderer->propertyChanged("auto_focus", m_cameraController->autoFocus());
         m_renderer->propertyChanged("camera_mode", all::CameraMode(m_cameraController->cameraMode()));
         m_mouseInputTracker.cursor_changes_focus = !m_cameraController->autoFocus();
     }
@@ -297,6 +308,16 @@ public:
     {
         m_camera.setPosition({ 0.2, 5, -10 });
         m_camera.setForwardVector({ 0, -.5, 1 });
+    }
+
+    void propertyChanged(std::string_view name, std::any value)
+    {
+        if (name == "auto_focus_distance") {
+            const float distanceToCamera = std::any_cast<float>(value);
+            const float normalizedFocusDistanceOfNearFar = (distanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
+            const float focusDistanceAsPercentOfNearFar = normalizedFocusDistanceOfNearFar * 100.0f;
+            m_cameraController->setFocusDistance(focusDistanceAsPercentOfNearFar);
+        }
     }
 
 private:

@@ -29,6 +29,7 @@
 #include <QFileInfo>
 #include <QImageReader>
 #include <shared/stereo_camera.h>
+#include <QTimer>
 
 namespace all::qt3d {
 namespace {
@@ -74,8 +75,10 @@ static void traverseEntities(Qt3DCore::QEntity* entity, QVector3D& minExtents, Q
 
 } // namespace
 
-Qt3DRenderer::Qt3DRenderer(Qt3DExtras::Qt3DWindow* view, all::StereoCamera& stereoCamera)
-    : m_view(view), m_stereoCamera(&stereoCamera)
+Qt3DRenderer::Qt3DRenderer(Qt3DExtras::Qt3DWindow* view,
+                           all::StereoCamera& stereoCamera,
+                           std::function<void(std::string_view, std::any)> propertyUpdateNotifier)
+    : m_view(view), m_stereoCamera(&stereoCamera), m_propertyUpdateNofitier(propertyUpdateNotifier)
 {
 }
 
@@ -166,6 +169,10 @@ void Qt3DRenderer::projectionChanged()
     // FocusArea
     {
         m_focusArea->update();
+
+        if (m_autoFocus) {
+            handleFocusForFocusArea();
+        }
     }
 }
 
@@ -260,6 +267,20 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
         QObject::connect(m_view, &Qt3DExtras::Qt3DWindow::widthChanged, m_focusArea, updateViewSize);
         QObject::connect(m_view, &Qt3DExtras::Qt3DWindow::heightChanged, m_focusArea, updateViewSize);
         updateViewSize();
+
+        for (size_t i = 0, m = m_afRayCasters.size(); i < m; ++i) {
+            m_afRayCasters[i] = new Qt3DRender::QScreenRayCaster(m_sceneEntity);
+            m_afRayCasters[i]->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
+            // m_afRayCaster->setFilterMode(Qt3DRender::QAbstractRayCaster::AcceptAnyMatchingLayers);
+            // m_afRayCaster->addLayer(m_renderer->sceneLayer());
+            QObject::connect(m_afRayCasters[i], &Qt3DRender::QScreenRayCaster::hitsChanged, [this, idx = i](const Qt3DRender::QAbstractRayCaster::Hits& hits) {
+                afRaycasterHitResult(idx, hits);
+            });
+            m_userEntity->addComponent(m_afRayCasters[i]);
+        }
+
+        QObject::connect(m_focusArea, &FocusArea::centerChanged, this, &Qt3DRenderer::handleFocusForFocusArea);
+        QObject::connect(m_focusArea, &FocusArea::extentChanged, this, &Qt3DRenderer::handleFocusForFocusArea);
     }
 
     loadModel();
@@ -316,6 +337,11 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "show_focus_area") {
         const bool showFocusArea = std::any_cast<bool>(value);
         m_focusArea->setEnabled(showFocusArea);
+    } else if (name == "auto_focus") {
+        const bool useAF = std::any_cast<bool>(value);
+        m_autoFocus = useAF;
+        if (m_autoFocus)
+            handleFocusForFocusArea();
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->setCursorTintColor(QColor::fromRgbF(color[0], color[1], color[2], color[3]));
@@ -436,6 +462,10 @@ void Qt3DRenderer::loadModel(std::filesystem::path path)
         frameAction->deleteLater();
     });
     m_userEntity->addComponent(frameAction);
+
+    // For AutoFocus Intersection Testing
+    for (auto* rayCaster : m_afRayCasters)
+        m_userEntity->addComponent(rayCaster);
 }
 
 void Qt3DRenderer::setCursorEnabled(bool enabled)
@@ -573,6 +603,68 @@ void Qt3DRenderer::setupCameraBasedOnSceneExtent()
         cam->rotate(glm::radians(45.0f), glm::radians(90.0f));
     }
 }
+
+void Qt3DRenderer::handleFocusForFocusArea()
+{
+    if (m_focusArea == nullptr)
+        return;
+
+    const QVector3D center = m_focusArea->center();
+    const QVector3D extent = m_focusArea->extent();
+
+    for (size_t y = 0; y < AFSamplesY; ++y) {
+        QVector3D p;
+        float yPos = center.y() + ((float(y) / AFSamplesY) - 1.0f) * (extent.y() * 0.5f);
+        // To OpenGL Y
+        yPos = m_view->height() - yPos;
+        for (size_t x = 0; x < AFSamplesX; ++x) {
+            const float xPos = center.x() + ((float(x) / AFSamplesX) - 1.0f) * (extent.x() * 0.5f);
+
+            const size_t rayCasterIdx = y * AFSamplesX + x;
+            assert(rayCasterIdx < m_afRayCasters.size());
+            m_lastAfHitDistances[rayCasterIdx] = 0.0f;
+            m_afRayCasters[rayCasterIdx]->trigger({ int(xPos), int(yPos) });
+        }
+    }
+}
+
+void Qt3DRenderer::afRaycasterHitResult(size_t idx, const Qt3DRender::QAbstractRayCaster::Hits& hits)
+{
+    float nearestHitDistanceFromCamera = std::numeric_limits<float>::max();
+
+    // Average result of hits distance (or we could keep smallest one)
+    for (const auto& hit : hits)
+        nearestHitDistanceFromCamera = std::min(hit.distance(), nearestHitDistanceFromCamera);
+
+    if (nearestHitDistanceFromCamera < std::numeric_limits<float>::max())
+        m_lastAfHitDistances[idx] = nearestHitDistanceFromCamera;
+
+    // Trigger delay evaluation once we know all raycasters have received their results
+    if (!m_afResultUpdateRequested) {
+        m_afResultUpdateRequested = true;
+
+        // Average all hits
+        QTimer::singleShot(0, [this] {
+            m_afResultUpdateRequested = false;
+            float averagedDistanceFromCamera = 0.0f;
+            size_t validHits = 0;
+
+            for (float hitDistance : m_lastAfHitDistances) {
+                if (hitDistance > 0) {
+                    averagedDistanceFromCamera += hitDistance;
+                    ++validHits;
+                }
+            }
+
+            if (validHits > 0) {
+                averagedDistanceFromCamera /= float(validHits);
+                // Notify Controllers our AF Distance is updated
+                m_propertyUpdateNofitier("auto_focus_distance", averagedDistanceFromCamera);
+            }
+        });
+    }
+}
+
 void Qt3DRenderer::updateMouse()
 {
     m_cursor->onMouseMoveEvent(toQVector3D(m_stereoCamera->position()), m_view->mapFromGlobal(m_view->cursor().pos()));
