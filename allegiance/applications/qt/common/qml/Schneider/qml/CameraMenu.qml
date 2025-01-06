@@ -228,6 +228,7 @@ ColumnLayout {
                 to: 2
                 title: "Screen Height"
                 enabled: fovByPhysicalDimCheckBox.isChecked
+                visible: enabled
                 unit: "m"
                 value: Camera.screenHeight
                 onMoved: current => Camera.screenHeight = current
@@ -240,6 +241,7 @@ ColumnLayout {
                 to: 10.0
                 title: "Viewer Distance"
                 enabled: fovByPhysicalDimCheckBox.isChecked
+                visible: enabled
                 unit: "m"
                 value: Camera.viewerDistance
                 onMoved: current => Camera.viewerDistance = current
