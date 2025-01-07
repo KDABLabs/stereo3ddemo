@@ -32,48 +32,6 @@
 #include <QTimer>
 
 namespace all::qt3d {
-namespace {
-
-static void traverseEntities(Qt3DCore::QEntity* entity, QVector3D& minExtents, QVector3D& maxExtents)
-{
-    if (!entity)
-        return;
-    Qt3DRender::QMesh* mesh = entity->findChild<Qt3DRender::QMesh*>();
-    Qt3DCore::QTransform* transform = entity->findChild<Qt3DCore::QTransform*>();
-
-    if (mesh && transform) {
-        // Iterate over attributes to find the position attribute
-        const QList<Qt3DCore::QAttribute*> attributes = mesh->geometry()->attributes();
-        for (Qt3DCore::QAttribute* attribute : attributes) {
-            if (attribute->name() == Qt3DCore::QAttribute::defaultPositionAttributeName()) {
-                const QByteArray& dataArray = attribute->buffer()->data();
-                const float* data = reinterpret_cast<const float*>(dataArray.constData());
-
-                // Transform the bounding volume by the entity's transform
-                for (int i = 0; i < attribute->count(); ++i) {
-                    QVector4D vertex(data[i * 3], data[i * 3 + 1], data[i * 3 + 2], 1.0);
-                    QVector4D transformedVertex = transform->matrix() * vertex;
-
-                    minExtents.setX(qMin(minExtents.x(), transformedVertex.x()));
-                    minExtents.setY(qMin(minExtents.y(), transformedVertex.y()));
-                    minExtents.setZ(qMin(minExtents.z(), transformedVertex.z()));
-
-                    maxExtents.setX(qMax(maxExtents.x(), transformedVertex.x()));
-                    maxExtents.setY(qMax(maxExtents.y(), transformedVertex.y()));
-                    maxExtents.setZ(qMax(maxExtents.z(), transformedVertex.z()));
-                }
-            }
-        }
-    }
-
-    QObjectList children = entity->children();
-    for (auto c : children) {
-        const auto childEntity = dynamic_cast<Qt3DCore::QEntity*>(c);
-        traverseEntities(childEntity, minExtents, maxExtents);
-    }
-}
-
-} // namespace
 
 Qt3DRenderer::Qt3DRenderer(Qt3DExtras::Qt3DWindow* view,
                            all::StereoCamera& stereoCamera,
