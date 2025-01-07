@@ -33,6 +33,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     m_cursorLayer->setObjectName(QStringLiteral("CursorLayer"));
     m_cursorLayer->setRecursive(true);
     m_frustumLayer->setObjectName(QStringLiteral("FrustumLayer"));
+    m_frustumLayer->setRecursive(true);
     m_focusAreaLayer->setObjectName(QStringLiteral("FocusAreaLayer"));
 
     auto vp = new Qt3DRender::QViewport();

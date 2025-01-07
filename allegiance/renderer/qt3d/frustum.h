@@ -10,11 +10,35 @@ class QBuffer;
 
 namespace all::qt3d {
 
+class FrustumLines : public Qt3DCore::QEntity
+{
+    Q_OBJECT
+public:
+    explicit FrustumLines(const QColor& color, Qt3DCore::QNode* parent = nullptr);
+
+    void setVertices(const std::vector<QVector3D>& vertices);
+
+private:
+    Qt3DCore::QBuffer* mVertexBuffer{ nullptr };
+};
+
+class FrustumTriangles : public Qt3DCore::QEntity
+{
+    Q_OBJECT
+public:
+    explicit FrustumTriangles(const QColor& color, Qt3DCore::QNode* parent = nullptr);
+
+    void setVertices(const std::vector<QVector3D>& vertices);
+
+private:
+    Qt3DCore::QBuffer* mVertexBuffer{ nullptr };
+};
+
 class Frustum : public Qt3DCore::QEntity
 {
     Q_OBJECT
 public:
-    explicit Frustum(const QColor& color, Qt3DCore::QNode* parent = nullptr);
+    explicit Frustum(const QColor& color, bool showTriangles, Qt3DCore::QNode* parent = nullptr);
 
     void setViewMatrix(const QMatrix4x4& viewMatrix);
     void setProjectionMatrix(const QMatrix4x4& projectionMatrix);
@@ -38,8 +62,8 @@ private:
     float m_convergence{ 1.0f };
     bool m_updateRequested{ false };
 
-    Qt3DCore::QBuffer* mVertexBuffer{ nullptr };
-    const QColor mColor;
+    FrustumLines* m_frustumLines{ nullptr };
+    FrustumTriangles* m_frustumTriangles{ nullptr };
 };
 
 } // namespace all::qt3d

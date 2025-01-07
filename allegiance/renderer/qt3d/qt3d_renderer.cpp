@@ -245,9 +245,9 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     // Frustums
     {
         m_frustumRect = new FrustumRect(root);
-        m_centerFrustum = new Frustum(QColor(Qt::white), root);
-        m_leftFrustum = new Frustum(QColor(Qt::red), root);
-        m_rightFrustum = new Frustum(QColor(Qt::blue), root);
+        m_centerFrustum = new Frustum(QColor(), false, root);
+        m_leftFrustum = new Frustum(QColor::fromRgb(0xff, 0x80, 0x80, 0x90), true, root);
+        m_rightFrustum = new Frustum(QColor::fromRgb(0x00, 0x80, 0xff, 0x90), true, root);
 
         m_frustumRect->addComponent(m_renderer->frustumLayer());
         m_centerFrustum->addComponent(m_renderer->frustumLayer());
