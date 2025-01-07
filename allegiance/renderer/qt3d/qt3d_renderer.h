@@ -93,7 +93,6 @@ private:
     CursorEntity* m_cursor;
     float cursor_scale = 1.0f;
     all::StereoCamera* m_stereoCamera;
-    all::DisplayMode m_displayMode = all::DisplayMode::Stereo;
     bool m_autoFocus{ false };
 
     Picker* m_picker;

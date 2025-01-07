@@ -1,5 +1,6 @@
 #pragma once
 #include <Qt3DRender/QRenderSurfaceSelector>
+#include <shared/stereo_camera.h>
 
 namespace Qt3DRender {
 class QCameraSelector;
@@ -25,7 +26,9 @@ public:
     explicit QStereoForwardRenderer(Qt3DCore::QNode* parent = nullptr);
 
 public:
+    void setCamera(QStereoProxyCamera* newCamera);
     inline QStereoProxyCamera* camera() const { return m_camera; }
+
     inline Qt3DRender::QCamera* frustumCamera() const { return m_frustumCamera; }
     inline Qt3DRender::QLayer* leftLayer() const { return m_leftLayer; }
     inline Qt3DRender::QLayer* rightLayer() const { return m_rightLayer; }
@@ -36,14 +39,18 @@ public:
     inline Qt3DRender::QLayer* focusAreaLayer() const { return m_focusAreaLayer; }
 
     void setMode(Mode mode);
+    inline Mode mode() const { return m_mode; }
 
-    void setCamera(QStereoProxyCamera* newCamera);
+    void setDisplayMode(all::DisplayMode displayMode);
+    inline all::DisplayMode displayMode() const { return m_displayMode; }
 
 Q_SIGNALS:
     void cameraChanged();
 
 private:
     Mode m_mode = Mode::Scene;
+    all::DisplayMode m_displayMode = all::DisplayMode::Stereo;
+
     Qt3DRender::QCameraSelector* m_leftCameraSelector;
     Qt3DRender::QCameraSelector* m_rightCameraSelector;
     Qt3DRender::QCameraSelector* m_leftFrustumCameraSelector;

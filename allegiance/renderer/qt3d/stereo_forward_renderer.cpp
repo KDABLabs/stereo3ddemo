@@ -211,6 +211,33 @@ void all::qt3d::QStereoForwardRenderer::setMode(Mode mode)
     m_mode = mode;
 }
 
+void all::qt3d::QStereoForwardRenderer::setDisplayMode(DisplayMode displayMode)
+{
+    m_displayMode = displayMode;
+
+    if (m_camera == nullptr)
+        return;
+
+    switch (m_displayMode) {
+    case all::DisplayMode::Stereo:
+        m_leftCameraSelector->setCamera(m_camera->leftCamera());
+        m_rightCameraSelector->setCamera(m_camera->rightCamera());
+        break;
+    case all::DisplayMode::Mono:
+        m_leftCameraSelector->setCamera(m_camera->centerCamera());
+        m_rightCameraSelector->setCamera(m_camera->centerCamera());
+        break;
+    case all::DisplayMode::Left:
+        m_leftCameraSelector->setCamera(m_camera->leftCamera());
+        m_rightCameraSelector->setCamera(m_camera->leftCamera());
+        break;
+    case all::DisplayMode::Right:
+        m_leftCameraSelector->setCamera(m_camera->rightCamera());
+        m_rightCameraSelector->setCamera(m_camera->rightCamera());
+        break;
+    }
+}
+
 void all::qt3d::QStereoForwardRenderer::setCamera(QStereoProxyCamera* newCamera)
 {
     if (m_camera == newCamera)
@@ -219,7 +246,6 @@ void all::qt3d::QStereoForwardRenderer::setCamera(QStereoProxyCamera* newCamera)
     Q_EMIT cameraChanged();
 
     if (m_camera) {
-        m_leftCameraSelector->setCamera(m_camera->leftCamera());
-        m_rightCameraSelector->setCamera(m_camera->rightCamera());
+        setDisplayMode(m_displayMode);
     }
 }

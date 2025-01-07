@@ -326,8 +326,8 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "cursor_type") {
         m_cursor->setType(std::any_cast<CursorType>(value));
     } else if (name == "display_mode") {
-        m_displayMode = std::any_cast<DisplayMode>(value);
-        viewChanged();
+        auto displayMode = std::any_cast<DisplayMode>(value);
+        m_renderer->setDisplayMode(displayMode);
     } else if (name == "frustum_view_enabled") {
         const bool frustumEnabled = std::any_cast<bool>(value);
         m_frustumRect->setEnabled(frustumEnabled);
