@@ -353,6 +353,16 @@ glm::vec3 Qt3DRenderer::cursorWorldPosition() const
     return toGlmVec3(m_cursor->position());
 }
 
+glm::vec3 Qt3DRenderer::sceneCenter() const
+{
+    return toGlmVec3(m_sceneCenter);
+}
+
+glm::vec3 Qt3DRenderer::sceneExtent() const
+{
+    return toGlmVec3(m_sceneExtent);
+}
+
 void Qt3DRenderer::loadImage(QUrl path)
 {
     QImageReader::setAllocationLimit(0);
@@ -582,12 +592,12 @@ void Qt3DRenderer::setupCameraBasedOnSceneExtent()
     m_nav_params->min_extent = toGlmVec3(ext.min);
     m_nav_params->max_extent = toGlmVec3(ext.max);
 
-    const QVector3D viewCenter = (ext.max + ext.min) * 0.5f;
-    const QVector3D extent = ext.max - ext.min;
-    const float radius = std::max(extent.x(), std::max(extent.y(), extent.z())) * 0.5f;
+    m_sceneCenter = (ext.max + ext.min) * 0.5f;
+    m_sceneExtent = ext.max - ext.min;
+    const float radius = std::max(m_sceneExtent.x(), std::max(m_sceneExtent.y(), m_sceneExtent.z())) * 0.5f;
 
-    const QVector3D cameraPosition = viewCenter - QVector3D(0.0f, 0.0f, 1.0f) * radius;
-    const QVector3D viewVector = viewCenter - cameraPosition;
+    const QVector3D cameraPosition = m_sceneCenter - QVector3D(0.0f, 0.0f, 1.0f) * radius;
+    const QVector3D viewVector = m_sceneCenter - cameraPosition;
 
     m_stereoCamera->setPosition(toGlmVec3(cameraPosition));
     m_stereoCamera->setForwardVector(toGlmVec3(viewVector.normalized()));
@@ -599,7 +609,7 @@ void Qt3DRenderer::setupCameraBasedOnSceneExtent()
     auto cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
     if (cam) {
         cam->setRadius(viewVector.length());
-        cam->setTarget(toGlmVec3(viewCenter));
+        cam->setTarget(toGlmVec3(m_sceneCenter));
         cam->rotate(glm::radians(45.0f), glm::radians(90.0f));
     }
 }

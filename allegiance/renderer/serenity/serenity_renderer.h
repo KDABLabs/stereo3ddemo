@@ -47,6 +47,8 @@ public:
     void screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in);
 
     glm::vec3 cursorWorldPosition() const;
+    glm::vec3 sceneCenter() const;
+    glm::vec3 sceneExtent() const;
 
     bool hoversFocusArea(int x, int y) const;
 

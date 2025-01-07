@@ -124,6 +124,16 @@ glm::vec3 SerenityRenderer::cursorWorldPosition() const
     return glm::vec3();
 }
 
+glm::vec3 SerenityRenderer::sceneCenter() const
+{
+    return glm::vec3();
+}
+
+glm::vec3 SerenityRenderer::sceneExtent() const
+{
+    return glm::vec3();
+}
+
 bool SerenityRenderer::hoversFocusArea(int x, int y) const
 {
     return false;

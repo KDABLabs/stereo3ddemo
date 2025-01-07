@@ -88,7 +88,32 @@ public:
                          });
         QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::scrollEvent,
                          [this](::QWheelEvent* e) {
-                             m_camera.zoom(e->angleDelta().y() / m_sceneController->mouseSensitivity());
+                             const glm::vec3 viewCenterBeforeZoom = m_camera.position() + m_camera.forwardVector() * m_camera.convergencePlaneDistance();
+
+                             const float distanceToCenter = glm::length(m_camera.position() - m_renderer->sceneCenter());
+                             const glm::vec3 sceneExtent = m_renderer->sceneExtent();
+                             const float maxExtent = std::max(sceneExtent[0], std::max(sceneExtent[1], sceneExtent[2]));
+                             const float minExtent = std::min(sceneExtent[0], std::min(sceneExtent[1], sceneExtent[2]));
+                             const float zoomCameraLimit = minExtent * 0.1f;
+                             // We reduce zoom as we get closer to the scene center
+                             const float correctionFactor = exp(std::clamp(distanceToCenter / maxExtent, 0.0f, 1.0f) - 1.0f);
+                             const float safeWheelDelta = std::clamp(float(e->angleDelta().y()), -20.0f, 20.0f); // Prevent dealing with too huge wheel deltas
+                             const float zoomFactor = safeWheelDelta / m_sceneController->mouseSensitivity() * correctionFactor;
+                             const float deltaLength = -1.0f * zoomFactor * distanceToCenter;
+
+                             // Check we don't try to zoom past scene center
+                             if (std::abs(distanceToCenter + deltaLength) < zoomCameraLimit)
+                                 return;
+
+                             m_camera.zoom(zoomFactor);
+
+                             if (!m_cameraController->autoFocus()) {
+                                 // Adjust convergence plane distance so that the viewCenter would remain at the same exact position after the zoom
+                                 const float distToOriginalViewCenter = glm::length(viewCenterBeforeZoom - m_camera.position());
+                                 const float normalizedNearFarPlaneDist = (distToOriginalViewCenter - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
+                                 const float focusDistancePercentage = normalizedNearFarPlaneDist * 100.0f;
+                                 m_cameraController->setFocusDistance(focusDistancePercentage);
+                             }
                          });
         QObject::connect(m_mainWindow, &MainWindow::onScreenshot,
                          [this]() {

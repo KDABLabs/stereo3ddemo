@@ -59,6 +59,8 @@ public:
 
     void propertyChanged(std::string_view name, std::any value);
     glm::vec3 cursorWorldPosition() const;
+    glm::vec3 sceneCenter() const;
+    glm::vec3 sceneExtent() const;
 
 private:
     static void addDirectionalLight(Qt3DCore::QNode* node, QVector3D position);
@@ -92,6 +94,8 @@ private:
     QStereoProxyCamera* m_camera;
     CursorEntity* m_cursor;
     float cursor_scale = 1.0f;
+    QVector3D m_sceneCenter;
+    QVector3D m_sceneExtent;
     all::StereoCamera* m_stereoCamera;
     bool m_autoFocus{ false };
 
