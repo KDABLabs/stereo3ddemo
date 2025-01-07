@@ -2,6 +2,7 @@
 #include "qt3d_cursor.h"
 #include "qt3d_materials.h"
 #include "qt3d_focusarea.h"
+#include "focus_plane_preview.h"
 #include "mesh_loader.h"
 #include "stereo_image_material.h"
 #include "stereo_image_mesh.h"
@@ -76,6 +77,11 @@ void Qt3DRenderer::viewChanged()
         frustumCamera->tiltAboutViewCenter(90.0f);
     }
 
+    // FocusPlanePreview
+    {
+        m_focusPlanePreview->setViewMatrix(m_camera->centerCamera()->viewMatrix());
+    }
+
     projectionChanged();
 }
 
@@ -131,6 +137,12 @@ void Qt3DRenderer::projectionChanged()
         if (m_autoFocus) {
             handleFocusForFocusArea();
         }
+    }
+
+    // FocusPlanePreview
+    {
+        m_focusPlanePreview->setProjectionMatrix(m_camera->centerCamera()->projectionMatrix());
+        m_focusPlanePreview->setConvergence(m_stereoCamera->convergencePlaneDistance());
     }
 }
 
@@ -241,6 +253,12 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
         QObject::connect(m_focusArea, &FocusArea::extentChanged, this, &Qt3DRenderer::handleFocusForFocusArea);
     }
 
+    // FocusPlanePreview
+    {
+        m_focusPlanePreview = new FocusPlanePreview(root);
+        m_focusPlanePreview->addComponent(m_renderer->sceneLayer());
+    }
+
     loadModel();
 
     m_view->setRootEntity(m_rootEntity.get());
@@ -303,6 +321,10 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->setCursorTintColor(QColor::fromRgbF(color[0], color[1], color[2], color[3]));
+    } else if (name == "show_focus_plane") {
+        const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
+        qDebug() << focusPlanePreviewEnabled;
+        m_focusPlanePreview->setEnabled(focusPlanePreviewEnabled);
     }
 }
 

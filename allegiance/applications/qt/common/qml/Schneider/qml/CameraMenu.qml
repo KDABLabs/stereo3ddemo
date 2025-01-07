@@ -126,6 +126,13 @@ ColumnLayout {
                                     "Shift + F2"]);
             }
 
+            CheckBoxX {
+                title: "Show Focus Plane"
+                initial: Camera.showFocusPlane
+                onChecked: checkValue => Camera.showFocusPlane = checkValue
+                ToolTip.text: "Shows the focus plane"
+            }
+
             SliderValue {
                 Layout.fillWidth: true
                 from: 0.1

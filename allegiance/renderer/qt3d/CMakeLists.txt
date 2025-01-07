@@ -42,6 +42,8 @@ target_sources(
            scene_mesh.h
            frustum.h
            frustum_rect.h
+           focus_plane_preview.h
+
     PRIVATE qt3d_renderer.cpp
             qt3d_cursor.cpp
             qt3d_materials.cpp
@@ -54,6 +56,7 @@ target_sources(
             stereo_proxy_camera.cpp
             frustum.cpp
             frustum_rect.cpp
+            focus_plane_preview.cpp
 )
 
 target_link_libraries(

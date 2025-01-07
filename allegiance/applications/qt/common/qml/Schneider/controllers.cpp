@@ -302,3 +302,16 @@ QColor CursorController::cursorTint() const
 {
     return m_tint;
 }
+
+bool CameraController::showFocusPlane() const
+{
+    return m_showFocusPlane;
+}
+
+void CameraController::setShowFocusPlane(bool newShowFocusPlane)
+{
+    if (m_showFocusPlane == newShowFocusPlane)
+        return;
+    m_showFocusPlane = newShowFocusPlane;
+    emit showFocusPlaneChanged(m_showFocusPlane);
+}

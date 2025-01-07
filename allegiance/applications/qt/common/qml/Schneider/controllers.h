@@ -46,6 +46,7 @@ class CameraController : public QObject
 
     Q_PROPERTY(bool autoFocus READ autoFocus WRITE setAutoFocus NOTIFY autoFocusChanged)
     Q_PROPERTY(bool showAutoFocusArea READ showAutoFocusArea WRITE setShowAutoFocusArea NOTIFY showAutoFocusAreaChanged)
+    Q_PROPERTY(bool showFocusPlane READ showFocusPlane WRITE setShowFocusPlane NOTIFY showFocusPlaneChanged)
     Q_PROPERTY(float focusDistance READ focusDistance WRITE setFocusDistance NOTIFY focusDistanceChanged)
     Q_PROPERTY(float popOut READ popOut WRITE setPopOut NOTIFY popOutChanged)
 
@@ -124,6 +125,9 @@ public:
     inline static float MinFocusDistance = 0.1f;
     inline static float MaxFocusDistance = 100.0f;
 
+    bool showFocusPlane() const;
+    void setShowFocusPlane(bool newShowFocusPlane);
+
 Q_SIGNALS:
     void eyeDistanceChanged(float);
     void flippedChanged(bool);
@@ -137,6 +141,7 @@ Q_SIGNALS:
     void popOutChanged(float);
     void autoFocusChanged(bool);
     void showAutoFocusAreaChanged(bool);
+    void showFocusPlaneChanged(bool);
 
     void fovChanged(float);
     void fovByPhysicalDimChanged(bool);
@@ -163,6 +168,7 @@ private:
     float m_screenHeight = 1.0f;
     float m_viewerDistance = 1.0f;
     bool m_separationBasedOnFocusDistance = false;
+    bool m_showFocusPlane = false;
 };
 
 class CursorController : public QObject

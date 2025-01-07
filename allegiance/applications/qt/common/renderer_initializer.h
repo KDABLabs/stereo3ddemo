@@ -263,6 +263,9 @@ public:
         QObject::connect(m_cameraController, &CameraController::showAutoFocusAreaChanged, [this](bool enabled) {
             m_renderer->propertyChanged("show_focus_area", enabled);
         });
+        QObject::connect(m_cameraController, &CameraController::showFocusPlaneChanged, [this](bool enabled) {
+            m_renderer->propertyChanged("show_focus_plane", enabled);
+        });
         QObject::connect(m_cameraController, &CameraController::autoFocusChanged, [this](bool enabled) {
             m_renderer->propertyChanged("auto_focus", enabled);
         });
@@ -321,6 +324,7 @@ public:
         m_camera.setFlipped(m_cameraController->flipped());
         m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
         m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea());
+        m_renderer->propertyChanged("show_focus_plane", m_cameraController->showFocusPlane());
         m_renderer->propertyChanged("auto_focus", m_cameraController->autoFocus());
         m_renderer->propertyChanged("display_mode", all::DisplayMode(m_cameraController->displayMode()));
         m_mouseInputTracker.cursor_changes_focus = !m_cameraController->autoFocus();

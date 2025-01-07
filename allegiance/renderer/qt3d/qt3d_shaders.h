@@ -543,6 +543,30 @@ void main()
 }
 )";
 
+constexpr std::string_view focus_plane_preview_vs = R"(
+#version 150 core
+
+in vec3 vertexPosition;
+
+uniform mat4 mvp;
+
+void main(void)
+{
+    gl_Position = mvp * vec4(vertexPosition, 1.0);
+}
+)";
+
+constexpr std::string_view focus_plane_preview_ps = R"(
+#version 150 core
+
+out vec4 fragColor;
+
+void main()
+{
+    fragColor = vec4(1.0, 1.0, 1.0, 0.5);
+}
+)";
+
 struct shader_uniforms {
     QVector3D normalScaling{ 1, 1, 1 };
     QVector3D semInner{ 0, 0, 0 };

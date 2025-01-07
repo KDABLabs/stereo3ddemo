@@ -25,10 +25,10 @@ struct StereoCamera;
 
 namespace all::qt3d {
 class CursorEntity;
-class Picker;
 class Frustum;
 class FrustumRect;
 class FocusArea;
+class FocusPlanePreview;
 
 class Qt3DRenderer : public QObject
 {
@@ -108,6 +108,7 @@ private:
     Frustum* m_rightFrustum{ nullptr };
 
     FocusArea* m_focusArea{ nullptr };
+    FocusPlanePreview* m_focusPlanePreview{ nullptr };
 
     static constexpr size_t AFSamplesY = 2;
     static constexpr size_t AFSamplesX = 2;
