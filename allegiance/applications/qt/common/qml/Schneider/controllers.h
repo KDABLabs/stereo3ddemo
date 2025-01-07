@@ -41,7 +41,7 @@ class CameraController : public QObject
     Q_PROPERTY(bool separationBasedOnFocusDistance READ separationBasedOnFocusDistance WRITE setSeparationBasedOnFocusDistance NOTIFY separationBasedOnFocusDistanceChanged)
 
     Q_PROPERTY(bool frustumViewEnabled READ frustumViewEnabled WRITE setFrustumViewEnabled NOTIFY frustumViewEnabledChanged)
-    Q_PROPERTY(CameraMode cameraMode READ cameraMode WRITE setCameraMode NOTIFY cameraModeChanged)
+    Q_PROPERTY(DisplayMode displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(StereoMode stereoMode READ stereoMode WRITE setStereoMode NOTIFY stereoModeChanged)
 
     Q_PROPERTY(bool autoFocus READ autoFocus WRITE setAutoFocus NOTIFY autoFocusChanged)
@@ -58,13 +58,13 @@ class CameraController : public QObject
     QML_NAMED_ELEMENT(Camera)
 
 public:
-    enum class CameraMode {
-        Stereo = int(all::CameraMode::Stereo),
-        Mono = int(all::CameraMode::Mono),
-        Left = int(all::CameraMode::Left),
-        Right = int(all::CameraMode::Right)
+    enum class DisplayMode {
+        Stereo = int(all::DisplayMode::Stereo),
+        Mono = int(all::DisplayMode::Mono),
+        Left = int(all::DisplayMode::Left),
+        Right = int(all::DisplayMode::Right)
     };
-    Q_ENUM(CameraMode);
+    Q_ENUM(DisplayMode);
 
     enum class StereoMode {
         ToeIn = int(all::StereoCamera::Mode::ToeIn),
@@ -91,8 +91,8 @@ public:
     void setFlipped(bool flipped);
     bool flipped() const;
 
-    void setCameraMode(CameraMode mode);
-    CameraMode cameraMode() const;
+    void setDisplayMode(DisplayMode mode);
+    DisplayMode displayMode() const;
 
     StereoMode stereoMode() const;
     void setStereoMode(StereoMode newStereoMode);
@@ -129,7 +129,7 @@ Q_SIGNALS:
     void flippedChanged(bool);
     void separationBasedOnFocusDistanceChanged(bool);
 
-    void cameraModeChanged(CameraMode);
+    void displayModeChanged(DisplayMode);
     void stereoModeChanged(StereoMode);
     void frustumViewEnabledChanged(bool);
 
@@ -149,7 +149,7 @@ private:
     float m_eyeDistance = 0.06f;
     bool m_flipped = false;
 
-    CameraMode m_cameraMode = CameraMode::Stereo;
+    DisplayMode m_displayMode = DisplayMode::Stereo;
     StereoMode m_stereoMode = StereoMode::AsymmetricFrustum;
     bool m_frustumViewEnabled = true;
 

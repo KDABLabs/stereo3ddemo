@@ -226,8 +226,8 @@ public:
         QObject::connect(m_cameraController, &CameraController::eyeDistanceChanged, [this](float v) {
             m_camera.setInterocularDistance(v);
         });
-        QObject::connect(m_cameraController, &CameraController::cameraModeChanged, [this](CameraController::CameraMode v) {
-            m_renderer->propertyChanged("camera_mode", all::CameraMode(v));
+        QObject::connect(m_cameraController, &CameraController::displayModeChanged, [this](CameraController::DisplayMode v) {
+            m_renderer->propertyChanged("display_mode", all::DisplayMode(v));
         });
         QObject::connect(m_cameraController, &CameraController::stereoModeChanged, [this](CameraController::StereoMode v) {
             m_camera.setMode(all::StereoCamera::Mode(v));
@@ -297,7 +297,7 @@ public:
         m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
         m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea());
         m_renderer->propertyChanged("auto_focus", m_cameraController->autoFocus());
-        m_renderer->propertyChanged("camera_mode", all::CameraMode(m_cameraController->cameraMode()));
+        m_renderer->propertyChanged("display_mode", all::DisplayMode(m_cameraController->displayMode()));
         m_mouseInputTracker.cursor_changes_focus = !m_cameraController->autoFocus();
     }
 

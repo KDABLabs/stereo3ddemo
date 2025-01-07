@@ -198,17 +198,17 @@ CameraController::StereoMode CameraController::stereoMode() const
     return m_stereoMode;
 }
 
-void CameraController::setCameraMode(CameraMode mode)
+void CameraController::setDisplayMode(DisplayMode mode)
 {
-    if (m_cameraMode == mode)
+    if (m_displayMode == mode)
         return;
-    m_cameraMode = mode;
-    Q_EMIT cameraModeChanged(mode);
+    m_displayMode = mode;
+    Q_EMIT displayModeChanged(mode);
 }
 
-CameraController::CameraMode CameraController::cameraMode() const
+CameraController::DisplayMode CameraController::displayMode() const
 {
-    return m_cameraMode;
+    return m_displayMode;
 }
 
 bool CameraController::fovByPhysicalDim() const

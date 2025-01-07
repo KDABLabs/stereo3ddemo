@@ -6,7 +6,7 @@
 
 namespace all {
 // The camera is always stereo, this enum is used to determine which eye to render
-enum class CameraMode {
+enum class DisplayMode {
     Stereo,
     Mono,
     Left,

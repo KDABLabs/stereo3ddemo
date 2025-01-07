@@ -90,8 +90,8 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
         m_pickingLayer->setScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
         m_pickingLayer->setTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->transform());
-    } else if (name == "camera_mode") {
-        m_cameraMode = std::any_cast<CameraMode>(value);
+    } else if (name == "display_mode") {
+        m_displayMode = std::any_cast<DisplayMode>(value);
         viewChanged();
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
@@ -131,17 +131,17 @@ bool SerenityRenderer::hoversFocusArea(int x, int y) const
 
 void SerenityRenderer::viewChanged()
 {
-    switch (m_cameraMode) {
-    case CameraMode::Mono:
+    switch (m_displayMode) {
+    case DisplayMode::Mono:
         m_camera->setMatrices(camera.viewCenter(), camera.viewCenter(), camera.viewCenter());
         break;
-    case CameraMode::Stereo:
+    case DisplayMode::Stereo:
         m_camera->setMatrices(camera.viewLeft(), camera.viewRight(), camera.viewCenter());
         break;
-    case CameraMode::Left:
+    case DisplayMode::Left:
         m_camera->setMatrices(camera.viewLeft(), camera.viewLeft(), camera.viewCenter());
         break;
-    case CameraMode::Right:
+    case DisplayMode::Right:
         m_camera->setMatrices(camera.viewRight(), camera.viewRight(), camera.viewCenter());
         break;
     }

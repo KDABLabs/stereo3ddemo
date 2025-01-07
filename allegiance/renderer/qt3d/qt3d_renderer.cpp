@@ -325,8 +325,8 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
         m_cursor->setScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
         m_cursor->setType(std::any_cast<CursorType>(value));
-    } else if (name == "camera_mode") {
-        m_cameraMode = std::any_cast<CameraMode>(value);
+    } else if (name == "display_mode") {
+        m_displayMode = std::any_cast<DisplayMode>(value);
         viewChanged();
     } else if (name == "frustum_view_enabled") {
         const bool frustumEnabled = std::any_cast<bool>(value);

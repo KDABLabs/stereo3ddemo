@@ -71,17 +71,17 @@ ColumnLayout {
         ComboBox {
             Layout.fillWidth: true
             model: [
-                { value: Camera.CameraMode.Stereo, text: "Stereo" },
-                { value: Camera.CameraMode.Mono, text: "Mono" },
-                { value: Camera.CameraMode.Left, text: "Left Eye" },
-                { value: Camera.CameraMode.Right, text: "Right Eye"}
+                { value: Camera.DisplayMode.Stereo, text: "Stereo" },
+                { value: Camera.DisplayMode.Mono, text: "Mono" },
+                { value: Camera.DisplayMode.Left, text: "Left Eye" },
+                { value: Camera.DisplayMode.Right, text: "Right Eye"}
             ]
             textRole: "text"
             valueRole: "value"
-            currentIndex: Camera.cameraMode
+            currentIndex: Camera.displayMode
             onCurrentIndexChanged: {
-                if (currentIndex !== -1 && Camera.cameraMode != currentIndex) {
-                    Camera.cameraMode = currentIndex;
+                if (currentIndex !== -1 && Camera.displayMode != currentIndex) {
+                    Camera.displayMode = currentIndex;
                 }
             }
             Layout.columnSpan: 2
