@@ -74,7 +74,7 @@ private:
 class CursorEntity : public Qt3DCore::QEntity
 {
 public:
-    CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, all::StereoCamera* pCamera);
+    CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window);
 
 public:
     void setPosition(const QVector3D& positionInScene);
@@ -87,8 +87,6 @@ public:
     void setCursorTintColor(const QColor& color);
 
 public:
-    void onMouseMoveEvent(QVector3D pos, QPoint cursorPosition);
-
     void onProjectionMatrixChanged(const QMatrix4x4& matrix)
     {
         m_projectionMatrix = matrix;
@@ -122,8 +120,6 @@ protected:
     CursorSphere* m_sphere;
     CursorCross* m_cross;
     CursorBillboard* m_billboard;
-
-    Qt3DRender::QScreenRayCaster* m_raycaster;
 
     Qt3DCore::QTransform* m_transform;
     const Qt3DCore::QEntity* m_camera;

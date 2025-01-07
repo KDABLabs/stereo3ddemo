@@ -81,25 +81,26 @@ protected:
 
 private:
     void afRaycasterHitResult(size_t idx, const Qt3DRender::QAbstractRayCaster::Hits& hits);
+    void cursorHitResult(const Qt3DRender::QAbstractRayCaster::Hits& hits);
 
     Qt3DExtras::Qt3DWindow* m_view{ nullptr };
     std::unique_ptr<Qt3DCore::QEntity> m_rootEntity;
     Qt3DCore::QEntity* m_sceneEntity = nullptr;
     Qt3DCore::QEntity* m_userEntity = nullptr;
     Qt3DCore::QEntity* m_skyBox = nullptr;
-    Qt3DRender::QRayCaster* m_raycaster;
+    Qt3DRender::QScreenRayCaster* m_cursorRaycaster;
 
     std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
     QStereoForwardRenderer* m_renderer;
     QStereoProxyCamera* m_camera;
     CursorEntity* m_cursor;
+
     float cursor_scale = 1.0f;
     QVector3D m_sceneCenter;
     QVector3D m_sceneExtent;
     all::StereoCamera* m_stereoCamera;
     bool m_autoFocus{ false };
 
-    Picker* m_picker;
     std::shared_ptr<all::ModelNavParameters> m_nav_params;
 
     FrustumRect* m_frustumRect{ nullptr };

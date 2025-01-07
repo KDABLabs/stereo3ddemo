@@ -1,8 +1,4 @@
 #include "qt3d_cursor.h"
-#include "qt3d_cursor.h"
-#include "qt3d_cursor.h"
-#include "qt3d_cursor.h"
-#include "qt3d_cursor.h"
 #include "shared/stereo_camera.h"
 #include "util_qt.h"
 
@@ -21,25 +17,9 @@
 #include <Qt3DRender/QRayCaster>
 #include <qlogging.h>
 #include <qquaternion.h>
-#include <ranges>
 
 using namespace all::qt3d;
 using namespace Qt3DRender;
-
-// Function to convert screen coordinates to world coordinates
-static glm::vec3 screenToWorld(const QPoint& cursorPos, const QSize& frameSize, const QMatrix4x4& viewMatrix, const QMatrix4x4& projectionMatrix)
-{
-    // Convert cursor position to NDC
-    float x = (2.0f * cursorPos.x()) / frameSize.width() - 1.0f;
-    float y = 1.0f - (2.0f * cursorPos.y()) / frameSize.height();
-
-    // Direction vector in view space
-    glm::vec4 rayView(x, y, -1.0f, 1.0f);
-
-    // Convert view space to world space
-    glm::vec4 rayWorld = glm::inverse(toGlmMat4x4(viewMatrix) * toGlmMat4x4(projectionMatrix)) * (rayView);
-    return glm::normalize(glm::vec3(rayWorld));
-}
 
 CursorBillboard::CursorBillboard(QNode* parent)
     : Qt3DCore::QEntity(parent)
@@ -127,7 +107,7 @@ CursorSphere::CursorSphere(QNode* parent)
     addComponent(material);
 }
 
-void all::qt3d::CursorSphere::setCursorTintColor(const QColor& color)
+void CursorSphere::setCursorTintColor(const QColor& color)
 {
     m_material->setAmbient(color);
 }
@@ -167,12 +147,12 @@ CursorCross::CursorCross(QNode* parent)
     m_material = material;
 }
 
-void all::qt3d::CursorCross::setCursorTintColor(const QColor& color)
+void CursorCross::setCursorTintColor(const QColor& color)
 {
     m_material->setAmbient(color);
 }
 
-all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window, all::StereoCamera* pCamera)
+CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window)
     : QEntity(parent)
 {
 
@@ -192,34 +172,9 @@ all::qt3d::CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* 
     m_billboard = new CursorBillboard{ this };
     m_sphere = new CursorSphere{ this };
     m_cross = new CursorCross{ this };
-
-    m_raycaster = new Qt3DRender::QScreenRayCaster{ scene };
-    m_raycaster->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
-    connect(m_raycaster, &QRayCaster::hitsChanged,
-            [this, pCamera](const Qt3DRender::QRayCaster::Hits& hits) {
-                auto filteredHits = hits | std::ranges::views::filter([this](const QRayCasterHit& hit) {
-                                        return hit.entity() != m_sphere && hit.entity() != m_billboard;
-                                    });
-                auto nearestHitIterator = std::ranges::min_element(filteredHits, {}, &QRayCasterHit::distance);
-                if (nearestHitIterator == filteredHits.end()) {
-                    auto frame = m_window->frameGeometry();
-                    auto cursorPos = m_window->mapFromGlobal(m_window->cursor().pos());
-                    auto unv = glm::unProject(glm::vec3(cursorPos.x(), frame.height() - cursorPos.y(), 1.0f),
-                                              pCamera->viewCenter(),
-                                              pCamera->projection(),
-                                              glm::vec4{ frame.x(), frame.y(), frame.width(), frame.height() });
-                    auto pos = glm::inverse(pCamera->viewCenter()) * glm::vec4(0, 0, 0, 1);
-                    setPosition(toQVector3D(glm::vec3(pos) + 0.1f * (unv - glm::vec3(pos))));
-                    return;
-                }
-                setPosition(nearestHitIterator->worldIntersection());
-            });
-
-    m_raycaster->setEnabled(true);
-    scene->addComponent(m_raycaster);
 }
 
-void all::qt3d::CursorEntity::setType(CursorType type)
+void CursorEntity::setType(CursorType type)
 {
     switch (type) {
     default:
@@ -249,14 +204,14 @@ void all::qt3d::CursorEntity::setType(CursorType type)
     }
 }
 
-void all::qt3d::CursorEntity::setCursorTintColor(const QColor& color)
+void CursorEntity::setCursorTintColor(const QColor& color)
 {
     m_billboard->setCursorTintColor(color);
     m_sphere->setCursorTintColor(color);
     m_cross->setCursorTintColor(color);
 }
 
-void all::qt3d::CursorEntity::setPosition(const QVector3D& positionInScene)
+void CursorEntity::setPosition(const QVector3D& positionInScene)
 {
     m_transform->setTranslation(positionInScene);
     updateSize();
@@ -267,7 +222,7 @@ QVector3D CursorEntity::position() const
     return m_transform->translation();
 }
 
-void all::qt3d::CursorEntity::setCamera(const QEntity* camera)
+void CursorEntity::setCamera(const QEntity* camera)
 {
     m_camera = camera;
     m_cameraLens = nullptr;
@@ -289,7 +244,7 @@ void all::qt3d::CursorEntity::setCamera(const QEntity* camera)
             this, &CursorEntity::onCameraTransformChanged);
 }
 
-void all::qt3d::CursorEntity::updateSize()
+void CursorEntity::updateSize()
 {
     constexpr float cursor_size = 0.06f;
     int targetSize = 20;
@@ -309,8 +264,4 @@ void all::qt3d::CursorEntity::updateSize()
     QQuaternion rotationToFaceTarget = QQuaternion::fromDirection(direction, cameraUp);
 
     m_billboard->setRotation(rotationToFaceTarget);
-}
-void CursorEntity::onMouseMoveEvent(QVector3D pos, QPoint cursorPosition)
-{
-    this->m_raycaster->trigger(cursorPosition);
 }

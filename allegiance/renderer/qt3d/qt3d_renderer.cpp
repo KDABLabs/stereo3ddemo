@@ -32,6 +32,8 @@
 #include <shared/stereo_camera.h>
 #include <QTimer>
 
+#include <ranges>
+
 namespace all::qt3d {
 
 Qt3DRenderer::Qt3DRenderer(Qt3DExtras::Qt3DWindow* view,
@@ -163,39 +165,6 @@ void Qt3DRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_pa
     m_camera = new QStereoProxyCamera(m_rootEntity.get());
     m_renderer->setCamera(m_camera);
 
-    m_raycaster = new Qt3DRender::QRayCaster{ m_rootEntity.get() };
-    m_raycaster->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
-    m_raycaster->setDirection(QVector3D(0.0f, 0.0f, 1.0f)); // Set your own direction
-    m_raycaster->setOrigin(QVector3D(0.0f, 0.01f, 0.0f)); // Set your own position
-    QObject::connect(m_raycaster, &QRayCaster::hitsChanged,
-                     [](const Qt3DRender::QRayCaster::Hits& hits) {
-                         if (hits.empty())
-                             return;
-                     });
-
-    m_raycaster->setEnabled(true);
-    m_rootEntity->addComponent(m_raycaster);
-
-    auto ent = m_rootEntity.get();
-
-    if (m_nav_params)
-        m_nav_params->hit_test = [this](glm::vec3 pos, glm::vec3 dir) {
-            this->m_raycaster->trigger(toQVector3D(pos), toQVector3D(dir), 1000);
-
-            auto hits = this->m_raycaster->pick(toQVector3D(pos), toQVector3D(dir), 100);
-
-            if (hits.isEmpty()) {
-                return glm::vec3{ -1 };
-            }
-
-            // Use std::min_element along with a lambda function to find the minimum distance
-            auto nearestHitIterator = std::min_element(hits.begin(), hits.end(),
-                                                       [](const QRayCasterHit& a, const QRayCasterHit& b) {
-                                                           return a.distance() < b.distance();
-                                                       });
-
-            return toGlmVec3(nearestHitIterator->worldIntersection());
-        };
     createScene(m_rootEntity.get());
 }
 
@@ -204,13 +173,26 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     m_sceneEntity = new Qt3DCore::QEntity{ m_rootEntity.get() };
     m_sceneEntity->setObjectName("SceneEntity");
     m_sceneEntity->addComponent(m_renderer->sceneLayer());
+
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
 
-    m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->leftCamera(), m_view, m_stereoCamera);
+    m_cursor = new CursorEntity(m_rootEntity.get(), m_sceneEntity, m_camera->leftCamera(), m_view);
     m_cursor->setObjectName("CursorEntity");
     m_cursor->addComponent(m_renderer->cursorLayer());
     m_cursor->setType(CursorType::Ball);
+
+    m_cursorRaycaster = new Qt3DRender::QScreenRayCaster{ m_sceneEntity };
+    m_cursorRaycaster->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
+    m_cursorRaycaster->setFilterMode(Qt3DRender::QScreenRayCaster::DiscardAnyMatchingLayers);
+    m_cursorRaycaster->addLayer(m_renderer->stereoImageLayer());
+    m_cursorRaycaster->addLayer(m_renderer->leftLayer());
+    m_cursorRaycaster->addLayer(m_renderer->rightLayer());
+    m_cursorRaycaster->addLayer(m_renderer->frustumLayer());
+    m_cursorRaycaster->addLayer(m_renderer->cursorLayer());
+    m_cursorRaycaster->addLayer(m_renderer->focusAreaLayer());
+    m_sceneEntity->addComponent(m_cursorRaycaster);
+    QObject::connect(m_cursorRaycaster, &Qt3DRender::QScreenRayCaster::hitsChanged, this, &Qt3DRenderer::cursorHitResult);
 
     // Frustums
     {
@@ -604,15 +586,14 @@ void Qt3DRenderer::handleFocusForFocusArea()
 
     for (size_t y = 0; y < AFSamplesY; ++y) {
         QVector3D p;
-        float yPos = center.y() + ((float(y) / AFSamplesY) - 1.0f) * (extent.y() * 0.5f);
-        // To OpenGL Y
-        yPos = m_view->height() - yPos;
+        const float yPos = center.y() + ((float(y) / AFSamplesY) - 1.0f) * (extent.y() * 0.5f);
         for (size_t x = 0; x < AFSamplesX; ++x) {
             const float xPos = center.x() + ((float(x) / AFSamplesX) - 1.0f) * (extent.x() * 0.5f);
 
             const size_t rayCasterIdx = y * AFSamplesX + x;
             assert(rayCasterIdx < m_afRayCasters.size());
             m_lastAfHitDistances[rayCasterIdx] = 0.0f;
+            // Note: ScreenRayCaster takes care of Qt -> OpenGL Y coordinate conversion
             m_afRayCasters[rayCasterIdx]->trigger({ int(xPos), int(yPos) });
         }
     }
@@ -623,8 +604,12 @@ void Qt3DRenderer::afRaycasterHitResult(size_t idx, const Qt3DRender::QAbstractR
     float nearestHitDistanceFromCamera = std::numeric_limits<float>::max();
 
     // Average result of hits distance (or we could keep smallest one)
-    for (const auto& hit : hits)
+    for (const auto& hit : hits) {
+        // Check we didn't hit the focus plane (which is in the sceneLayer like the rest of the entities we want to pick against)
+        if (hit.entity() == m_focusPlanePreview)
+            continue;
         nearestHitDistanceFromCamera = std::min(hit.distance(), nearestHitDistanceFromCamera);
+    }
 
     if (nearestHitDistanceFromCamera < std::numeric_limits<float>::max())
         m_lastAfHitDistances[idx] = nearestHitDistanceFromCamera;
@@ -655,9 +640,32 @@ void Qt3DRenderer::afRaycasterHitResult(size_t idx, const Qt3DRender::QAbstractR
     }
 }
 
+void Qt3DRenderer::cursorHitResult(const Qt3DRender::QAbstractRayCaster::Hits& hits)
+{
+    // Check we didn't hit the focus plane (which is in the sceneLayer like the rest of the entities we want to pick against)
+    auto filteredHits = hits | std::ranges::views::filter([this](const Qt3DRender::QRayCasterHit& hit) {
+                            return hit.entity() != m_focusPlanePreview;
+                        });
+    auto nearestHitIterator = std::ranges::min_element(filteredHits, {}, &Qt3DRender::QRayCasterHit::distance);
+
+    if (nearestHitIterator == filteredHits.end()) {
+        auto frame = m_view->frameGeometry();
+        auto cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
+        const QVector3D cursorScreenPos(cursorPos.x(), frame.height() - cursorPos.y(), 1.0f);
+        const QVector3D unv = cursorScreenPos.unproject(m_camera->centerCamera()->viewMatrix(),
+                                                        m_camera->centerCamera()->projectionMatrix(),
+                                                        QRect{ frame.x(), frame.y(), frame.width(), frame.height() });
+        m_cursor->setPosition(m_camera->centerCamera()->position() + 0.1f * (unv - m_camera->centerCamera()->position()));
+        return;
+    }
+    m_cursor->setPosition(nearestHitIterator->worldIntersection());
+}
+
 void Qt3DRenderer::updateMouse()
 {
-    m_cursor->onMouseMoveEvent(toQVector3D(m_stereoCamera->position()), m_view->mapFromGlobal(m_view->cursor().pos()));
+    // Note: ScreenRayCaster takes care of Qt -> OpenGL Y coordinate conversion
+    const QPoint cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
+    m_cursorRaycaster->trigger(cursorPos);
 }
 
 } // namespace all::qt3d

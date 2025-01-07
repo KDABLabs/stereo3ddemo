@@ -51,6 +51,7 @@ private:
     Mode m_mode = Mode::Scene;
     all::DisplayMode m_displayMode = all::DisplayMode::Stereo;
 
+    Qt3DRender::QCameraSelector* m_centerCameraSelector;
     Qt3DRender::QCameraSelector* m_leftCameraSelector;
     Qt3DRender::QCameraSelector* m_rightCameraSelector;
     Qt3DRender::QCameraSelector* m_leftFrustumCameraSelector;
@@ -69,6 +70,7 @@ private:
     QStereoProxyCamera* m_camera;
     Qt3DRender::QCamera* m_frustumCamera;
 
+    Qt3DRender::QLayerFilter* m_centerLayerFilter;
     Qt3DRender::QLayerFilter* m_leftLayerFilter;
     Qt3DRender::QLayerFilter* m_rightLayerFilter;
     Qt3DRender::QLayerFilter* m_frustumLayerFilter;

@@ -16,6 +16,7 @@
 #include <Qt3DRender/QDepthTest>
 #include <Qt3DRender/QDebugOverlay>
 #include <Qt3DRender/QCamera>
+#include <Qt3DRender/QNoPicking>
 
 all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* parent)
     : Qt3DRender::QRenderSurfaceSelector(parent)
@@ -37,6 +38,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     m_focusAreaLayer->setObjectName(QStringLiteral("FocusAreaLayer"));
 
     auto vp = new Qt3DRender::QViewport();
+    auto noPicking = new Qt3DRender::QNoPicking();
 
     // Frame graph sub branch for the 3D scene
     auto renderStateSet = new Qt3DRender::QRenderStateSet();
@@ -48,6 +50,17 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     auto depthTest = new Qt3DRender::QDepthTest(renderStateSet);
     depthTest->setDepthFunction(Qt3DRender::QDepthTest::Less);
     renderStateSet->addRenderState(depthTest);
+
+    // CenterLayerFilter is used to perform scene picking (and we want to discard everything but the sceneLayer)
+    m_centerLayerFilter = new Qt3DRender::QLayerFilter();
+    m_centerLayerFilter->setObjectName("CenterLayerFilter");
+    m_centerLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::DiscardAnyMatchingLayers);
+    m_centerLayerFilter->addLayer(m_stereoImageLayer);
+    m_centerLayerFilter->addLayer(m_leftLayer);
+    m_centerLayerFilter->addLayer(m_rightLayer);
+    m_centerLayerFilter->addLayer(m_frustumLayer);
+    m_centerLayerFilter->addLayer(m_cursorLayer);
+    m_centerLayerFilter->addLayer(m_focusAreaLayer);
 
     m_leftLayerFilter = new Qt3DRender::QLayerFilter();
     m_leftLayerFilter->setObjectName("LeftLayerFilter");
@@ -63,6 +76,14 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
 
     auto* sortPolicy = new Qt3DRender::QSortPolicy();
     sortPolicy->setSortTypes(QList<Qt3DRender::QSortPolicy::SortType>{ Qt3DRender::QSortPolicy::BackToFront });
+
+    auto makeCenterCameraPickingBranch = [&]() {
+        auto* cameraSelector = new Qt3DRender::QCameraSelector();
+        auto* noDraw = new Qt3DRender::QNoDraw();
+        noDraw->setParent(cameraSelector);
+
+        return cameraSelector;
+    };
 
     auto makeRenderTarget = [&](Qt3DRender::QRenderTargetOutput::AttachmentPoint attachment) {
         auto* output = new Qt3DRender::QRenderTargetOutput;
@@ -119,6 +140,8 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     Qt3DRender::QRenderTarget* leftRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Left);
     Qt3DRender::QRenderTarget* rightRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Right);
 
+    m_centerCameraSelector = makeCenterCameraPickingBranch();
+    m_centerCameraSelector->setObjectName("CenterCamera");
     m_leftCameraSelector = makeCameraSelectorForSceneBranch(leftRt);
     m_leftCameraSelector->setObjectName("LeftCamera");
     m_rightCameraSelector = makeCameraSelectorForSceneBranch(rightRt);
@@ -167,8 +190,13 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     // Hierarchy
     vp->setParent(this);
 
-    // Scene Render Branch
-    sortPolicy->setParent(vp);
+    // Scene Picking Branch (no render)
+    m_centerLayerFilter->setParent(vp);
+    m_centerCameraSelector->setParent(m_centerLayerFilter);
+
+    // Scene Render Branch (no picking)
+    noPicking->setParent(vp);
+    sortPolicy->setParent(noPicking);
     renderStateSet->setParent(sortPolicy);
     // Left Eye
     m_leftLayerFilter->setParent(renderStateSet);
@@ -178,8 +206,8 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     m_rightCameraSelector->setParent(m_rightLayerFilter);
 
     // Frustum Overlay
-    m_leftFrustumCameraSelector->setParent(vp);
-    m_rightFrustumCameraSelector->setParent(vp);
+    m_leftFrustumCameraSelector->setParent(noPicking);
+    m_rightFrustumCameraSelector->setParent(noPicking);
 
 #ifdef QT_DEBUG
     auto* debugOverlay = new Qt3DRender::QDebugOverlay();
@@ -217,6 +245,8 @@ void all::qt3d::QStereoForwardRenderer::setDisplayMode(DisplayMode displayMode)
 
     if (m_camera == nullptr)
         return;
+
+    m_centerCameraSelector->setCamera(m_camera->centerCamera());
 
     switch (m_displayMode) {
     case all::DisplayMode::Stereo:
