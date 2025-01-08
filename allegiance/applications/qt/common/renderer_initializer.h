@@ -233,13 +233,14 @@ public:
 
             if (m_cameraController->separationBasedOnFocusDistance()) {
                 // Set Eye Separation to 1/30th of focus distance if enabled
-                m_cameraController->setEyeDistance(m_camera.convergencePlaneDistance() / 30.0f);
+                m_cameraController->setEyeDistance(m_camera.convergencePlaneDistance() / m_cameraController->separationBasedOnFocusDistanceDivider());
             }
         };
 
         QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, updateFocusDistance);
         QObject::connect(m_cameraController, &CameraController::popOutChanged, updateFocusDistance);
         QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceChanged, updateFocusDistance);
+        QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceDividerChanged, updateFocusDistance);
 
         QObject::connect(m_cameraController, &CameraController::fovChanged, [this](float v) {
             m_camera.setFov(v);

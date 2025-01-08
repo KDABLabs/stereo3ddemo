@@ -315,3 +315,16 @@ void CameraController::setShowFocusPlane(bool newShowFocusPlane)
     m_showFocusPlane = newShowFocusPlane;
     emit showFocusPlaneChanged(m_showFocusPlane);
 }
+
+int CameraController::separationBasedOnFocusDistanceDivider() const
+{
+    return m_separationBasedOnFocusDistanceDivider;
+}
+
+void CameraController::setSeparationBasedOnFocusDistanceDivider(int newSeparationBasedOnFocusDistanceDivider)
+{
+    if (m_separationBasedOnFocusDistanceDivider == newSeparationBasedOnFocusDistanceDivider)
+        return;
+    m_separationBasedOnFocusDistanceDivider = newSeparationBasedOnFocusDistanceDivider;
+    emit separationBasedOnFocusDistanceDividerChanged(m_separationBasedOnFocusDistanceDivider);
+}

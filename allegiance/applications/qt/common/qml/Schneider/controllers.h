@@ -39,6 +39,7 @@ class CameraController : public QObject
     Q_PROPERTY(float eyeDistance READ eyeDistance WRITE setEyeDistance NOTIFY eyeDistanceChanged)
     Q_PROPERTY(bool flipped READ flipped WRITE setFlipped NOTIFY flippedChanged)
     Q_PROPERTY(bool separationBasedOnFocusDistance READ separationBasedOnFocusDistance WRITE setSeparationBasedOnFocusDistance NOTIFY separationBasedOnFocusDistanceChanged)
+    Q_PROPERTY(int separationBasedOnFocusDistanceDivider READ separationBasedOnFocusDistanceDivider WRITE setSeparationBasedOnFocusDistanceDivider NOTIFY separationBasedOnFocusDistanceDividerChanged)
 
     Q_PROPERTY(bool frustumViewEnabled READ frustumViewEnabled WRITE setFrustumViewEnabled NOTIFY frustumViewEnabledChanged)
     Q_PROPERTY(DisplayMode displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
@@ -128,10 +129,14 @@ public:
     bool showFocusPlane() const;
     void setShowFocusPlane(bool newShowFocusPlane);
 
+    int separationBasedOnFocusDistanceDivider() const;
+    void setSeparationBasedOnFocusDistanceDivider(int newSeparationBasedOnFocusDistanceDivider);
+
 Q_SIGNALS:
     void eyeDistanceChanged(float);
     void flippedChanged(bool);
     void separationBasedOnFocusDistanceChanged(bool);
+    void separationBasedOnFocusDistanceDividerChanged(int);
 
     void displayModeChanged(DisplayMode);
     void stereoModeChanged(StereoMode);
@@ -169,6 +174,7 @@ private:
     float m_viewerDistance = 1.0f;
     bool m_separationBasedOnFocusDistance = false;
     bool m_showFocusPlane = false;
+    int m_separationBasedOnFocusDistanceDivider = 30;
 };
 
 class CursorController : public QObject

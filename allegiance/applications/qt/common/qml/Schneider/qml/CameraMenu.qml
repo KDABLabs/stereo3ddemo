@@ -202,11 +202,22 @@ ColumnLayout {
             CheckBoxX {
                 id: _1_30th_separation_mode_checkbox
                 Layout.fillWidth: true
-                title: "Set to 1/30th of Focus Distance"
+                title: "Set to 1/%1th of Focus Distance".arg(Camera.separationBasedOnFocusDistanceDivider)
                 initial: Camera.separationBasedOnFocusDistance
                 onChecked: bchecked => Camera.separationBasedOnFocusDistance = bchecked
 
                 ToolTip.text: "Automatically set the separation as 1/30th of the focus distance."
+            }
+
+            SliderValue {
+                Layout.fillWidth: true
+                from: 1
+                visible: Camera.separationBasedOnFocusDistance
+                to: 300
+                title: "Divider:"
+                value: Camera.separationBasedOnFocusDistanceDivider
+                onMoved: current => Camera.separationBasedOnFocusDistanceDivider = Math.round(current/ 10) * 10
+                ToolTip.text: "Dividers by which we device the focusDistance to obtain the eyeSeparation"
             }
         }
     }
