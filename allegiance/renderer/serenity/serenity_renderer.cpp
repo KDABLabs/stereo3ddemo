@@ -1,5 +1,4 @@
 #include "serenity_renderer.h"
-#include "stereo_proxy_camera.h"
 #include "window_extent_watcher.h"
 #include "picking_application_layer.h"
 #include "shared/cursor.h"
@@ -63,6 +62,13 @@ Serenity::Flutter::Overlay* createFlutterOverlay(SerenityWindow* w, StereoForwar
 
 } // namespace
 
+SerenityRenderer::SerenityRenderer(SerenityWindow* window,
+                                   StereoCamera& camera,
+                                   std::function<void(std::string_view, std::any)>)
+    : m_window(window), m_stereoCamera(camera)
+{
+}
+
 void SerenityRenderer::loadModel(std::filesystem::path file)
 {
     setMode(Mode::Scene);
@@ -91,8 +97,7 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "cursor_type") {
         m_pickingLayer->setTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->transform());
     } else if (name == "display_mode") {
-        m_displayMode = std::any_cast<DisplayMode>(value);
-        viewChanged();
+        updateDisplayMode(std::any_cast<DisplayMode>(value));
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->setColor(CursorBase::ColorData{
@@ -141,28 +146,21 @@ bool SerenityRenderer::hoversFocusArea(int x, int y) const
 
 void SerenityRenderer::viewChanged()
 {
-    switch (m_displayMode) {
-    case DisplayMode::Mono:
-        m_camera->setMatrices(camera.viewCenter(), camera.viewCenter(), camera.viewCenter());
-        break;
-    case DisplayMode::Stereo:
-        m_camera->setMatrices(camera.viewLeft(), camera.viewRight(), camera.viewCenter());
-        break;
-    case DisplayMode::Left:
-        m_camera->setMatrices(camera.viewLeft(), camera.viewLeft(), camera.viewCenter());
-        break;
-    case DisplayMode::Right:
-        m_camera->setMatrices(camera.viewRight(), camera.viewRight(), camera.viewCenter());
-        break;
-    }
+    m_camera->lookAt(m_stereoCamera.position(), m_stereoCamera.forwardVector(), m_stereoCamera.upVector());
+
+    const float flippedCorrection = m_stereoCamera.isFlipped() ? -1.0f : 1.0f;
+    const float interocularDistance = flippedCorrection * m_stereoCamera.interocularDistance();
+    m_camera->interocularDistance = interocularDistance;
+    m_camera->convergencePlaneDistance = m_stereoCamera.convergencePlaneDistance();
+    m_camera->toeIn = m_stereoCamera.mode() == all::StereoCamera::Mode::ToeIn;
 }
 
 void SerenityRenderer::projectionChanged()
 {
-    m_camera->lens()->setPerspectiveProjection(camera.fov(),
-                                               camera.aspectRatio(),
-                                               camera.nearPlane(),
-                                               camera.farPlane());
+    m_camera->lens()->setPerspectiveProjection(m_stereoCamera.fov(),
+                                               m_stereoCamera.aspectRatio(),
+                                               m_stereoCamera.nearPlane(),
+                                               m_stereoCamera.farPlane());
 }
 
 void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
@@ -179,7 +177,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
 
     // Add Camera into the Scene
 
-    m_camera = rootEntity->createChildEntity<StereoProxyCamera>();
+    m_camera = rootEntity->createChildEntity<Serenity::StereoCamera>();
     // Create Render Algo
     auto algo = std::make_unique<StereoRenderAlgorithm>();
     m_renderAlgorithm = algo.get();
@@ -193,7 +191,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     m_renderAspect = m_engine.createAspect<Serenity::RenderAspect>(std::move(device));
     auto logicAspect = m_engine.createAspect<Serenity::LogicAspect>();
 
-    const bool supportsStereoSwapchain = maxSupportedSwapchainArrayLayers > 1;
+    m_supportsStereoSwapchain = maxSupportedSwapchainArrayLayers > 1;
 
     Serenity::RenderTargetRef windowRenderTargetRef{
         .type = Serenity::RenderTargetRef::Type::Surface,
@@ -209,7 +207,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
         .additionalUsageFlags = Serenity::RenderTargetUsageFlagBits::Capture,
     };
 
-    if (supportsStereoSwapchain) {
+    if (m_supportsStereoSwapchain) {
         algo->renderTargetRefs = { std::move(windowRenderTargetRef) };
         algo->offscreenMultiViewRenderTargetRefIndex = 0;
         algo->presentRenderTargetRefIndex = 0;
@@ -389,6 +387,24 @@ void SerenityRenderer::updateRenderPhases()
         break;
     default:
         assert(false);
+        break;
+    }
+}
+
+void SerenityRenderer::updateDisplayMode(DisplayMode displayMode)
+{
+    switch (displayMode) {
+    case all::DisplayMode::Stereo:
+        m_renderAlgorithm->renderMode = (m_supportsStereoSwapchain) ? StereoForwardAlgorithm::StereoRenderMode::Stereo : StereoForwardAlgorithm::StereoRenderMode::SideBySide;
+        break;
+    case all::DisplayMode::Left:
+        m_renderAlgorithm->renderMode = StereoForwardAlgorithm::StereoRenderMode::LeftOnly;
+        break;
+    case all::DisplayMode::Right:
+        m_renderAlgorithm->renderMode = StereoForwardAlgorithm::StereoRenderMode::RightOnly;
+        break;
+    case all::DisplayMode::Mono:
+        m_renderAlgorithm->renderMode = StereoForwardAlgorithm::StereoRenderMode::SideBySide;
         break;
     }
 }

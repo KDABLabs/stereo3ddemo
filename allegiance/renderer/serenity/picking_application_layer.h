@@ -1,14 +1,16 @@
 #pragma once
-#include "stereo_proxy_camera.h"
+
+namespace Serenity {
+class StereoCamera;
+} // namespace Serenity
 
 namespace all::serenity {
-class StereoProxyCamera;
 class SerenityWindow;
 
 class PickingApplicationLayer : public Serenity::ApplicationLayer
 {
 public:
-    PickingApplicationLayer(StereoProxyCamera* camera, SerenityWindow* window, Serenity::SpatialAspect* spatialAspect, Serenity::SrtTransform* ctransform);
+    PickingApplicationLayer(Serenity::StereoCamera* camera, SerenityWindow* window, Serenity::SpatialAspect* spatialAspect, Serenity::SrtTransform* ctransform);
 
 public:
     void onAfterRootEntityChanged(Serenity::Entity* oldRoot, Serenity::Entity* newRoot) override;
@@ -35,7 +37,7 @@ private:
     Serenity::SrtTransform* m_ctransform;
     Serenity::SpatialAspect* m_spatialAspect;
     SerenityWindow* m_window;
-    StereoProxyCamera* m_camera = nullptr;
+    Serenity::StereoCamera* m_camera = nullptr;
     std::vector<Serenity::Entity*> m_pickedEntities;
     float m_scale_factor = 1.0f;
     bool m_scaling_enabled = true;

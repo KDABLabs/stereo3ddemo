@@ -14,16 +14,16 @@ struct ModelNavParameters;
 struct StereoCamera;
 } // namespace all
 
+namespace Serenity {
+class StereoCamera;
+}
+
 namespace all::serenity {
-class StereoProxyCamera;
 class PickingApplicationLayer;
 class SerenityRenderer
 {
 public:
-    explicit SerenityRenderer(SerenityWindow* window, all::StereoCamera& camera, std::function<void(std::string_view name, std::any value)> = {})
-        : m_window(window), camera(camera)
-    {
-    }
+    explicit SerenityRenderer(SerenityWindow* window, all::StereoCamera& camera, std::function<void(std::string_view name, std::any value)> = {});
     virtual ~SerenityRenderer() = default;
 
 public:
@@ -71,6 +71,7 @@ protected:
     }
 
     void updateRenderPhases();
+    void updateDisplayMode(all::DisplayMode displayMode);
 
     Serenity::StereoForwardAlgorithm::RenderPhase createOpaquePhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createTransparentPhase() const;
@@ -84,13 +85,13 @@ protected:
     Serenity::LayerManager* m_layerManager{ nullptr };
     Serenity::Entity* m_model{ nullptr };
     Serenity::Entity* m_scene_root{ nullptr };
-    all::StereoCamera& camera;
-    all::DisplayMode m_displayMode{ all::DisplayMode::Stereo };
+    all::StereoCamera& m_stereoCamera;
+    bool m_supportsStereoSwapchain {false};
 
     std::shared_ptr<all::ModelNavParameters> m_navParams;
 
     // Camera
-    all::serenity::StereoProxyCamera* m_camera{ nullptr };
+    Serenity::StereoCamera* m_camera{ nullptr };
     all::serenity::PickingApplicationLayer* m_pickingLayer{ nullptr };
     all::serenity::StereoRenderAlgorithm* m_renderAlgorithm{ nullptr };
 

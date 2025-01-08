@@ -27,7 +27,6 @@ target_sources(
            "serenity_renderer.h"
            "mesh_loader.h"
            "window_extent_watcher.h"
-           "stereo_proxy_camera.h"
            "serenity_stereo_graph.h"
            "picking_application_layer.h"
            "cursor.h"

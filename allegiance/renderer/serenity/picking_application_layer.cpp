@@ -3,7 +3,7 @@
 
 using namespace Serenity;
 
-all::serenity::PickingApplicationLayer::PickingApplicationLayer(StereoProxyCamera* camera, SerenityWindow* window, SpatialAspect* spatialAspect, SrtTransform* ctransform)
+all::serenity::PickingApplicationLayer::PickingApplicationLayer(Serenity::StereoCamera* camera, SerenityWindow* window, SpatialAspect* spatialAspect, SrtTransform* ctransform)
     : m_camera(camera), m_window(window), m_spatialAspect(spatialAspect), m_ctransform(ctransform)
 {
 }
@@ -24,9 +24,9 @@ void all::serenity::PickingApplicationLayer::update()
 
     // Perform ray cast
     const auto cursorPos = m_window->cursorPos();
-    const auto hits = m_spatialAspect->screenCast(cursorPos, viewportRect, m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix());
+    const auto hits = m_spatialAspect->screenCast(cursorPos, viewportRect, m_camera->viewMatrix(), m_camera->lens()->projectionMatrix());
 
-    auto unv = glm::unProject(glm::vec3(cursorPos.x, cursorPos.y, 1.0f), m_camera->centerEyeViewMatrix(), m_camera->lens()->projectionMatrix(), viewportRect);
+    auto unv = glm::unProject(glm::vec3(cursorPos.x, cursorPos.y, 1.0f), m_camera->viewMatrix(), m_camera->lens()->projectionMatrix(), viewportRect);
 
     if (!hits.empty()) {
         // Find closest intersection
