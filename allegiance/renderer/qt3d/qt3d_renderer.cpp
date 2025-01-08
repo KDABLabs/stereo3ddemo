@@ -145,7 +145,7 @@ void Qt3DRenderer::projectionChanged()
         frustumCamera->setLeft(-frustumMaxHalfSize);
         frustumCamera->setRight(frustumMaxHalfSize);
         frustumCamera->setNearPlane(m_stereoCamera->nearPlane());
-        frustumCamera->setFarPlane(m_stereoCamera->farPlane() * 2.0f);
+        frustumCamera->setFarPlane(m_stereoCamera->farPlane() * 3.0f);
     }
 
     // FocusArea
