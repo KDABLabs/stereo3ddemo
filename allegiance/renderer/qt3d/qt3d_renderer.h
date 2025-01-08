@@ -93,6 +93,7 @@ private:
     std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
     QStereoForwardRenderer* m_renderer;
     QStereoProxyCamera* m_camera;
+    QStereoProxyCamera* m_frustumAmplifiedCamera;
     CursorEntity* m_cursor;
 
     float cursor_scale = 1.0f;

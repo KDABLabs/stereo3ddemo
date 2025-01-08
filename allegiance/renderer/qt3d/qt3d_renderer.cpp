@@ -59,15 +59,23 @@ void Qt3DRenderer::viewChanged()
                                  interocularDistance,
                                  m_stereoCamera->mode());
 
-    const QVector3D camPosition = toQVector3D(m_stereoCamera->position());
-    const QVector3D viewVector = toQVector3D(m_stereoCamera->forwardVector());
-    const QVector3D upVector = toQVector3D(m_stereoCamera->upVector());
 
     // Frustum
     {
-        m_centerFrustum->setViewMatrix(m_camera->centerCamera()->viewMatrix());
-        m_leftFrustum->setViewMatrix(m_camera->leftCamera()->viewMatrix());
-        m_rightFrustum->setViewMatrix(m_camera->rightCamera()->viewMatrix());
+        const QVector3D camPosition = toQVector3D(m_stereoCamera->position());
+        const QVector3D viewVector = toQVector3D(m_stereoCamera->forwardVector());
+        const QVector3D upVector = toQVector3D(m_stereoCamera->upVector());
+
+        m_frustumAmplifiedCamera->updateViewMatrices(toQVector3D(m_stereoCamera->position()),
+                                     toQVector3D(m_stereoCamera->forwardVector()),
+                                     toQVector3D(m_stereoCamera->upVector()),
+                                     m_stereoCamera->convergencePlaneDistance(),
+                                     interocularDistance * 20.0f,
+                                     m_stereoCamera->mode());
+
+        m_centerFrustum->setViewMatrix(m_frustumAmplifiedCamera->centerCamera()->viewMatrix());
+        m_leftFrustum->setViewMatrix(m_frustumAmplifiedCamera->leftCamera()->viewMatrix());
+        m_rightFrustum->setViewMatrix(m_frustumAmplifiedCamera->rightCamera()->viewMatrix());
 
         auto* frustumCamera = m_renderer->frustumCamera();
         // Place the camera to match the center camera but with a viewCenter placed at the center of the near and far planes
@@ -102,9 +110,17 @@ void Qt3DRenderer::projectionChanged()
 
     // Frustum
     {
-        m_centerFrustum->setProjectionMatrix(m_camera->centerCamera()->projectionMatrix());
-        m_leftFrustum->setProjectionMatrix(m_camera->leftCamera()->projectionMatrix());
-        m_rightFrustum->setProjectionMatrix(m_camera->rightCamera()->projectionMatrix());
+        m_frustumAmplifiedCamera->updateProjection(m_stereoCamera->nearPlane(),
+                                                   m_stereoCamera->farPlane(),
+                                                   m_stereoCamera->fov(),
+                                                   m_stereoCamera->aspectRatio(),
+                                                   m_stereoCamera->convergencePlaneDistance(),
+                                                   interocularDistance * 20.0f,
+                                                   m_stereoCamera->mode());
+
+        m_centerFrustum->setProjectionMatrix(m_frustumAmplifiedCamera->centerCamera()->projectionMatrix());
+        m_leftFrustum->setProjectionMatrix(m_frustumAmplifiedCamera->leftCamera()->projectionMatrix());
+        m_rightFrustum->setProjectionMatrix(m_frustumAmplifiedCamera->rightCamera()->projectionMatrix());
 
         m_centerFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
         m_leftFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
@@ -164,6 +180,8 @@ void Qt3DRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_pa
 
     m_camera = new QStereoProxyCamera(m_rootEntity.get());
     m_renderer->setCamera(m_camera);
+
+    m_frustumAmplifiedCamera = new QStereoProxyCamera(m_rootEntity.get());
 
     createScene(m_rootEntity.get());
 }
