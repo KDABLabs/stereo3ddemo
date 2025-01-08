@@ -216,7 +216,7 @@ ColumnLayout {
                 to: 300
                 title: "Divider:"
                 value: Camera.separationBasedOnFocusDistanceDivider
-                onMoved: current => Camera.separationBasedOnFocusDistanceDivider = Math.round(current/ 10) * 10
+                onMoved: current => Camera.separationBasedOnFocusDistanceDivider = Math.round(current / 10) * 10
                 ToolTip.text: "Dividers by which we device the focusDistance to obtain the eyeSeparation"
             }
         }

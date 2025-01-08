@@ -197,6 +197,14 @@ FrustumLines::FrustumLines(const QColor& color, QNode* parent)
         auto* renderPass = new Qt3DRender::QRenderPass;
         renderPass->setShaderProgram(shaderProgram);
 
+        auto* depthState = new Qt3DRender::QDepthTest;
+        depthState->setDepthFunction(Qt3DRender::QDepthTest::LessOrEqual);
+
+        auto* noDepthMask = new Qt3DRender::QNoDepthMask();
+
+        renderPass->addRenderState(depthState);
+        renderPass->addRenderState(noDepthMask);
+
         auto* lineWidth = new Qt3DRender::QLineWidth();
         lineWidth->setValue(2.0f);
         lineWidth->setSmooth(true);
