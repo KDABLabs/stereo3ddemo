@@ -21,7 +21,6 @@ set(CMAKE_CXX_STANDARD 20)
 qt_add_library(
     ${PROJECT_NAME}
     STATIC
-    stereo_camera.h
     util_qt.h
     side_menu.h
     main_window.h

@@ -49,7 +49,7 @@ Qt3DRenderer::~Qt3DRenderer()
 
 void Qt3DRenderer::viewChanged()
 {
-    const float flippedCorrection = m_stereoCamera->isFlipped() ? -1.0f : 1.0f;
+    const float flippedCorrection = m_stereoCamera->flipped() ? -1.0f : 1.0f;
     const float interocularDistance = flippedCorrection * m_stereoCamera->interocularDistance();
 
     m_camera->updateViewMatrices(toQVector3D(m_stereoCamera->position()),
@@ -97,7 +97,7 @@ void Qt3DRenderer::viewChanged()
 
 void Qt3DRenderer::projectionChanged()
 {
-    const float flippedCorrection = m_stereoCamera->isFlipped() ? -1.0f : 1.0f;
+    const float flippedCorrection = m_stereoCamera->flipped() ? -1.0f : 1.0f;
     const float interocularDistance = flippedCorrection * m_stereoCamera->interocularDistance();
 
     m_camera->updateProjection(m_stereoCamera->nearPlane(),
@@ -579,17 +579,17 @@ void Qt3DRenderer::setupCameraBasedOnSceneExtent()
     const QVector3D cameraPosition = m_sceneCenter - QVector3D(0.0f, 0.0f, 1.0f) * radius;
     const QVector3D viewVector = m_sceneCenter - cameraPosition;
 
-    m_stereoCamera->setPosition(toGlmVec3(cameraPosition));
-    m_stereoCamera->setForwardVector(toGlmVec3(viewVector.normalized()));
-    m_stereoCamera->setConvergencePlaneDistance(viewVector.length());
-    m_stereoCamera->setFarPlane(5 * radius);
-    m_stereoCamera->setUpVector(glm::vec3(0.0f, 1.0f, 0.0f));
+    m_stereoCamera->position = toGlmVec3(cameraPosition);
+    m_stereoCamera->forwardVector = toGlmVec3(viewVector.normalized());
+    m_stereoCamera->convergencePlaneDistance = viewVector.length();
+    m_stereoCamera->farPlane = (5 * radius);
+    m_stereoCamera->upVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
     // set rotation point
-    auto cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
+    auto* cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
     if (cam) {
-        cam->setRadius(viewVector.length());
-        cam->setTarget(toGlmVec3(m_sceneCenter));
+        cam->radius = viewVector.length();
+        cam->target = toGlmVec3(m_sceneCenter);
         cam->rotate(glm::radians(45.0f), glm::radians(90.0f));
     }
 }

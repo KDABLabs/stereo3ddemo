@@ -1,5 +1,6 @@
 project(shared)
 
+# Assimp library
 FetchContent_Declare(
     assimp
     GIT_REPOSITORY https://github.com/assimp/assimp.git
@@ -11,6 +12,18 @@ set(ASSIMP_BUILD_IFC_IMPORTER OFF)
 set(ASSIMP_BUILD_USE_CCACHE OFF)
 set(BUILD_SHARED_LIBS OFF)
 FetchContent_MakeAvailable(assimp)
+
+# KDBindings library
+find_package(KDBindings QUIET)
+if(NOT TARGET KDAB::KDBindings)
+    fetchcontent_declare(
+        KDBindings
+        GIT_REPOSITORY https://github.com/KDAB/KDBindings.git
+        GIT_TAG efb54c58c3c2fce280d7089617935ec265fe4e2d # v1.1.0
+        USES_TERMINAL_DOWNLOAD YES USES_TERMINAL_UPDATE YES
+    )
+    fetchcontent_makeavailable(KDBindings)
+endif()
 
 add_library(
     ${PROJECT_NAME} STATIC
@@ -51,11 +64,12 @@ target_sources(
            "include/shared/cursor.h"
            "include/shared/stereo_camera.h"
     PRIVATE ${VAR_SRCS_PRIVATE}
+           "src/stereo_camera.cpp"
 )
 
 target_link_libraries(
     ${PROJECT_NAME}
-    PUBLIC glm::glm assimp::assimp
+    PUBLIC glm::glm assimp::assimp KDAB::KDBindings
 )
 target_include_directories(
     ${PROJECT_NAME}

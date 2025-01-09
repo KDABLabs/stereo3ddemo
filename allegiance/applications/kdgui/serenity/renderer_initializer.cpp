@@ -19,17 +19,15 @@ RendererInitializer::RendererInitializer(SerenityWindowKDGui* renderingSurface)
     window->registerEventReceiver(m_windowEventWatcher);
 
     // Setup Camera
-    m_camera.setShear(true);
-
     m_camera.viewChanged.connect([this] { m_renderer->viewChanged(); }).release();
     m_camera.projectionChanged.connect([this] { m_renderer->projectionChanged(); }).release();
 
     window->width.valueChanged().connect([this, window](const uint32_t w) {
-                                    m_camera.setAspectRatio(float(w) / window->height());
+                                    m_camera.aspectRatio = (float(w) / window->height());
                                 })
             .release();
     window->height.valueChanged().connect([this, window](const uint32_t h) {
-                                     m_camera.setAspectRatio(float(window->width()) / h);
+                                     m_camera.aspectRatio = (float(window->width()) / h);
                                  })
             .release();
 
@@ -100,12 +98,6 @@ RendererInitializer::RendererInitializer(SerenityWindowKDGui* renderingSurface)
                                          })
             .release();
 
-    // TODO: CameraController
-
-    // TODO: Cursor Controller
-
-    // TODO: SceneController
-
     m_renderer->createAspects(nav_params);
     resetCamera();
     window->visible = true;
@@ -115,7 +107,7 @@ RendererInitializer::~RendererInitializer() = default;
 
 void RendererInitializer::resetCamera() noexcept
 {
-    m_camera.setPosition({ 0.2, 5, -10 });
+    m_camera.position = { 0.2, 5, -10 };
     m_camera.setForwardVector({ 0, -.5, 1 });
 }
 

@@ -7,7 +7,6 @@ add_executable(
     renderer_initializer.h
     serenity_kdgui_window.cpp
     serenity_kdgui_window.h
-    stereo_camera.h
     window_watcher.h
 )
 

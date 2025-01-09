@@ -2,8 +2,7 @@
 
 #include <shared/spacemouse_impl.h>
 #include <shared/cursor.h>
-
-#include "stereo_camera.h"
+#include <shared/stereo_camera.h>
 
 #include <memory>
 
@@ -34,7 +33,7 @@ public:
 private:
     void resetCamera() noexcept;
 
-    all::kdgui::OrbitalStereoCamera m_camera;
+    all::OrbitalStereoCamera m_camera;
     all::kdgui::WindowEventWatcher* m_windowEventWatcher{ nullptr };
     std::unique_ptr<all::serenity::SerenityRenderer> m_renderer;
     std::optional<all::SpacemouseImpl> m_spacemouse;

@@ -2,7 +2,6 @@
 #include <shared/spacemouse_impl.h>
 #include <shared/cursor.h>
 
-#include "stereo_camera.h"
 #include "window_event_watcher.h"
 
 #include <applications/qt/common/window_event_watcher.h>
@@ -65,16 +64,8 @@ public:
         qApp->setPalette(m_appStyle->palette());
 
         // Setup the camera
-        m_camera.setShear(true);
-        QObject::connect(&m_camera,
-                         &all::qt::OrbitalStereoCamera::viewChanged,
-                         [this]() {
-                             m_renderer->viewChanged();
-                         });
-
-        QObject::connect(&m_camera, &all::qt::OrbitalStereoCamera::projectionChanged, [this]() {
-            m_renderer->projectionChanged();
-        });
+        m_camera.viewChanged.connect([this] { m_renderer->viewChanged(); }).release();
+        m_camera.projectionChanged.connect([this] { m_renderer->projectionChanged(); }).release();
 
         auto nav_params = std::make_shared<all::ModelNavParameters>();
         m_spacemouse.emplace(&m_camera, nav_params);
@@ -212,11 +203,11 @@ public:
 
         QWindow* qWindow = m_renderer->window();
 
-        QObject::connect(qWindow, &QWindow::widthChanged, [this, qWindow](int width) {
-            m_camera.setAspectRatio(float(qWindow->width()) / qWindow->height());
+        QObject::connect(qWindow, &QWindow::widthChanged, [this, qWindow]() {
+            m_camera.aspectRatio = (float(qWindow->width()) / qWindow->height());
         });
-        QObject::connect(qWindow, &QWindow::heightChanged, [this, qWindow](int height) {
-            m_camera.setAspectRatio(float(qWindow->width()) / qWindow->height());
+        QObject::connect(qWindow, &QWindow::heightChanged, [this, qWindow]() {
+            m_camera.aspectRatio = (float(qWindow->width()) / qWindow->height());
         });
 
         auto updateFocusDistance = [this]() {
@@ -229,7 +220,7 @@ public:
             // popOut == 100 -> 1.5f * focusDistanceFromNearPlane
             // popOut == -100 -> 0.5f focusDistanceFromNearPlane
             const float popOutCorrectionFactor = (popOut * 0.01) * 0.5f + 1.0f; // [0.5, 1.5]
-            m_camera.setConvergencePlaneDistance(popOutCorrectionFactor * focusDistanceFromNearPlane);
+            m_camera.convergencePlaneDistance = popOutCorrectionFactor * focusDistanceFromNearPlane;
 
             if (m_cameraController->separationBasedOnFocusDistance()) {
                 // Set Eye Separation to 1/30th of focus distance if enabled
@@ -243,20 +234,19 @@ public:
         QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceDividerChanged, updateFocusDistance);
 
         QObject::connect(m_cameraController, &CameraController::fovChanged, [this](float v) {
-            m_camera.setFov(v);
+            m_camera.fov = v;
         });
-
         QObject::connect(m_cameraController, &CameraController::flippedChanged, [this](bool v) {
-            m_camera.setFlipped(v);
+            m_camera.flipped = v;
         });
         QObject::connect(m_cameraController, &CameraController::eyeDistanceChanged, [this](float v) {
-            m_camera.setInterocularDistance(v);
+            m_camera.interocularDistance = v;
         });
         QObject::connect(m_cameraController, &CameraController::displayModeChanged, [this](CameraController::DisplayMode v) {
             m_renderer->propertyChanged("display_mode", all::DisplayMode(v));
         });
         QObject::connect(m_cameraController, &CameraController::stereoModeChanged, [this](CameraController::StereoMode v) {
-            m_camera.setMode(all::StereoCamera::Mode(v));
+            m_camera.mode = all::StereoCamera::Mode(v);
         });
         QObject::connect(m_cameraController, &CameraController::frustumViewEnabledChanged, [this](bool enabled) {
             m_renderer->propertyChanged("frustum_view_enabled", enabled);
@@ -317,12 +307,12 @@ public:
         resetCamera();
 
         // Set Initial Values
-        m_camera.setAspectRatio(float(qWindow->width()) / qWindow->height());
-        m_camera.setInterocularDistance(m_cameraController->eyeDistance());
-        m_camera.setConvergencePlaneDistance(m_cameraController->focusDistance());
-        m_camera.setFov(m_cameraController->fov());
-        m_camera.setMode(all::StereoCamera::Mode(m_cameraController->stereoMode()));
-        m_camera.setFlipped(m_cameraController->flipped());
+        m_camera.aspectRatio = (float(qWindow->width()) / qWindow->height());
+        m_camera.interocularDistance = m_cameraController->eyeDistance();
+        m_camera.convergencePlaneDistance = m_cameraController->focusDistance();
+        m_camera.fov = m_cameraController->fov();
+        m_camera.mode = all::StereoCamera::Mode(m_cameraController->stereoMode());
+        m_camera.flipped = m_cameraController->flipped();
         m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
         m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea());
         m_renderer->propertyChanged("show_focus_plane", m_cameraController->showFocusPlane());
@@ -338,7 +328,7 @@ public:
 public:
     void resetCamera() noexcept
     {
-        m_camera.setPosition({ 0.2, 5, -10 });
+        m_camera.position = { 0.2, 5, -10 };
         m_camera.setForwardVector({ 0, -.5, 1 });
     }
 
@@ -353,7 +343,7 @@ public:
     }
 
 private:
-    all::qt::OrbitalStereoCamera m_camera;
+    all::OrbitalStereoCamera m_camera;
     MainWindow* m_mainWindow{ nullptr };
     std::unique_ptr<WindowEventWatcher> m_windowEventWatcher;
     std::unique_ptr<Renderer> m_renderer;

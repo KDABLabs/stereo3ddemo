@@ -52,9 +52,9 @@ long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 
 long CNavigationModel::GetCameraMatrix(navlib::matrix_t& matrix) const
 {
-    auto m = m_camera->cameraMatrix();
-    // qCDebug(spcmsView) << "setting SpcMouse Camera Matrix to " << m;
-    matrix = toNavlibMatrix(m);
+    // auto m = m_camera->cameraMatrix();
+    // // qCDebug(spcmsView) << "setting SpcMouse Camera Matrix to " << m;
+    // matrix = toNavlibMatrix(m);
     return 0;
 }
 

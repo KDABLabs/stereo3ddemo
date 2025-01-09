@@ -148,7 +148,7 @@ void SerenityRenderer::viewChanged()
 {
     m_camera->lookAt(m_stereoCamera.position(), m_stereoCamera.forwardVector(), m_stereoCamera.upVector());
 
-    const float flippedCorrection = m_stereoCamera.isFlipped() ? -1.0f : 1.0f;
+    const float flippedCorrection = m_stereoCamera.flipped() ? -1.0f : 1.0f;
     const float interocularDistance = flippedCorrection * m_stereoCamera.interocularDistance();
     m_camera->interocularDistance = interocularDistance;
     m_camera->convergencePlaneDistance = m_stereoCamera.convergencePlaneDistance();
