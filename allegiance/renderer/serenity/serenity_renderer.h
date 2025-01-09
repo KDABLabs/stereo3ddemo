@@ -32,6 +32,7 @@ public:
     void createAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
     void loadModel(std::filesystem::path file);
+    void loadImage(std::filesystem::path url);
 
     void propertyChanged(std::string_view name, std::any value);
     void setCursorEnabled(bool enabled);
@@ -55,7 +56,7 @@ public:
     void onMouseEvent(const KDFoundation::Event& event);
 
 protected:
-    std::unique_ptr<Serenity::Entity> createScene(Serenity::LayerManager& layers);
+    void createScene(Serenity::LayerManager& layers);
 
     enum class Mode {
         Scene,
@@ -84,7 +85,8 @@ protected:
     Serenity::RenderAspect* m_renderAspect{ nullptr };
     Serenity::LayerManager* m_layerManager{ nullptr };
     Serenity::Entity* m_model{ nullptr };
-    Serenity::Entity* m_scene_root{ nullptr };
+    Serenity::Entity* m_stereoImage{ nullptr };
+    Serenity::Entity* m_sceneRoot{ nullptr };
     all::StereoCamera& m_stereoCamera;
     bool m_supportsStereoSwapchain {false};
 

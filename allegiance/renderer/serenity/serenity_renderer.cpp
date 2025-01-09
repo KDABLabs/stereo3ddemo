@@ -72,20 +72,29 @@ SerenityRenderer::SerenityRenderer(SerenityWindow* window,
 void SerenityRenderer::loadModel(std::filesystem::path file)
 {
     setMode(Mode::Scene);
-    auto entity = MeshLoader::load(file);
-    if (auto root = m_engine.rootEntity()) {
-        root->takeEntity(m_model);
-        entity->layerMask = m_layerManager->layerMask({ "Opaque" });
-        m_model = entity.get();
-        auto* bv = m_model->createComponent<TriangleBoundingVolume>();
+    if (m_sceneRoot == nullptr)
+        return;
 
-        bv->meshRenderer = entity->component<MeshRenderer>();
-        auto bb = bv->worldAxisAlignedBoundingBox.get();
-        m_navParams->max_extent = bb.max;
-        m_navParams->min_extent = bb.min;
+    // Release previous scene model
+    m_sceneRoot->takeEntity(m_model);
 
-        root->addChildEntity(std::move(entity));
-    }
+    // Load Mesh
+    std::unique_ptr<Entity> entity = MeshLoader::load(file);
+    m_model = entity.get();
+    if (m_model == nullptr)
+        return;
+
+    // Set Layers
+    m_model->layerMask = m_layerManager->layerMask({ "Opaque" });
+    auto* bv = m_model->createComponent<TriangleBoundingVolume>();
+    bv->meshRenderer = entity->component<MeshRenderer>();
+    bv->cacheTriangles = true; // Generate Octree for faster ray casting checks
+
+    auto bb = bv->worldAxisAlignedBoundingBox.get();
+    m_navParams->max_extent = bb.max;
+    m_navParams->min_extent = bb.min;
+
+    m_sceneRoot->addChildEntity(std::move(entity));
 }
 
 void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
@@ -95,7 +104,7 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "scaling_enabled") {
         m_pickingLayer->setScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
-        m_pickingLayer->setTransform(m_cursor->ChangeCursor(m_scene_root, std::any_cast<CursorType>(value))->transform());
+        m_pickingLayer->setTransform(m_cursor->ChangeCursor(m_sceneRoot, std::any_cast<CursorType>(value))->transform());
     } else if (name == "display_mode") {
         updateDisplayMode(std::any_cast<DisplayMode>(value));
     } else if (name == "cursor_color") {
@@ -172,12 +181,15 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     for (auto&& layerName : { "Alpha", "Opaque", "StereoImage" })
         m_layerManager->addLayer(layerName);
 
-    std::unique_ptr<Serenity::Entity> rootEntity = createScene(*m_layerManager);
-    m_scene_root = rootEntity.get();
+    auto rootEntityPtr = std::make_unique<Entity>();
+    m_sceneRoot = rootEntityPtr.get();
+    m_sceneRoot->setObjectName("Root Entity");
+
+    createScene(*m_layerManager);
 
     // Add Camera into the Scene
+    m_camera = m_sceneRoot->createChildEntity<Serenity::StereoCamera>();
 
-    m_camera = rootEntity->createChildEntity<Serenity::StereoCamera>();
     // Create Render Algo
     auto algo = std::make_unique<StereoRenderAlgorithm>();
     m_renderAlgorithm = algo.get();
@@ -185,11 +197,10 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     const uint32_t maxSupportedSwapchainArrayLayers = device.adapter()->swapchainProperties(m_window->surface().handle()).capabilities.maxImageArrayLayers;
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
 
-    m_cursor->ChangeCursor(m_scene_root, CursorType::Ball);
+    m_cursor->ChangeCursor(m_sceneRoot, CursorType::Ball);
     m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window, spatialAspect, m_cursor->transform());
 
     m_renderAspect = m_engine.createAspect<Serenity::RenderAspect>(std::move(device));
-    auto logicAspect = m_engine.createAspect<Serenity::LogicAspect>();
 
     m_supportsStereoSwapchain = maxSupportedSwapchainArrayLayers > 1;
 
@@ -245,23 +256,111 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
 
     updateRenderPhases();
 
-    m_engine.setRootEntity(std::move(rootEntity));
+    m_engine.setRootEntity(std::move(rootEntityPtr));
 
     m_engine.running = true;
 }
 
-std::unique_ptr<Serenity::Entity> SerenityRenderer::createScene(Serenity::LayerManager& layers)
+void SerenityRenderer::loadImage(std::filesystem::path url)
 {
-    auto rootEntity = std::make_unique<Entity>();
-    rootEntity->setObjectName("Root Entity");
+    if (m_sceneRoot == nullptr)
+        return;
 
+    // Release previous scene model
+    m_sceneRoot->takeEntity(m_stereoImage);
+
+    m_stereoImage = m_sceneRoot->createChildEntity<Entity>();
+    m_stereoImage->setObjectName("Stereo Image Entity");
+    m_stereoImage->layerMask = m_layerManager->layerMask({ "StereoImage" });
+
+    auto* shader = m_stereoImage->createChild<SpirVShaderProgram>();
+    shader->vertexShader = SHADER_DIR "stereoimage.vert.spv";
+    shader->fragmentShader = SHADER_DIR "stereoimage.frag.spv";
+
+    auto* material = m_stereoImage->createChild<Material>();
+    material->setObjectName("Stereo Image Material");
+    material->shaderProgram = shader;
+
+    auto* texture = m_stereoImage->createChild<Texture2D>();
+    texture->setObjectName("Stereo Image Texture");
+    texture->setPath(url.string());
+    material->setTexture(2, 2, texture);
+
+    struct ViewportData {
+        float viewportSize[2];
+        float textureSize[2];
+    };
+    static_assert(sizeof(ViewportData) == 4 * sizeof(float));
+
+    StaticUniformBuffer* viewportUbo = m_stereoImage->createChild<StaticUniformBuffer>();
+    viewportUbo->size = sizeof(ViewportData);
+    material->setUniformBuffer(3, 0, viewportUbo);
+
+    const Material::UboDataBuilder materialDataBuilder = [this, texture](uint32_t set, uint32_t binding) {
+        const ViewportData data = {
+            .viewportSize = { static_cast<float>(m_window->width()), static_cast<float>(m_window->height()) },
+            .textureSize = { static_cast<float>(texture->width()), static_cast<float>(texture->height()) }
+        };
+        std::vector<uint8_t> rawData(sizeof(ViewportData));
+        std::memcpy(rawData.data(), &data, sizeof(ViewportData));
+        return rawData;
+    };
+    material->setUniformBufferDataBuilder(materialDataBuilder);
+
+    auto* mesh = m_stereoImage->createChild<Mesh>();
+    mesh->setObjectName("Stereo Image Mesh");
+
+    {
+        struct Vertex {
+            glm::vec2 position;
+            glm::vec2 texCoord;
+        };
+
+        VertexFormat vertexFormat;
+        vertexFormat.attributes.emplace_back(KDGpu::VertexAttribute{
+                .location = 0,
+                .binding = 0,
+                .format = KDGpu::Format::R32G32_SFLOAT,
+                .offset = offsetof(Vertex, position) });
+        vertexFormat.attributes.emplace_back(KDGpu::VertexAttribute{
+                .location = 1,
+                .binding = 0,
+                .format = KDGpu::Format::R32G32_SFLOAT,
+                .offset = offsetof(Vertex, texCoord) });
+        vertexFormat.buffers.emplace_back(KDGpu::VertexBufferLayout{
+                .binding = 0,
+                .stride = sizeof(Vertex),
+                .inputRate = KDGpu::VertexRate::Vertex });
+        mesh->vertexFormat = vertexFormat;
+
+        const std::array<Vertex, 4> vertexData = { {
+                { { -1, -1 }, { 0, 1 } },
+                { { -1, 1 }, { 0, 0 } },
+                { { 1, -1 }, { 1, 1 } },
+                { { 1, 1 }, { 1, 0 } },
+        } };
+
+        std::vector<Mesh::VertexBufferData> verts(1);
+        const auto vertexBufferSize = vertexData.size() * sizeof(Vertex);
+        verts[0].resize(vertexBufferSize);
+        std::memcpy(verts[0].data(), vertexData.data(), vertexBufferSize);
+        mesh->setVertices(std::move(verts));
+    }
+
+    auto* renderer = m_stereoImage->createComponent<MeshRenderer>();
+    renderer->mesh = mesh;
+    renderer->material = material;
+}
+
+void SerenityRenderer::createScene(Serenity::LayerManager& layers)
+{
     // Lights
-    auto directionalLight = rootEntity->createComponent<Light>();
+    auto directionalLight = m_sceneRoot->createComponent<Light>();
     directionalLight->type = Light::Type::Directional;
     directionalLight->color = glm::vec4(0.6, 0.6, 0.7, 1.0f);
     directionalLight->worldDirection = glm::vec3(1.0f, -0.3f, 0.0f);
 
-    auto pointLightEntity = rootEntity->createChildEntity<Entity>();
+    auto pointLightEntity = m_sceneRoot->createChildEntity<Entity>();
     auto pointLightTransform =
             pointLightEntity->createComponent<SrtTransform>();
     pointLightTransform->translation = glm::vec3(0.0f, 10.0f, 0.0f);
@@ -271,108 +370,12 @@ std::unique_ptr<Serenity::Entity> SerenityRenderer::createScene(Serenity::LayerM
     pointLight->intensity = 1.0f;
 
     // Create scene graph for the 3D scene
-    {
-        auto entity = MeshLoader::load("assets/cottage.obj");
-        entity->layerMask = layers.layerMask({ "Opaque" });
-        m_model = entity.get();
-        auto* bv = m_model->createComponent<TriangleBoundingVolume>();
-
-        bv->meshRenderer = entity->component<MeshRenderer>();
-        auto bb = bv->worldAxisAlignedBoundingBox.get();
-        m_navParams->max_extent = bb.max;
-        m_navParams->min_extent = bb.min;
-
-        rootEntity->addChildEntity(std::move(entity));
-    }
+    loadModel("assets/cottage.obj");
 
     // Create scene graph for the stereo image
-    {
-        auto* shader = rootEntity->createChild<SpirVShaderProgram>();
-        shader->vertexShader = SHADER_DIR "stereoimage.vert.spv";
-        shader->fragmentShader = SHADER_DIR "stereoimage.frag.spv";
-
-        auto* material = rootEntity->createChild<Material>();
-        material->setObjectName("Stereo Image Material");
-        material->shaderProgram = shader;
-
-        auto* texture = rootEntity->createChild<Texture2D>();
-        texture->setObjectName("Stereo Image Texture");
-        texture->setPath("assets/13_3840x2160_sbs.jpg");
-        material->setTexture(2, 2, texture);
-
-        struct ViewportData {
-            float viewportSize[2];
-            float textureSize[2];
-        };
-        static_assert(sizeof(ViewportData) == 4 * sizeof(float));
-
-        StaticUniformBuffer* viewportUbo = rootEntity->createChild<StaticUniformBuffer>();
-        viewportUbo->size = sizeof(ViewportData);
-        material->setUniformBuffer(3, 0, viewportUbo);
-
-        const Material::UboDataBuilder materialDataBuilder = [this, texture](uint32_t set, uint32_t binding) {
-            const ViewportData data = {
-                .viewportSize = { static_cast<float>(m_window->width()), static_cast<float>(m_window->height()) },
-                .textureSize = { static_cast<float>(texture->width()), static_cast<float>(texture->height()) }
-            };
-            std::vector<uint8_t> rawData(sizeof(ViewportData));
-            std::memcpy(rawData.data(), &data, sizeof(ViewportData));
-            return rawData;
-        };
-        material->setUniformBufferDataBuilder(materialDataBuilder);
-
-        auto* mesh = rootEntity->createChild<Mesh>();
-        mesh->setObjectName("Stereo Image Mesh");
-
-        {
-            struct Vertex {
-                glm::vec2 position;
-                glm::vec2 texCoord;
-            };
-
-            VertexFormat vertexFormat;
-            vertexFormat.attributes.emplace_back(KDGpu::VertexAttribute{
-                    .location = 0,
-                    .binding = 0,
-                    .format = KDGpu::Format::R32G32_SFLOAT,
-                    .offset = offsetof(Vertex, position) });
-            vertexFormat.attributes.emplace_back(KDGpu::VertexAttribute{
-                    .location = 1,
-                    .binding = 0,
-                    .format = KDGpu::Format::R32G32_SFLOAT,
-                    .offset = offsetof(Vertex, texCoord) });
-            vertexFormat.buffers.emplace_back(KDGpu::VertexBufferLayout{
-                    .binding = 0,
-                    .stride = sizeof(Vertex),
-                    .inputRate = KDGpu::VertexRate::Vertex });
-            mesh->vertexFormat = vertexFormat;
-
-            const std::array<Vertex, 4> vertexData = { {
-                    { { -1, -1 }, { 0, 1 } },
-                    { { -1, 1 }, { 0, 0 } },
-                    { { 1, -1 }, { 1, 1 } },
-                    { { 1, 1 }, { 1, 0 } },
-            } };
-
-            std::vector<Mesh::VertexBufferData> verts(1);
-            const auto vertexBufferSize = vertexData.size() * sizeof(Vertex);
-            verts[0].resize(vertexBufferSize);
-            std::memcpy(verts[0].data(), vertexData.data(), vertexBufferSize);
-            mesh->setVertices(std::move(verts));
-        }
-
-        auto* entity = rootEntity->createChildEntity<Entity>();
-        entity->setObjectName("Stereo Image Entity");
-        entity->layerMask = layers.layerMask({ "StereoImage" });
-
-        auto* renderer = entity->createComponent<MeshRenderer>();
-        renderer->mesh = mesh;
-        renderer->material = material;
-    }
+    loadImage("assets/13_3840x2160_sbs.jpg");
 
     m_cursor.emplace(layers);
-
-    return rootEntity;
 }
 
 void SerenityRenderer::updateRenderPhases()
