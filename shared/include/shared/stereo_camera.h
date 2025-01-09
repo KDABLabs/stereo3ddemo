@@ -24,6 +24,7 @@ public:
     KDBindings::Property<glm::vec3> forwardVector{ { 0.0f, 0.0f, 1.0f } };
     KDBindings::Property<glm::vec3> upVector{ { 0.0f, 1.0f, 0.0f } };
     KDBindings::Property<glm::vec3> position{ { 0.0f, 0.0f, 0.0f } };
+    KDBindings::Property<glm::vec3> viewCenter;
 
     KDBindings::Property<float> fov{ 45.0f };
     KDBindings::Property<float> horizontalFov;
@@ -51,9 +52,6 @@ class OrbitalStereoCamera : public StereoCamera
 public:
     OrbitalStereoCamera();
 
-    KDBindings::Property<float> radius{ 20.0f };
-    KDBindings::Property<float> phi{ 0.0f };
-    KDBindings::Property<float> theta{ 0.001f };
     KDBindings::Property<glm::vec3> target{ glm::vec3(0.0f, 0.0f, 0.0f) };
 
 public:
@@ -63,9 +61,6 @@ public:
     bool rotate(float dx, float dy);
 
     void translate(float dx, float dy);
-
-private:
-    void update();
 };
 
 } // namespace all

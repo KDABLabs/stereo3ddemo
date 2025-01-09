@@ -79,7 +79,7 @@ public:
                          });
         QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::scrollEvent,
                          [this](::QWheelEvent* e) {
-                             const glm::vec3 viewCenterBeforeZoom = m_camera.position() + m_camera.forwardVector() * m_camera.convergencePlaneDistance();
+                             const glm::vec3 viewCenterBeforeZoom = m_camera.viewCenter();
 
                              const float distanceToCenter = glm::length(m_camera.position() - m_renderer->sceneCenter());
                              const glm::vec3 sceneExtent = m_renderer->sceneExtent();
@@ -149,11 +149,19 @@ public:
                                      m_mouseInputTracker.is_pressed = true;
                                      m_mouseInputTracker.skip_first = true;
 
+                                     if (e->modifiers() & Qt::ControlModifier) {
+                                         // Set Camera Orbit Pivot to 3D Cursor Position
+                                         m_camera.target = m_renderer->cursorWorldPosition();
+                                     } else {
+                                         // Set Camera Orbit Pivot to scene center
+                                         m_camera.target = m_renderer->sceneCenter();
+                                     }
+                                     pnav_params->pivot_point = m_camera.target();
+
                                  } else if (e->buttons() & Qt::MouseButton::RightButton && !m_cameraController->autoFocus()) {
-                                     auto pos = m_renderer->cursorWorldPosition();
-                                     qDebug() << " setting pivot " << pos.x << pos.y << pos.z;
-                                     pnav_params->pivot_point = { pos.x, pos.y, pos.z };
                                      if (m_mouseInputTracker.cursor_changes_focus && e->modifiers() & Qt::ControlModifier) {
+                                         // Update Focus Plane Distance Based on distance from camera to 3D cursor
+                                         const glm::vec3 pos = m_renderer->cursorWorldPosition();
                                          const float distanceToCamera = glm::length(pos - m_camera.position());
                                          // Convert this distance as % or near to far plane distance
                                          const float zDistanceNormalized = (distanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());

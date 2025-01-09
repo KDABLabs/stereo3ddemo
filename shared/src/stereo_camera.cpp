@@ -9,12 +9,19 @@
 
 namespace {
 
-static float updateHorizontalFov(float fovY, float aspectRatio)
+float updateHorizontalFov(float fovY, float aspectRatio)
 {
     return glm::degrees(2.0f * std::atan(std::tan(glm::radians(fovY / 2.0f)) * aspectRatio));
 }
 
 KDBINDINGS_DECLARE_FUNCTION(horizontalFovBinding, updateHorizontalFov)
+
+glm::vec3 computeViewCenter(const glm::vec3 &pos, const glm::vec3 &forward, float distance)
+{
+    return pos + forward * distance;
+}
+
+KDBINDINGS_DECLARE_FUNCTION(viewCenterBinding, computeViewCenter)
 
 } // namespace
 
@@ -23,6 +30,7 @@ namespace all {
 StereoCamera::StereoCamera()
 {
     horizontalFov = KDBindings::makeBoundProperty(horizontalFovBinding(fov, aspectRatio));
+    viewCenter = KDBindings::makeBoundProperty(viewCenterBinding(position, forwardVector, convergencePlaneDistance));
 
     forwardVector.valueChanged().connect([this] {
                                     viewChanged.emit(this);
@@ -89,15 +97,7 @@ void StereoCamera::setUpVector(const glm::vec3& up)
     upVector = glm::normalize(up);
 }
 
-OrbitalStereoCamera::OrbitalStereoCamera()
-    : StereoCamera()
-{
-    radius.valueChanged().connect([this] { update(); }).release();
-    phi.valueChanged().connect([this] { update(); }).release();
-    theta.valueChanged().connect([this] { update(); }).release();
-    target.valueChanged().connect([this] { update(); }).release();
-    update();
-}
+OrbitalStereoCamera::OrbitalStereoCamera() = default;
 
 void OrbitalStereoCamera::zoom(float d)
 {
@@ -107,15 +107,20 @@ void OrbitalStereoCamera::zoom(float d)
 // return true, if Up Vector got flipped
 bool OrbitalStereoCamera::rotate(float dx, float dy)
 {
-    auto up = upVector();
-    glm::mat4 translateToPivot = glm::translate(glm::mat4(1.0f), target());
+    const glm::vec3 up = upVector();
+    const glm::mat4 translateToPivot = glm::translate(glm::mat4(1.0f), target());
     glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), -dx, glm::vec3(0.0f, 1.0f, 0.0f));
     rotation = rotation * glm::rotate(glm::mat4(1.0f), dy, glm::cross(upVector(), forwardVector()));
-    glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), -target());
-    glm::mat4 finalTransform = translateToPivot * rotation * translateBack;
-    glm::vec3 newPosition = glm::vec3(finalTransform * glm::vec4(position(), 1.0f));
+    const glm::mat4 translateBack = glm::translate(glm::mat4(1.0f), -target());
+    const glm::mat4 finalTransform = translateToPivot * rotation * translateBack;
+
+    const glm::vec3 newPosition = glm::vec3(finalTransform * glm::vec4(position(), 1.0f));
+    const glm::vec3 newViewCenter = glm::vec3(finalTransform * glm::vec4(viewCenter(), 1.0f));
+    const glm::vec3 newUp = glm::vec3(finalTransform * glm::vec4(up, 0.0f));
     position = newPosition;
-    setForwardVector(target() - newPosition);
+    upVector = newUp;
+    setForwardVector(newViewCenter - newPosition);
+
     return glm::dot(up, upVector()) < 0;
 }
 
@@ -127,14 +132,6 @@ void OrbitalStereoCamera::translate(float dx, float dy)
     glm::vec3 newPosition = position() + lateralTranslation + verticalTranslation;
 
     position = newPosition;
-}
-
-void OrbitalStereoCamera::update()
-{
-    const float sinTheta = sin(theta());
-    auto pos = target() + glm::vec3(radius() * sinTheta * cos(phi()), radius() * cos(theta()), radius() * sinTheta * sin(phi()));
-    position = pos;
-    setForwardVector(target() - pos);
 }
 
 } // namespace all

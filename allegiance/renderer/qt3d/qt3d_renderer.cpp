@@ -602,9 +602,7 @@ void Qt3DRenderer::setupCameraBasedOnSceneExtent()
     // set rotation point
     auto* cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
     if (cam) {
-        cam->radius = viewVector.length();
         cam->target = toGlmVec3(m_sceneCenter);
-        cam->rotate(glm::radians(45.0f), glm::radians(90.0f));
     }
 }
 
