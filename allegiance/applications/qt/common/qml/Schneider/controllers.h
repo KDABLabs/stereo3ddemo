@@ -249,5 +249,5 @@ private:
     all::CursorType m_cursorType = all::CursorType::Ball;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
-    QColor m_tint = QColor(255, 255, 255);
+    QColor m_tint = QColor(0, 255, 200);
 };
