@@ -105,7 +105,6 @@ private:
     std::shared_ptr<all::ModelNavParameters> m_nav_params;
 
     FrustumRect* m_frustumRect{ nullptr };
-    Frustum* m_centerFrustum{ nullptr };
     Frustum* m_leftFrustum{ nullptr };
     Frustum* m_rightFrustum{ nullptr };
 

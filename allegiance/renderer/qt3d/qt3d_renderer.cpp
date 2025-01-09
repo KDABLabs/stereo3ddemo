@@ -73,7 +73,6 @@ void Qt3DRenderer::viewChanged()
                                      interocularDistance * 20.0f,
                                      m_stereoCamera->mode());
 
-        m_centerFrustum->setViewMatrix(m_frustumAmplifiedCamera->centerCamera()->viewMatrix());
         m_leftFrustum->setViewMatrix(m_frustumAmplifiedCamera->leftCamera()->viewMatrix());
         m_rightFrustum->setViewMatrix(m_frustumAmplifiedCamera->rightCamera()->viewMatrix());
 
@@ -118,11 +117,9 @@ void Qt3DRenderer::projectionChanged()
                                                    interocularDistance * 20.0f,
                                                    m_stereoCamera->mode());
 
-        m_centerFrustum->setProjectionMatrix(m_frustumAmplifiedCamera->centerCamera()->projectionMatrix());
         m_leftFrustum->setProjectionMatrix(m_frustumAmplifiedCamera->leftCamera()->projectionMatrix());
         m_rightFrustum->setProjectionMatrix(m_frustumAmplifiedCamera->rightCamera()->projectionMatrix());
 
-        m_centerFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
         m_leftFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
         m_rightFrustum->setConvergence(m_stereoCamera->convergencePlaneDistance());
 
@@ -215,12 +212,10 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     // Frustums
     {
         m_frustumRect = new FrustumRect(root);
-        m_centerFrustum = new Frustum(QColor(), false, root);
         m_leftFrustum = new Frustum(QColor::fromRgb(0xff, 0x80, 0x80, 0x90), true, root);
         m_rightFrustum = new Frustum(QColor::fromRgb(0x00, 0x80, 0xff, 0x90), true, root);
 
         m_frustumRect->addComponent(m_renderer->frustumLayer());
-        m_centerFrustum->addComponent(m_renderer->frustumLayer());
         m_leftFrustum->addComponent(m_renderer->frustumLayer());
         m_rightFrustum->addComponent(m_renderer->frustumLayer());
     }
@@ -307,7 +302,6 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "frustum_view_enabled") {
         const bool frustumEnabled = std::any_cast<bool>(value);
         m_frustumRect->setEnabled(frustumEnabled);
-        m_centerFrustum->setEnabled(frustumEnabled);
         m_leftFrustum->setEnabled(frustumEnabled);
         m_rightFrustum->setEnabled(frustumEnabled);
     } else if (name == "show_focus_area") {
