@@ -6,6 +6,7 @@
 
 #include <applications/qt/common/window_event_watcher.h>
 #include <applications/qt/common/side_menu.h>
+#include <applications/qt/common/util_qt.h>
 
 #include <QStyleFactory>
 #include <QFileDialog>
@@ -101,9 +102,7 @@ public:
                              if (!m_cameraController->autoFocus()) {
                                  // Adjust convergence plane distance so that the viewCenter would remain at the same exact position after the zoom
                                  const float distToOriginalViewCenter = glm::length(viewCenterBeforeZoom - m_camera.position());
-                                 const float normalizedNearFarPlaneDist = (distToOriginalViewCenter - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
-                                 const float focusDistancePercentage = normalizedNearFarPlaneDist * 100.0f;
-                                 m_cameraController->setFocusDistance(focusDistancePercentage);
+                                 setAbsolutePlaneDistance(distToOriginalViewCenter);
                              }
                          });
         QObject::connect(m_mainWindow, &MainWindow::onScreenshot,
@@ -163,9 +162,7 @@ public:
                                          // Update Focus Plane Distance Based on distance from camera to 3D cursor
                                          const glm::vec3 pos = m_renderer->cursorWorldPosition();
                                          const float distanceToCamera = glm::length(pos - m_camera.position());
-                                         // Convert this distance as % or near to far plane distance
-                                         const float zDistanceNormalized = (distanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
-                                         m_cameraController->setFocusDistance(zDistanceNormalized * 100.0f);
+                                         setAbsolutePlaneDistance(distanceToCamera);
                                      }
                                  }
 
@@ -219,28 +216,10 @@ public:
             m_camera.aspectRatio = (float(qWindow->width()) / qWindow->height());
         });
 
-        auto updateFocusDistance = [this]() {
-            // focusDistancePercentage is a % of the nearPlane -> farPlane distance
-            const float focusDistancePercentage = m_cameraController->focusDistance();
-            const float popOut = m_cameraController->popOut();
-            const float focusDistanceFromNearPlane = m_camera.nearPlane() + (focusDistancePercentage * 0.01) * (m_camera.farPlane() - m_camera.nearPlane());
-
-            // popOut == 0 -> focusDistanceFromNearPlane
-            // popOut == 100 -> 1.5f * focusDistanceFromNearPlane
-            // popOut == -100 -> 0.5f focusDistanceFromNearPlane
-            const float popOutCorrectionFactor = (popOut * 0.01) * 0.5f + 1.0f; // [0.5, 1.5]
-            m_camera.convergencePlaneDistance = popOutCorrectionFactor * focusDistanceFromNearPlane;
-
-            if (m_cameraController->separationBasedOnFocusDistance()) {
-                // Set Eye Separation to 1/30th of focus distance if enabled
-                m_cameraController->setEyeDistance(m_camera.convergencePlaneDistance() / m_cameraController->separationBasedOnFocusDistanceDivider());
-            }
-        };
-
-        QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, updateFocusDistance);
-        QObject::connect(m_cameraController, &CameraController::popOutChanged, updateFocusDistance);
-        QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceChanged, updateFocusDistance);
-        QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceDividerChanged, updateFocusDistance);
+        QObject::connect(m_cameraController, &CameraController::focusDistanceChanged, [this] { focusDistanceUpdated(); });
+        QObject::connect(m_cameraController, &CameraController::popOutChanged, [this] { focusDistanceUpdated(); });
+        QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceChanged, [this] { focusDistanceUpdated(); });
+        QObject::connect(m_cameraController, &CameraController::separationBasedOnFocusDistanceDividerChanged, [this] { focusDistanceUpdated(); });
 
         QObject::connect(m_cameraController, &CameraController::fovChanged, [this](float v) {
             m_camera.fov = v;
@@ -338,11 +317,51 @@ public:
     {
         if (name == "auto_focus_distance") {
             const float distanceToCamera = std::any_cast<float>(value);
-            const float normalizedFocusDistanceOfNearFar = (distanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane());
-            const float focusDistanceAsPercentOfNearFar = normalizedFocusDistanceOfNearFar * 100.0f;
-            m_cameraController->setFocusDistance(focusDistanceAsPercentOfNearFar);
+            setAbsolutePlaneDistance(distanceToCamera);
+        } else if (name == "scene_loaded") {
+            const glm::vec3 sceneCenter = m_renderer->sceneCenter();
+            const glm::vec3 sceneExtent = m_renderer->sceneExtent();
+            const float radius = std::max(sceneExtent.x, std::max(sceneExtent.y, sceneExtent.z)) * 0.5f;
+
+            const glm::vec3 cameraPosition = sceneCenter - glm::vec3(0.0f, 0.0f, 1.0f) * radius;
+            const glm::vec3 viewVector = sceneCenter - cameraPosition;
+
+            m_camera.position = cameraPosition;
+            m_camera.forwardVector = glm::normalize(viewVector);
+            m_camera.farPlane = (5 * radius);
+            m_camera.upVector = glm::vec3(0.0f, 1.0f, 0.0f);
+
+            setAbsolutePlaneDistance(glm::length(viewVector));
         }
     }
+
+    void setAbsolutePlaneDistance(const float worldDistanceToCamera)
+    {
+        // Convert this distance as % or near to far plane distance
+        float zDistanceNormalized = std::clamp((worldDistanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane()), 0.0f, 1.0f);
+
+        m_cameraController->setPopOut(0.0f);
+        m_cameraController->setFocusDistance(zDistanceNormalized * 100.0f);
+    }
+
+    void focusDistanceUpdated()
+    {
+        // focusDistancePercentage is a % of the nearPlane -> farPlane distance
+        const float focusDistancePercentage = m_cameraController->focusDistance();
+        const float popOut = m_cameraController->popOut();
+        const float focusDistanceFromNearPlane = m_camera.nearPlane() + (focusDistancePercentage * 0.01) * (m_camera.farPlane() - m_camera.nearPlane());
+
+        // popOut == 0 -> focusDistanceFromNearPlane
+        // popOut == 100 -> 1.5f * focusDistanceFromNearPlane
+        // popOut == -100 -> 0.5f focusDistanceFromNearPlane
+        const float popOutCorrectionFactor = (popOut * 0.01) * 0.5f + 1.0f; // [0.5, 1.5]
+        m_camera.convergencePlaneDistance = popOutCorrectionFactor * focusDistanceFromNearPlane;
+
+        if (m_cameraController->separationBasedOnFocusDistance()) {
+            // Set Eye Separation to 1/30th of focus distance if enabled
+            m_cameraController->setEyeDistance(m_camera.convergencePlaneDistance() / m_cameraController->separationBasedOnFocusDistanceDivider());
+        }
+    };
 
 private:
     all::OrbitalStereoCamera m_camera;

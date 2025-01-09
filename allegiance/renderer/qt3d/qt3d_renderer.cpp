@@ -588,22 +588,8 @@ void Qt3DRenderer::setupCameraBasedOnSceneExtent()
 
     m_sceneCenter = (ext.max + ext.min) * 0.5f;
     m_sceneExtent = ext.max - ext.min;
-    const float radius = std::max(m_sceneExtent.x(), std::max(m_sceneExtent.y(), m_sceneExtent.z())) * 0.5f;
 
-    const QVector3D cameraPosition = m_sceneCenter - QVector3D(0.0f, 0.0f, 1.0f) * radius;
-    const QVector3D viewVector = m_sceneCenter - cameraPosition;
-
-    m_stereoCamera->position = toGlmVec3(cameraPosition);
-    m_stereoCamera->forwardVector = toGlmVec3(viewVector.normalized());
-    m_stereoCamera->convergencePlaneDistance = viewVector.length();
-    m_stereoCamera->farPlane = (5 * radius);
-    m_stereoCamera->upVector = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    // set rotation point
-    auto* cam = dynamic_cast<all::OrbitalStereoCamera*>(m_stereoCamera);
-    if (cam) {
-        cam->target = toGlmVec3(m_sceneCenter);
-    }
+    m_propertyUpdateNofitier("scene_loaded", {});
 }
 
 void Qt3DRenderer::handleFocusForFocusArea()
