@@ -19,7 +19,8 @@ add_library(
     KDAB::Qt3DRenderer ALIAS ${PROJECT_NAME}
 )
 
-target_compile_definitions(${PROJECT_NAME} PUBLIC ALLEGIANCE_QT3D)
+target_compile_definitions(${PROJECT_NAME} PUBLIC ALLEGIANCE_QT3D QT_NO_KEYWORDS)
+
 target_include_directories(
     ${PROJECT_NAME}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}

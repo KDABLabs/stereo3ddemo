@@ -24,7 +24,7 @@ void SceneController::setShiftPressed(bool newShiftPressed)
     if (m_shiftPressed == newShiftPressed)
         return;
     m_shiftPressed = newShiftPressed;
-    emit shiftPressedChanged();
+    Q_EMIT shiftPressedChanged();
 }
 
 ////////// CameraController //////////
@@ -76,7 +76,7 @@ void CameraController::setSeparationBasedOnFocusDistance(bool newSeparationBased
     if (m_separationBasedOnFocusDistance == newSeparationBasedOnFocusDistance)
         return;
     m_separationBasedOnFocusDistance = newSeparationBasedOnFocusDistance;
-    emit separationBasedOnFocusDistanceChanged(m_separationBasedOnFocusDistance);
+    Q_EMIT separationBasedOnFocusDistanceChanged(m_separationBasedOnFocusDistance);
 }
 
 void CameraController::setFocusDistance(float focusDistance)
@@ -221,7 +221,7 @@ void CameraController::setFovByPhysicalDim(bool newFovByPhysicalDim)
     if (m_fovByPhysicalDim == newFovByPhysicalDim)
         return;
     m_fovByPhysicalDim = newFovByPhysicalDim;
-    emit fovByPhysicalDimChanged(m_fovByPhysicalDim);
+    Q_EMIT fovByPhysicalDimChanged(m_fovByPhysicalDim);
 }
 
 void CameraController::updateFovFromDims()
@@ -313,7 +313,7 @@ void CameraController::setShowFocusPlane(bool newShowFocusPlane)
     if (m_showFocusPlane == newShowFocusPlane)
         return;
     m_showFocusPlane = newShowFocusPlane;
-    emit showFocusPlaneChanged(m_showFocusPlane);
+    Q_EMIT showFocusPlaneChanged(m_showFocusPlane);
 }
 
 int CameraController::separationBasedOnFocusDistanceDivider() const
@@ -326,7 +326,7 @@ void CameraController::setSeparationBasedOnFocusDistanceDivider(int newSeparatio
     if (m_separationBasedOnFocusDistanceDivider == newSeparationBasedOnFocusDistanceDivider)
         return;
     m_separationBasedOnFocusDistanceDivider = newSeparationBasedOnFocusDistanceDivider;
-    emit separationBasedOnFocusDistanceDividerChanged(m_separationBasedOnFocusDistanceDivider);
+    Q_EMIT separationBasedOnFocusDistanceDividerChanged(m_separationBasedOnFocusDistanceDivider);
 }
 
 float CameraController::eyeDistanceDefaultValue() const

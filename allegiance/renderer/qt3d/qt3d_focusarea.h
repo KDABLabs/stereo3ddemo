@@ -49,7 +49,7 @@ public:
     bool containsMouse() const { return m_containedArea != ContainedArea::None; }
     void update();
 
-signals:
+Q_SIGNALS:
     void centerChanged();
     void extentChanged();
     void viewSizeChanged();

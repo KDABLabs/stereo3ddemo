@@ -35,3 +35,5 @@ target_link_libraries(
     KDAB_QT_Common_Schneider_QML
     PRIVATE Qt6::Gui shared
 )
+
+target_compile_definitions(KDAB_QT_Common_Schneider_QML PUBLIC QT_NO_KEYWORDS)

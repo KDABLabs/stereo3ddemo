@@ -43,7 +43,7 @@ void Frustum::setViewMatrix(const QMatrix4x4& viewMatrix)
     if (viewMatrix == m_viewMatrix)
         return;
     m_viewMatrix = viewMatrix;
-    emit viewMatrixChanged();
+    Q_EMIT viewMatrixChanged();
 }
 
 void Frustum::setProjectionMatrix(const QMatrix4x4& projectionMatrix)
@@ -51,7 +51,7 @@ void Frustum::setProjectionMatrix(const QMatrix4x4& projectionMatrix)
     if (projectionMatrix == m_projectionMatrix)
         return;
     m_projectionMatrix = projectionMatrix;
-    emit projectionMatrixChanged();
+    Q_EMIT projectionMatrixChanged();
 }
 
 void Frustum::setConvergence(const float convergence)
@@ -59,7 +59,7 @@ void Frustum::setConvergence(const float convergence)
     if (convergence == m_convergence)
         return;
     m_convergence = convergence;
-    emit convergenceChanged();
+    Q_EMIT convergenceChanged();
 }
 
 void Frustum::updateGeometry()

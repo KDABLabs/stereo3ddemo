@@ -60,6 +60,9 @@ target_link_libraries(
            KDAB_QT_Common_Schneider_QMLplugin # To allow QML Imports to work since plugin is static
 )
 
+# Avoid conflicts between keywords such as emit that also exist in KDBindings
+target_compile_definitions(${PROJECT_NAME} PUBLIC QT_NO_KEYWORDS)
+
 target_include_directories(
     ${PROJECT_NAME}
     PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../../../

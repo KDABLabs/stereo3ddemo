@@ -24,7 +24,7 @@ public:
     QMatrix4x4 projectionMatrix() const { return m_viewMatrix; }
     float convergence() const { return m_convergence; }
 
-signals:
+Q_SIGNALS:
     void viewMatrixChanged();
     void projectionMatrixChanged();
     void convergenceChanged();
