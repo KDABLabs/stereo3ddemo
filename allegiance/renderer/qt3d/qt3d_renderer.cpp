@@ -90,8 +90,6 @@ void Qt3DRenderer::viewChanged()
     {
         m_focusPlanePreview->setViewMatrix(m_camera->centerCamera()->viewMatrix());
     }
-
-    projectionChanged();
 }
 
 void Qt3DRenderer::projectionChanged()
