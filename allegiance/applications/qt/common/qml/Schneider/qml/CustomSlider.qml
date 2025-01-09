@@ -14,6 +14,7 @@ Item {
     property real value: 0
     property real padding: 5
     property real stepSize: 1
+    property real defaultValue
 
     readonly property bool hovered: ma.containsMouse
 
@@ -122,6 +123,8 @@ Item {
                         root.moved(priv.fromNormalized(normalizedValue))
                     }
                 }
+
+            onDoubleClicked: root.moved(root.defaultValue)
         }
     }
 }

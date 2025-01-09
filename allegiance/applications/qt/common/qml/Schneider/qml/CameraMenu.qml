@@ -140,6 +140,7 @@ ColumnLayout {
                 title: "Distance:"
                 unit: "%"
                 value: Camera.focusDistance
+                defaultValue: Camera.focusDistanceDefaultValue
                 onMoved: current => Camera.focusDistance = current
                 enabled: !Camera.autoFocus
                 ToolTip.text: join(["Sets the focus plane distance as a % of the camera near and far planes.",
@@ -154,6 +155,7 @@ ColumnLayout {
                 to: 100
                 title: "Pop Out:"
                 unit: "%"
+                defaultValue: Camera.popOutDefaultValue
                 value: Camera.popOut
                 onMoved: current => Camera.popOut = current
                 ToolTip.text: join(["Controls if the object appears inside the screen or pops out of the screen.",
@@ -179,6 +181,7 @@ ColumnLayout {
                 from: 0.1
                 mid: 6.5
                 to: 50
+                defaultValue: Camera.eyeDistanceDefaultValue * 100
                 value: Camera.eyeDistance * 100
                 title: "Separation"
                 precision: 2
@@ -214,6 +217,7 @@ ColumnLayout {
                 Layout.fillWidth: true
                 from: 10
                 visible: Camera.separationBasedOnFocusDistance
+                defaultValue: Camera.separationBasedOnFocusDistanceDividerDefaultValue
                 to: 50
                 title: "Divider:"
                 value: Camera.separationBasedOnFocusDistanceDivider
@@ -250,6 +254,7 @@ ColumnLayout {
                 visible: enabled
                 unit: "m"
                 value: Camera.screenHeight
+                defaultValue: Camera.screenHeightDefaultValue
                 onMoved: current => Camera.screenHeight = current
                 ToolTip.text: "The physical HEIGHT of the screen or projection area respectively in meters."
             }
@@ -263,6 +268,7 @@ ColumnLayout {
                 visible: enabled
                 unit: "m"
                 value: Camera.viewerDistance
+                defaultValue: Camera.viewerDistanceDefaultValue
                 onMoved: current => Camera.viewerDistance = current
                 ToolTip.text: "The physical viewer distance to the screenin meters."
             }
@@ -275,6 +281,7 @@ ColumnLayout {
                 unit: "°"
                 precision: 1
                 value: Camera.fov
+                defaultValue: Camera.fovDefaultValue
                 onMoved: current => Camera.fov = current
                 enabled: !fovByPhysicalDimCheckBox.isChecked
                 ToolTip.text: "Set field of view (vertical angle) directly."

@@ -328,3 +328,38 @@ void CameraController::setSeparationBasedOnFocusDistanceDivider(int newSeparatio
     m_separationBasedOnFocusDistanceDivider = newSeparationBasedOnFocusDistanceDivider;
     emit separationBasedOnFocusDistanceDividerChanged(m_separationBasedOnFocusDistanceDivider);
 }
+
+float CameraController::eyeDistanceDefaultValue() const
+{
+    return ms_eyeDistanceDefaultValue;
+}
+
+int CameraController::separationBasedOnFocusDistanceDividerDefaultValue() const
+{
+    return ms_separationBasedOnFocusDistanceDividerDefaultValue;
+}
+
+float CameraController::focusDistanceDefaultValue() const
+{
+    return ms_focusDistanceDefaultValue;
+}
+
+float CameraController::popOutDefaultValue() const
+{
+    return ms_popOutDefaultValue;
+}
+
+float CameraController::screenHeightDefaultValue() const
+{
+    return ms_screenHeightDefaultValue;
+}
+
+float CameraController::viewerDistanceDefaultValue() const
+{
+    return ms_viewerDistanceDefaultValue;
+}
+
+float CameraController::fovDefaultValue() const
+{
+    return ms_fovDefaultValue;
+}

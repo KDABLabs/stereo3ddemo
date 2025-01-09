@@ -11,6 +11,7 @@ RowLayout {
     property real mid
     property real to
     property real value
+    property real defaultValue
     readonly property bool hovered: slider.hovered || label.hovered
     property int precision: 2
     property string unit: ""
@@ -53,6 +54,7 @@ RowLayout {
         from: 0
         to: 1
         value: toSliderValue(root.value)
+        defaultValue: toSliderValue(root.defaultValue)
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
         onMoved: (proposedValue) => root.moved(fromSliderValue(proposedValue))

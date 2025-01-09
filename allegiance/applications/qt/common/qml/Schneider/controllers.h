@@ -56,6 +56,14 @@ class CameraController : public QObject
     Q_PROPERTY(float screenHeight READ screenHeight WRITE setScreenHeight NOTIFY screenHeightChanged)
     Q_PROPERTY(float viewerDistance READ viewerDistance WRITE setViewerDistance NOTIFY viewerDistanceChanged)
 
+    Q_PROPERTY(float eyeDistanceDefaultValue READ eyeDistanceDefaultValue CONSTANT)
+    Q_PROPERTY(int separationBasedOnFocusDistanceDividerDefaultValue READ separationBasedOnFocusDistanceDividerDefaultValue CONSTANT)
+    Q_PROPERTY(float focusDistanceDefaultValue READ focusDistanceDefaultValue CONSTANT)
+    Q_PROPERTY(float popOutDefaultValue READ popOutDefaultValue CONSTANT)
+    Q_PROPERTY(float screenHeightDefaultValue READ screenHeightDefaultValue CONSTANT)
+    Q_PROPERTY(float viewerDistanceDefaultValue READ viewerDistanceDefaultValue CONSTANT)
+    Q_PROPERTY(float fovDefaultValue READ fovDefaultValue CONSTANT)
+
     QML_SINGLETON
     QML_NAMED_ELEMENT(Camera)
 
@@ -132,6 +140,14 @@ public:
     int separationBasedOnFocusDistanceDivider() const;
     void setSeparationBasedOnFocusDistanceDivider(int newSeparationBasedOnFocusDistanceDivider);
 
+    float eyeDistanceDefaultValue() const;
+    int separationBasedOnFocusDistanceDividerDefaultValue() const;
+    float focusDistanceDefaultValue() const;
+    float popOutDefaultValue() const;
+    float screenHeightDefaultValue() const;
+    float viewerDistanceDefaultValue() const;
+    float fovDefaultValue() const;
+
 Q_SIGNALS:
     void eyeDistanceChanged(float);
     void flippedChanged(bool);
@@ -156,25 +172,32 @@ Q_SIGNALS:
 private:
     void updateFovFromDims();
 
-    float m_eyeDistance = 0.06f;
-    bool m_flipped = false;
+    inline static constexpr float ms_eyeDistanceDefaultValue = 0.06f;
+    inline static constexpr int ms_separationBasedOnFocusDistanceDividerDefaultValue = 30;
+    inline static constexpr float ms_focusDistanceDefaultValue = 10.0f;
+    inline static constexpr float ms_popOutDefaultValue = 0.0f;
+    inline static constexpr float ms_screenHeightDefaultValue = 1.0f;
+    inline static constexpr float ms_viewerDistanceDefaultValue = 1.0f;
+    inline static constexpr float ms_fovDefaultValue = 60.0f;
 
     DisplayMode m_displayMode = DisplayMode::Stereo;
     StereoMode m_stereoMode = StereoMode::AsymmetricFrustum;
     bool m_frustumViewEnabled = true;
 
+    float m_eyeDistance = ms_eyeDistanceDefaultValue;
+    bool m_flipped = false;
     bool m_autoFocus = false;
     bool m_showAutoFocusArea = false;
-    float m_focusDistance = 10.0f;
-    float m_popOut = 0.0f;
+    float m_focusDistance = ms_focusDistanceDefaultValue;
+    float m_popOut = ms_popOutDefaultValue;
 
-    float m_fov = 60.0f;
+    float m_fov = ms_fovDefaultValue;
     bool m_fovByPhysicalDim = false;
-    float m_screenHeight = 1.0f;
-    float m_viewerDistance = 1.0f;
+    float m_screenHeight = ms_screenHeightDefaultValue;
+    float m_viewerDistance = ms_viewerDistanceDefaultValue;
     bool m_separationBasedOnFocusDistance = false;
     bool m_showFocusPlane = false;
-    int m_separationBasedOnFocusDistanceDivider = 30;
+    int m_separationBasedOnFocusDistanceDivider = ms_separationBasedOnFocusDistanceDividerDefaultValue;
 };
 
 class CursorController : public QObject

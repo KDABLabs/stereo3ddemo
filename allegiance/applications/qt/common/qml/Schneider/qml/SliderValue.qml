@@ -11,6 +11,7 @@ RowLayout {
     property alias to: slider.to
     property alias value: slider.value
     property alias stepSize: slider.stepSize
+    property alias defaultValue: slider.defaultValue
     readonly property bool hovered: slider.hovered || label.hovered
     property int precision: 2
     property string unit: ""
