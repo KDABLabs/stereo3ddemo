@@ -211,12 +211,12 @@ ColumnLayout {
 
             SliderValue {
                 Layout.fillWidth: true
-                from: 1
+                from: 10
                 visible: Camera.separationBasedOnFocusDistance
-                to: 300
+                to: 50
                 title: "Divider:"
                 value: Camera.separationBasedOnFocusDistanceDivider
-                onMoved: current => Camera.separationBasedOnFocusDistanceDivider = Math.round(current / 10) * 10
+                onMoved: current => Camera.separationBasedOnFocusDistanceDivider = Math.round(current / 1)
                 ToolTip.text: "Dividers by which we device the focusDistance to obtain the eyeSeparation"
             }
         }
