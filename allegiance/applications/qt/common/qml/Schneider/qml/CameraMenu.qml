@@ -181,7 +181,7 @@ ColumnLayout {
                 value: Camera.eyeDistance * 100
                 title: "Separation"
                 precision: 2
-                unit: "cm"
+                unit: ""
 
                 onMoved: current => Camera.eyeDistance = current * 0.01
 
