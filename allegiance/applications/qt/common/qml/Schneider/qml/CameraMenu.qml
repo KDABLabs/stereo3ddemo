@@ -144,7 +144,8 @@ ColumnLayout {
                 enabled: !Camera.autoFocus
                 ToolTip.text: join(["Sets the focus plane distance as a % of the camera near and far planes.",
                                     "(Shift) F3 -",
-                                    "(Shift) F4 +"])
+                                    "(Shift) F4 +",
+                                    "Auto set distance to 3D Cursor intersection with Ctrl+RMB"])
             }
 
             SliderValue {
