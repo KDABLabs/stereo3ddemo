@@ -3,6 +3,7 @@
 #include "picking_application_layer.h"
 #include "shared/cursor.h"
 #include "cursor.h"
+#include "focus_plane_preview.h"
 
 #include <Serenity/gui/imgui/overlay.h>
 #ifdef FLUTTER_UI_ASSET_DIR
@@ -135,9 +136,8 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
         // if (m_autoFocus)
         //     handleFocusForFocusArea();
     } else if (name == "show_focus_plane") {
-        // TODO
-        // const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
-        // m_focusPlanePreview->setEnabled(focusPlanePreviewEnabled);
+        const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
+        m_focusPlanePreview->enabled = focusPlanePreviewEnabled;
     }
 }
 
@@ -403,6 +403,19 @@ void SerenityRenderer::createScene()
     m_cursor = m_sceneRoot->createChildEntity<Cursor>(m_layerManager, m_window);
     m_cursor->setType(CursorType::Ball);
     m_cursor->setCamera(m_camera);
+
+    // TODO: Frustums
+    {
+    }
+    // TODO: FocusArea
+    {
+    }
+    // FocusPlanePreview
+    {
+        m_focusPlanePreview = m_sceneRoot->createChildEntity<FocusPlanePreview>();
+        m_focusPlanePreview->layerMask = m_layerManager->layerMask({ "Alpha" });
+        m_focusPlanePreview->camera = m_camera;
+    }
 }
 
 void SerenityRenderer::updateRenderPhases()

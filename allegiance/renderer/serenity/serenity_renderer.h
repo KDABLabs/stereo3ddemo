@@ -19,6 +19,7 @@ class StereoCamera;
 
 namespace all::serenity {
 class Cursor;
+class FocusPlanePreview;
 class PickingApplicationLayer;
 class SerenityRenderer
 {
@@ -88,6 +89,7 @@ protected:
     Serenity::Entity* m_stereoImage{ nullptr };
     Serenity::Entity* m_sceneRoot{ nullptr };
     all::serenity::Cursor* m_cursor{ nullptr };
+    FocusPlanePreview* m_focusPlanePreview{ nullptr };
     all::StereoCamera& m_stereoCamera;
     bool m_supportsStereoSwapchain {false};
 

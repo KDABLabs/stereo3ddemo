@@ -7,6 +7,7 @@ CompileShaderSet(serenity_multiview2 multiview.dif)
 CompileShaderSet(serenity_bb billboard)
 CompileShaderSet(serenity_color color)
 CompileShaderSet(serenity_stereoimage stereoimage)
+CompileShaderSet(serenity_focusplane focus_plane)
 add_dependencies(
     ${PROJECT_NAME}
     serenity_bbShaders
@@ -14,6 +15,7 @@ add_dependencies(
     serenity_multiviewShaders
     serenity_multiview2Shaders
     serenity_stereoimageShaders
+    serenity_focusplaneShaders
 )
 
 set(SHADER_FILES
@@ -27,6 +29,8 @@ set(SHADER_FILES
     "${CMAKE_CURRENT_BINARY_DIR}/billboard.frag.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/stereoimage.vert.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/stereoimage.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/focus_plane.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/focus_plane.frag.spv"
 )
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/serenity/shaders)
