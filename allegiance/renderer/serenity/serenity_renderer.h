@@ -2,7 +2,6 @@
 #include "serenity_stereo_graph.h"
 #include "serenity_window.h"
 #include "mesh_loader.h"
-#include "cursor.h"
 #include <any>
 
 #include <shared/stereo_camera.h>
@@ -19,6 +18,7 @@ class StereoCamera;
 }
 
 namespace all::serenity {
+class Cursor;
 class PickingApplicationLayer;
 class SerenityRenderer
 {
@@ -56,7 +56,7 @@ public:
     void onMouseEvent(const KDFoundation::Event& event);
 
 protected:
-    void createScene(Serenity::LayerManager& layers);
+    void createScene();
 
     enum class Mode {
         Scene,
@@ -87,6 +87,7 @@ protected:
     Serenity::Entity* m_model{ nullptr };
     Serenity::Entity* m_stereoImage{ nullptr };
     Serenity::Entity* m_sceneRoot{ nullptr };
+    all::serenity::Cursor* m_cursor{ nullptr };
     all::StereoCamera& m_stereoCamera;
     bool m_supportsStereoSwapchain {false};
 
@@ -97,7 +98,11 @@ protected:
     all::serenity::PickingApplicationLayer* m_pickingLayer{ nullptr };
     all::serenity::StereoRenderAlgorithm* m_renderAlgorithm{ nullptr };
 
-    std::optional<all::serenity::Cursor> m_cursor;
     float scale_factor = 1.0f;
+
+    glm::vec3 m_sceneCenter;
+    glm::vec3 m_sceneExtent;
+
+    std::function<void(std::string_view, std::any)> m_propertyUpdateNofitier;
 };
 } // namespace all::serenity

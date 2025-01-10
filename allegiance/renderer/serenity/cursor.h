@@ -10,119 +10,99 @@ class Texture2D;
 } // namespace Serenity
 
 namespace all::serenity {
+
+class SerenityWindow;
+
+struct ColorData {
+    float ambient[4];
+};
+
 class CursorBase : public Serenity::Entity
 {
 public:
-    struct ColorData {
-        float ambient[4];
-    };
+    KDBindings::Property<bool> enabled{ true };
 
-public:
-    CursorBase()
-    {
-        m_transform = createComponent<Serenity::SrtTransform>();
-    }
-
-public:
-    auto transform() const noexcept
-    {
-        return m_transform;
-    }
-    virtual void setColor(const ColorData& colorData) { }
+    void setColor(const ColorData& colorData);
 
 protected:
-    Serenity::SrtTransform* m_transform;
+    explicit CursorBase();
+
+    std::unique_ptr<Serenity::Mesh> m_mesh;
+    Serenity::StaticUniformBuffer* m_cbuf = nullptr;
 };
 
 class BallCursor : public CursorBase
 {
 public:
-    BallCursor(Serenity::LayerManager& layers)
-    {
-        MakeBall(this, layers);
-        MakeBillboard(this, layers);
-    }
+    explicit BallCursor(const Serenity::LayerManager* layers);
 
-protected:
-    void MakeBall(Serenity::Entity* ec, Serenity::LayerManager& layers);
-    void MakeBillboard(Serenity::Entity* ec, Serenity::LayerManager& layers);
-    void setColor(const ColorData& colorData);
+private:
+    void makeBall(Serenity::Entity* ec, const Serenity::LayerManager* layers);
+};
 
-protected:
-    std::unique_ptr<Serenity::Mesh> m_bb_mesh;
-    std::unique_ptr<Serenity::Mesh> m_ball_mesh;
+class BillboardCursor : public CursorBase
+{
+public:
+    explicit BillboardCursor(const Serenity::LayerManager* layers);
+
+    enum class CursorTexture {
+        Default,
+        CrossHair,
+        Dot,
+    };
+    KDBindings::Property<CursorTexture> texture{ CursorTexture::Default };
+
+private:
+    void makeBillboard(Serenity::Entity* ec, const Serenity::LayerManager* layers);
+
+    Serenity::SrtTransform* m_transform;
     std::unique_ptr<Serenity::Texture2D> m_texture;
-    Serenity::StaticUniformBuffer* m_cbuf = nullptr;
-    Serenity::StaticUniformBuffer* m_bb_cbuf = nullptr;
 };
 
 class CrossCursor : public CursorBase
 {
 public:
-    CrossCursor(Serenity::LayerManager& layers)
-    {
-        MakeCross(this, layers);
-    }
-
-public:
-    void setColor(const ColorData& colorData) override;
+    explicit CrossCursor(const Serenity::LayerManager* layers);
 
 protected:
-    void MakeCross(Serenity::Entity* ec, Serenity::LayerManager& layers);
-
-protected:
-    std::unique_ptr<Serenity::Mesh> m_cross_mesh;
-    Serenity::StaticUniformBuffer* m_cbuf = nullptr;
+    void makeCross(Serenity::Entity* ec, const Serenity::LayerManager* layers);
 };
 
-class Cursor
+class Cursor : public Serenity::Entity
 {
-
 public:
-    Cursor(Serenity::LayerManager& layers);
+    explicit Cursor(const Serenity::LayerManager* layers, SerenityWindow* window);
 
-public:
-    auto ChangeCursor(Serenity::Entity* parent, CursorType cursor) noexcept
-    {
-        if (m_currentType == cursor)
-            return m_currentCursor;
+    void setPosition(const glm::vec3& worldPosition);
+    glm::vec3 position() const;
 
-        if (cursor > CursorType::Cross) // not implemented
-            return m_currentCursor;
+    void setCamera(Serenity::StereoCamera* camera);
 
-        size_t index = static_cast<size_t>(cursor);
-        size_t prevIndex = static_cast<size_t>(m_currentType);
+    void setType(all::CursorType cursor) noexcept;
 
-        // super hacky way to move the cursor to the new parent
-        auto& children = parent->childEntities();
-        for (auto& child : children) {
-            if (child.get() == m_currentCursor) {
-                auto c = parent->takeEntity(m_currentCursor);
-                m_cursors[prevIndex] = std::move(c);
-                break;
-            }
-        }
+    void setColor(const ColorData& colorData);
 
-        m_currentCursor = (CursorBase*)parent->addChildEntity(std::move(m_cursors[index]));
-        m_currentType = cursor;
-        m_currentCursor->setColor(m_colorData);
-        return m_currentCursor;
-    }
+    void setScaleFactor(float scale_factor);
+    float scaleFactor() const noexcept;
 
-    auto transform() const noexcept
-    {
-        return m_currentCursor->transform();
-    }
-    void setColor(const CursorBase::ColorData& colorData)
-    {
-        m_colorData = colorData;
-        m_currentCursor->setColor(colorData);
-    }
+    void setScalingEnabled(bool enabled);
 
 private:
-    std::vector<std::unique_ptr<Serenity::Entity>> m_cursors;
-    CursorBase* m_currentCursor = nullptr;
-    CursorType m_currentType = CursorType(-1);
-    CursorBase::ColorData m_colorData = { { 1.0f, 1.0f, 1.0f, 1.0f } };
+    void updateSize();
+
+    KDBindings::ConnectionHandle m_projectionChangedConnection;
+    KDBindings::ConnectionHandle m_viewChangedConnection;
+    Serenity::StereoCamera* m_camera{ nullptr };
+    SerenityWindow* m_window{ nullptr };
+
+    float m_scale_factor{ 1.0f };
+    bool m_scaling_enabled{ true };
+
+    CrossCursor* m_cross{ nullptr };
+    BallCursor* m_sphere{ nullptr };
+    BillboardCursor* m_billboard{ nullptr };
+    ColorData m_colorData = { { 1.0f, 1.0f, 1.0f, 1.0f } };
+    Serenity::SrtTransform* m_transform{ nullptr };
 };
+
 } // namespace all::serenity

@@ -42,9 +42,7 @@ uint32_t SerenityWindowQt::height() const
 
 glm::vec4 SerenityWindowQt::viewportRect() const
 {
-    auto v = m_window->frameGeometry();
-    glm::vec4 r = { v.x(), v.y(), v.width(), v.height() };
-    return r * (float)m_window->screen()->devicePixelRatio();
+    return glm::vec4{ 0.0f, 0.0f, m_window->width(), m_window->height() };
 }
 
 glm::vec2 SerenityWindowQt::cursorPos() const

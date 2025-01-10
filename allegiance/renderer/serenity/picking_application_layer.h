@@ -6,11 +6,15 @@ class StereoCamera;
 
 namespace all::serenity {
 class SerenityWindow;
+class Cursor;
 
 class PickingApplicationLayer : public Serenity::ApplicationLayer
 {
 public:
-    PickingApplicationLayer(Serenity::StereoCamera* camera, SerenityWindow* window, Serenity::SpatialAspect* spatialAspect, Serenity::SrtTransform* ctransform);
+    PickingApplicationLayer(Serenity::StereoCamera* camera,
+                            SerenityWindow* window,
+                            Serenity::SpatialAspect* spatialAspect,
+                            Cursor* cursor);
 
 public:
     void onAfterRootEntityChanged(Serenity::Entity* oldRoot, Serenity::Entity* newRoot) override;
@@ -19,28 +23,17 @@ public:
 
     void setEnabled(bool en);
 
-    void setScaleFactor(float scale_factor)
-    {
-        m_scale_factor = scale_factor;
-    }
-    void setScalingEnabled(bool enabled)
-    {
-        m_scaling_enabled = enabled;
-    }
-    void setTransform(Serenity::SrtTransform* transform)
-    {
-        m_ctransform = transform;
-        update();
-    }
+    glm::vec3 cursorWorldPosition() const;
 
 private:
-    Serenity::SrtTransform* m_ctransform;
-    Serenity::SpatialAspect* m_spatialAspect;
-    SerenityWindow* m_window;
-    Serenity::StereoCamera* m_camera = nullptr;
+    void updateCursorWorldPosition();
+
     std::vector<Serenity::Entity*> m_pickedEntities;
-    float m_scale_factor = 1.0f;
-    bool m_scaling_enabled = true;
-    bool enabled = true;
+
+    Serenity::StereoCamera* m_camera{ nullptr };
+    SerenityWindow* m_window{ nullptr };
+    Serenity::SpatialAspect* m_spatialAspect{ nullptr };
+    Cursor* m_cursor{ nullptr };
+    bool m_enabled{ true };
 };
 } // namespace all::serenity

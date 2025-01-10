@@ -2,6 +2,7 @@
 #include "window_extent_watcher.h"
 #include "picking_application_layer.h"
 #include "shared/cursor.h"
+#include "cursor.h"
 
 #include <Serenity/gui/imgui/overlay.h>
 #ifdef FLUTTER_UI_ASSET_DIR
@@ -64,8 +65,8 @@ Serenity::Flutter::Overlay* createFlutterOverlay(SerenityWindow* w, StereoForwar
 
 SerenityRenderer::SerenityRenderer(SerenityWindow* window,
                                    StereoCamera& camera,
-                                   std::function<void(std::string_view, std::any)>)
-    : m_window(window), m_stereoCamera(camera)
+                                   std::function<void(std::string_view, std::any)> propertyUpdateNotifier)
+    : m_window(window), m_stereoCamera(camera), m_propertyUpdateNofitier(propertyUpdateNotifier)
 {
 }
 
@@ -93,38 +94,61 @@ void SerenityRenderer::loadModel(std::filesystem::path file)
     auto bb = bv->worldAxisAlignedBoundingBox.get();
     m_navParams->max_extent = bb.max;
     m_navParams->min_extent = bb.min;
+    m_sceneCenter = (bb.max + bb.min) * 0.5f;
+    m_sceneExtent = bb.max - bb.min;
 
     m_sceneRoot->addChildEntity(std::move(entity));
+
+    m_propertyUpdateNofitier("scene_loaded", {});
 }
 
 void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
 {
     if (name == "scale_factor") {
-        m_pickingLayer->setScaleFactor(std::any_cast<float>(value));
+        m_cursor->setScaleFactor(std::any_cast<float>(value));
     } else if (name == "scaling_enabled") {
-        m_pickingLayer->setScalingEnabled(std::any_cast<bool>(value));
+        m_cursor->setScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
-        m_pickingLayer->setTransform(m_cursor->ChangeCursor(m_sceneRoot, std::any_cast<CursorType>(value))->transform());
+        m_cursor->setType(std::any_cast<CursorType>(value));
     } else if (name == "display_mode") {
         updateDisplayMode(std::any_cast<DisplayMode>(value));
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
-        m_cursor->setColor(CursorBase::ColorData{
+        m_cursor->setColor(ColorData{
                 .ambient = { color[0], color[1], color[2], color[3] },
         });
+    } else if (name == "frustum_view_enabled") {
+        // TODO
+        // const bool frustumEnabled = std::any_cast<bool>(value);
+        // m_frustumRect->setEnabled(frustumEnabled);
+        // m_centerFrustum->setEnabled(frustumEnabled);
+        // m_leftFrustum->setEnabled(frustumEnabled);
+        // m_rightFrustum->setEnabled(frustumEnabled);
+    } else if (name == "show_focus_area") {
+        // TODO
+        // const bool showFocusArea = std::any_cast<bool>(value);
+        // m_focusArea->setEnabled(showFocusArea);
+    } else if (name == "auto_focus") {
+        // TODO
+        // const bool useAF = std::any_cast<bool>(value);
+        // m_autoFocus = useAF;
+        // if (m_autoFocus)
+        //     handleFocusForFocusArea();
+    } else if (name == "show_focus_plane") {
+        // TODO
+        // const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
+        // m_focusPlanePreview->setEnabled(focusPlanePreviewEnabled);
     }
 }
 
 void SerenityRenderer::setCursorEnabled(bool enabled)
 {
     if (enabled) {
-        m_cursor->transform()->scale = glm::vec3(scale_factor);
+        m_cursor->setScaleFactor(scale_factor);
     } else {
-        scale_factor = m_cursor->transform()->scale().x;
-        m_cursor->transform()->scale = glm::vec3(0.0f);
+        scale_factor = m_cursor->scaleFactor();
+        m_cursor->setScaleFactor(0);
     }
-
-    m_pickingLayer->setEnabled(enabled);
 }
 
 void SerenityRenderer::screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
@@ -135,17 +159,17 @@ void SerenityRenderer::screenshot(const std::function<void(const uint8_t* data, 
 
 glm::vec3 SerenityRenderer::cursorWorldPosition() const
 {
-    return glm::vec3();
+    return m_cursor->position();
 }
 
 glm::vec3 SerenityRenderer::sceneCenter() const
 {
-    return glm::vec3();
+    return m_sceneCenter;
 }
 
 glm::vec3 SerenityRenderer::sceneExtent() const
 {
-    return glm::vec3();
+    return m_sceneExtent;
 }
 
 bool SerenityRenderer::hoversFocusArea(int x, int y) const
@@ -185,10 +209,11 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     m_sceneRoot = rootEntityPtr.get();
     m_sceneRoot->setObjectName("Root Entity");
 
-    createScene(*m_layerManager);
-
     // Add Camera into the Scene
     m_camera = m_sceneRoot->createChildEntity<Serenity::StereoCamera>();
+
+    // Create Scene Content
+    createScene();
 
     // Create Render Algo
     auto algo = std::make_unique<StereoRenderAlgorithm>();
@@ -197,8 +222,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     const uint32_t maxSupportedSwapchainArrayLayers = device.adapter()->swapchainProperties(m_window->surface().handle()).capabilities.maxImageArrayLayers;
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
 
-    m_cursor->ChangeCursor(m_sceneRoot, CursorType::Ball);
-    m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window, spatialAspect, m_cursor->transform());
+    m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window, spatialAspect, m_cursor);
 
     m_renderAspect = m_engine.createAspect<Serenity::RenderAspect>(std::move(device));
 
@@ -352,7 +376,7 @@ void SerenityRenderer::loadImage(std::filesystem::path url)
     renderer->material = material;
 }
 
-void SerenityRenderer::createScene(Serenity::LayerManager& layers)
+void SerenityRenderer::createScene()
 {
     // Lights
     auto directionalLight = m_sceneRoot->createComponent<Light>();
@@ -375,7 +399,10 @@ void SerenityRenderer::createScene(Serenity::LayerManager& layers)
     // Create scene graph for the stereo image
     loadImage("assets/13_3840x2160_sbs.jpg");
 
-    m_cursor.emplace(layers);
+    // 3D Cursor
+    m_cursor = m_sceneRoot->createChildEntity<Cursor>(m_layerManager, m_window);
+    m_cursor->setType(CursorType::Ball);
+    m_cursor->setCamera(m_camera);
 }
 
 void SerenityRenderer::updateRenderPhases()
