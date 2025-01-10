@@ -282,7 +282,6 @@ public:
         QObject::connect(m_sceneController, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(m_mainWindow, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
             if (!fn.isEmpty()) {
-                resetCamera();
                 m_renderer->loadModel(fn.toStdString());
             }
         });
@@ -304,7 +303,6 @@ public:
         // #endif
 
         m_renderer->createAspects(nav_params);
-        resetCamera();
 
         // Set Initial Values
         m_camera.aspectRatio = (float(qWindow->width()) / qWindow->height());
@@ -327,12 +325,6 @@ public:
     }
 
 public:
-    void resetCamera() noexcept
-    {
-        m_camera.position = { 0.2, 5, -10 };
-        m_camera.setForwardVector({ 0, -.5, 1 });
-    }
-
     void propertyChanged(std::string_view name, std::any value)
     {
         if (name == "auto_focus_distance") {
