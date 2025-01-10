@@ -205,6 +205,8 @@ void all::serenity::StereoRenderAlgorithm::compositeAndOverlayNonStereo(KDGpu::C
         renderPass.draw(DrawCommand{ .vertexCount = 6 });
         break;
     }
+    case StereoRenderMode::CenterOnly:
+        // fallthrough
     case StereoRenderMode::LeftOnly: {
         renderPass.setViewport(Viewport{
                 .x = 0.0f,

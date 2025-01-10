@@ -407,7 +407,7 @@ void SerenityRenderer::updateDisplayMode(DisplayMode displayMode)
         m_renderAlgorithm->renderMode = StereoForwardAlgorithm::StereoRenderMode::RightOnly;
         break;
     case all::DisplayMode::Mono:
-        m_renderAlgorithm->renderMode = StereoForwardAlgorithm::StereoRenderMode::SideBySide;
+        m_renderAlgorithm->renderMode = StereoForwardAlgorithm::StereoRenderMode::CenterOnly;
         break;
     }
 }
