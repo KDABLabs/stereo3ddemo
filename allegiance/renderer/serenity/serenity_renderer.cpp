@@ -106,18 +106,18 @@ void SerenityRenderer::loadModel(std::filesystem::path file)
 void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
 {
     if (name == "scale_factor") {
-        m_cursor->setScaleFactor(std::any_cast<float>(value));
+        m_cursor->scaleFactor = std::any_cast<float>(value);
     } else if (name == "scaling_enabled") {
-        m_cursor->setScalingEnabled(std::any_cast<bool>(value));
+        m_cursor->scalingEnabled = std::any_cast<bool>(value);
     } else if (name == "cursor_type") {
-        m_cursor->setType(std::any_cast<CursorType>(value));
+        m_cursor->type = std::any_cast<CursorType>(value);
     } else if (name == "display_mode") {
         updateDisplayMode(std::any_cast<DisplayMode>(value));
     } else if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
-        m_cursor->setColor(ColorData{
-                .ambient = { color[0], color[1], color[2], color[3] },
-        });
+        m_cursor->color = ColorData{
+            .ambient = { color[0], color[1], color[2], color[3] },
+        };
     } else if (name == "frustum_view_enabled") {
         // TODO
         // const bool frustumEnabled = std::any_cast<bool>(value);
@@ -144,10 +144,10 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
 void SerenityRenderer::setCursorEnabled(bool enabled)
 {
     if (enabled) {
-        m_cursor->setScaleFactor(scale_factor);
+        m_cursor->scaleFactor = scale_factor;
     } else {
         scale_factor = m_cursor->scaleFactor();
-        m_cursor->setScaleFactor(0);
+        m_cursor->scaleFactor = 0.0f;
     }
 }
 
@@ -401,8 +401,8 @@ void SerenityRenderer::createScene()
 
     // 3D Cursor
     m_cursor = m_sceneRoot->createChildEntity<Cursor>(m_layerManager, m_window);
-    m_cursor->setType(CursorType::Ball);
-    m_cursor->setCamera(m_camera);
+    m_cursor->type = CursorType::Ball;
+    m_cursor->camera = m_camera;
 
     // TODO: Frustums
     {

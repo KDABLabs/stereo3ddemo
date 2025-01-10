@@ -14,7 +14,9 @@ namespace all::serenity {
 class SerenityWindow;
 
 struct ColorData {
-    float ambient[4];
+    std::array<float, 4> ambient;
+
+    friend bool operator==(const ColorData&, const ColorData&) = default;
 };
 
 class CursorBase : public Serenity::Entity
@@ -76,23 +78,19 @@ public:
     void setPosition(const glm::vec3& worldPosition);
     glm::vec3 position() const;
 
-    void setCamera(Serenity::StereoCamera* camera);
-
-    void setType(all::CursorType cursor) noexcept;
-
-    void setColor(const ColorData& colorData);
-
-    void setScaleFactor(float scale_factor);
-    float scaleFactor() const noexcept;
-
-    void setScalingEnabled(bool enabled);
+    KDBindings::Property<Serenity::StereoCamera*> camera{ nullptr };
+    KDBindings::Property<all::CursorType> type{ all::CursorType::Ball };
+    KDBindings::Property<ColorData> color{ { 1.0f, 1.0f, 1.0f, 1.0f } };
+    KDBindings::Property<float> scaleFactor{ 1.0f };
+    KDBindings::Property<bool> scalingEnabled{ true };
 
 private:
+    void applyColor(const ColorData& colorData);
+    void applyType(all::CursorType type);
     void updateSize();
 
     KDBindings::ConnectionHandle m_projectionChangedConnection;
     KDBindings::ConnectionHandle m_viewChangedConnection;
-    Serenity::StereoCamera* m_camera{ nullptr };
     SerenityWindow* m_window{ nullptr };
 
     float m_scale_factor{ 1.0f };
@@ -101,7 +99,6 @@ private:
     CrossCursor* m_cross{ nullptr };
     BallCursor* m_sphere{ nullptr };
     BillboardCursor* m_billboard{ nullptr };
-    ColorData m_colorData = { { 1.0f, 1.0f, 1.0f, 1.0f } };
     Serenity::SrtTransform* m_transform{ nullptr };
 };
 

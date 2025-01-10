@@ -118,7 +118,23 @@ Cursor::Cursor(const Serenity::LayerManager* layers, SerenityWindow* window)
     m_sphere = createChildEntity<BallCursor>(layers);
     m_billboard = createChildEntity<BillboardCursor>(layers);
 
-    setColor(m_colorData);
+    camera.valueChanged().connect([this](Serenity::StereoCamera* c) {
+                             m_projectionChangedConnection.disconnect();
+                             m_viewChangedConnection.disconnect();
+                             if (c != nullptr) {
+                                 m_viewChangedConnection = c->viewMatrix.valueChanged().connect([this] { updateSize(); });
+                                 m_projectionChangedConnection = c->lens()->projectionMatrix.valueChanged().connect([this] { updateSize(); });
+                             }
+                         })
+            .release();
+
+    type.valueChanged().connect([this](all::CursorType type) { applyType(type); }).release();
+    color.valueChanged().connect([this](const ColorData& colorData) { applyColor(colorData); }).release();
+    scalingEnabled.valueChanged().connect([this] { updateSize(); }).release();
+    scaleFactor.valueChanged().connect([this] { updateSize(); }).release();
+
+    applyColor(color());
+    applyType(type());
 }
 
 void Cursor::setPosition(const glm::vec3& worldPosition)
@@ -132,19 +148,7 @@ glm::vec3 Cursor::position() const
     return m_transform->translation();
 }
 
-void Cursor::setCamera(Serenity::StereoCamera* camera)
-{
-    m_projectionChangedConnection.disconnect();
-    m_viewChangedConnection.disconnect();
-    m_camera = nullptr;
-    if (camera != nullptr) {
-        m_camera = camera;
-        m_viewChangedConnection = m_camera->viewMatrix.valueChanged().connect([this] { updateSize(); });
-        m_projectionChangedConnection = m_camera->lens()->projectionMatrix.valueChanged().connect([this] { updateSize(); });
-    }
-}
-
-void Cursor::setType(all::CursorType type) noexcept
+void Cursor::applyType(all::CursorType type)
 {
     switch (type) {
     default:
@@ -174,44 +178,26 @@ void Cursor::setType(all::CursorType type) noexcept
     }
 }
 
-void Cursor::setColor(const ColorData& colorData)
+void Cursor::applyColor(const ColorData& colorData)
 {
-    m_colorData = colorData;
     m_sphere->setColor(colorData);
     m_cross->setColor(colorData);
     m_billboard->setColor(colorData);
-}
-
-void Cursor::setScaleFactor(float scale_factor)
-{
-    m_scale_factor = scale_factor;
-    updateSize();
-}
-
-void Cursor::setScalingEnabled(bool enabled)
-{
-    m_scaling_enabled = enabled;
-    updateSize();
-}
-
-float Cursor::scaleFactor() const noexcept
-{
-    return m_scale_factor;
 }
 
 void Cursor::updateSize()
 {
     constexpr float cursor_size = 0.06f;
     constexpr int targetSize = 20;
-    glm::vec3 cameraPosition = m_camera->position();
+    glm::vec3 cameraPosition = camera()->position();
 
     const float distanceToCamera = (cameraPosition - position()).length();
-    const float vfov = glm::radians(m_camera->lens()->verticalFieldOfView());
+    const float vfov = glm::radians(camera()->lens()->verticalFieldOfView());
     const float pixelsToAngle = vfov / m_window->height();
     const float radius = distanceToCamera * tan(targetSize * pixelsToAngle / 2.0);
 
     // Set the scale based on the calculated radius
-    m_transform->scale = glm::vec3(m_scale_factor * (m_scaling_enabled ? radius : cursor_size));
+    m_transform->scale = glm::vec3(scaleFactor() * (scalingEnabled() ? radius : cursor_size));
 }
 
 void CursorBase::setColor(const ColorData& colorData)
