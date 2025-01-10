@@ -179,7 +179,7 @@ bool SerenityRenderer::hoversFocusArea(int x, int y) const
 
 void SerenityRenderer::viewChanged()
 {
-    m_camera->lookAt(m_stereoCamera.position(), m_stereoCamera.forwardVector(), m_stereoCamera.upVector());
+    m_camera->lookAt(m_stereoCamera.position(), m_stereoCamera.viewCenter(), m_stereoCamera.upVector());
 
     const float flippedCorrection = m_stereoCamera.flipped() ? -1.0f : 1.0f;
     const float interocularDistance = flippedCorrection * m_stereoCamera.interocularDistance();
