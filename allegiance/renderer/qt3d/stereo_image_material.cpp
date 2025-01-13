@@ -63,7 +63,7 @@ StereoImageMaterial::StereoImageMaterial(const QUrl& source, Qt3DCore::QNode* pa
     connect(m_texture, &QAbstractTexture::widthChanged, this, &StereoImageMaterial::textureSizeChanged);
     connect(m_texture, &QAbstractTexture::heightChanged, this, &StereoImageMaterial::textureSizeChanged);
 
-    auto* textureParameter = new QParameter(u"stereoImageMap"_qs, m_texture, this);
+    auto* textureParameter = new QParameter(QStringLiteral("stereoImageMap"), m_texture, this);
     addParameter(textureParameter);
 }
 

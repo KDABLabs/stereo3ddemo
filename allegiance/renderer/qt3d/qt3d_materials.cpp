@@ -18,20 +18,20 @@ all::qt3d::GlossyMaterial::GlossyMaterial(const all::qt3d::shader_textures& text
         addParameter(p);
     };
 
-    make_uniform(u"normalMapGain"_qs, 2.0f);
+    make_uniform(QStringLiteral("normalMapGain"), 2.0f);
 
-    make_uniform(u"semInner"_qs, uniforms.semInner);
-    make_uniform(u"semOuter"_qs, uniforms.semOuter);
-    make_uniform(u"semGain"_qs, uniforms.semGain);
+    make_uniform(QStringLiteral("semInner"), uniforms.semInner);
+    make_uniform(QStringLiteral("semOuter"), uniforms.semOuter);
+    make_uniform(QStringLiteral("semGain"), uniforms.semGain);
 
-    make_uniform(u"difInner"_qs, uniforms.difInner);
-    make_uniform(u"difOuter"_qs, uniforms.difOuter);
-    make_uniform(u"difGain"_qs, uniforms.difGain);
+    make_uniform(QStringLiteral("difInner"), uniforms.difInner);
+    make_uniform(QStringLiteral("difOuter"), uniforms.difOuter);
+    make_uniform(QStringLiteral("difGain"), uniforms.difGain);
 
-    make_uniform(u"normalScaling"_qs, uniforms.normalScaling);
-    make_uniform(u"postVertexColor"_qs, uniforms.postVertexColor);
-    make_uniform(u"postGain"_qs, 1.0f);
-    make_uniform(u"gammax"_qs, 1.2);
+    make_uniform(QStringLiteral("normalScaling"), uniforms.normalScaling);
+    make_uniform(QStringLiteral("postVertexColor"), uniforms.postVertexColor);
+    make_uniform(QStringLiteral("postGain"), 1.0f);
+    make_uniform(QStringLiteral("gammax"), 1.2);
 
     auto* effect = new Qt3DRender::QEffect(this);
 
@@ -108,9 +108,9 @@ all::qt3d::GlossyMaterial::GlossyMaterial(const all::qt3d::shader_textures& text
         addParameter(p);
     };
 
-    make_texture(u"semMap"_qs, texture);
-    make_texture(u"diffuseMap"_qs, texture2);
-    make_texture(u"normalMap"_qs, texture3);
+    make_texture(QStringLiteral("semMap"), texture);
+    make_texture(QStringLiteral("diffuseMap"), texture2);
+    make_texture(QStringLiteral("normalMap"), texture3);
 }
 
 SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const all::qt3d::shader_uniforms& uniforms, Qt3DCore::QNode* parent)
@@ -121,8 +121,8 @@ SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const
         addParameter(p);
     };
 
-    make_uniform(u"postGain"_qs, 1.0f);
-    make_uniform(u"gammax"_qs, 1.2);
+    make_uniform(QStringLiteral("postGain"), 1.0f);
+    make_uniform(QStringLiteral("gammax"), 1.2);
 
     auto* effect = new Qt3DRender::QEffect();
 
@@ -181,5 +181,5 @@ SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const
         addParameter(p);
     };
 
-    make_texture(u"diffuseMap"_qs, texture2);
+    make_texture(QStringLiteral("diffuseMap"), texture2);
 }
