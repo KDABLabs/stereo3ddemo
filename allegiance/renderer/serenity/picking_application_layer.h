@@ -1,20 +1,29 @@
 #pragma once
 
+#include <Serenity/core/application_layer.h>
+#include <kdbindings/property.h>
+
 namespace Serenity {
 class StereoCamera;
 } // namespace Serenity
 
 namespace all::serenity {
-class SerenityWindow;
+class FocusArea;
 class Cursor;
+class SerenityWindow;
 
 class PickingApplicationLayer : public Serenity::ApplicationLayer
 {
 public:
-    PickingApplicationLayer(Serenity::StereoCamera* camera,
-                            SerenityWindow* window,
-                            Serenity::SpatialAspect* spatialAspect,
-                            Cursor* cursor);
+    explicit PickingApplicationLayer(Serenity::SpatialAspect* spatialAspect);
+
+    KDBindings::Property<bool> autoFocus{ false };
+    KDBindings::Property<FocusArea*> focusArea{ nullptr };
+    KDBindings::Property<Cursor*> cursor{ nullptr };
+    KDBindings::Property<SerenityWindow*> window{ nullptr };
+    KDBindings::Property<Serenity::StereoCamera*> camera{ nullptr };
+
+    KDBindings::Signal<float> autoFocusDistanceChanged;
 
 public:
     void onAfterRootEntityChanged(Serenity::Entity* oldRoot, Serenity::Entity* newRoot) override;
@@ -27,13 +36,11 @@ public:
 
 private:
     void updateCursorWorldPosition();
+    void handleFocusForFocusArea();
 
     std::vector<Serenity::Entity*> m_pickedEntities;
 
-    Serenity::StereoCamera* m_camera{ nullptr };
-    SerenityWindow* m_window{ nullptr };
     Serenity::SpatialAspect* m_spatialAspect{ nullptr };
-    Cursor* m_cursor{ nullptr };
     bool m_enabled{ true };
 };
 } // namespace all::serenity

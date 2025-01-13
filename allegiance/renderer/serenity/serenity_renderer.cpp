@@ -130,11 +130,8 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
         const bool showFocusArea = std::any_cast<bool>(value);
         m_focusArea->enabled = showFocusArea;
     } else if (name == "auto_focus") {
-        // TODO
-        // const bool useAF = std::any_cast<bool>(value);
-        // m_autoFocus = useAF;
-        // if (m_autoFocus)
-        //     handleFocusForFocusArea();
+        const bool useAF = std::any_cast<bool>(value);
+        m_pickingLayer->autoFocus = useAF;
     } else if (name == "show_focus_plane") {
         const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
         m_focusPlanePreview->enabled = focusPlanePreviewEnabled;
@@ -222,7 +219,17 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     const uint32_t maxSupportedSwapchainArrayLayers = device.adapter()->swapchainProperties(m_window->surface().handle()).capabilities.maxImageArrayLayers;
     auto spatialAspect = m_engine.createAspect<Serenity::SpatialAspect>();
 
-    m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(m_camera, m_window, spatialAspect, m_cursor);
+    m_pickingLayer = m_engine.createApplicationLayer<PickingApplicationLayer>(spatialAspect);
+    m_pickingLayer->camera = m_camera;
+    m_pickingLayer->window = m_window;
+    m_pickingLayer->cursor = m_cursor;
+    m_pickingLayer->focusArea = m_focusArea;
+    m_pickingLayer->autoFocusDistanceChanged
+            .connect([this](float afDistance) {
+                // Notify Controllers our AF Distance is updated
+                m_propertyUpdateNofitier("auto_focus_distance", afDistance);
+            })
+            .release();
 
     m_renderAspect = m_engine.createAspect<Serenity::RenderAspect>(std::move(device));
 
