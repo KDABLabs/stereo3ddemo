@@ -6,7 +6,7 @@ namespace all::serenity {
 class StereoRenderAlgorithm : public Serenity::StereoForwardAlgorithm
 {
 public:
-    StereoRenderAlgorithm() = default;
+    StereoRenderAlgorithm();
 
 public:
     void Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in);

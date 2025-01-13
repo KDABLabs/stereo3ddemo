@@ -1,13 +1,25 @@
 #include "serenity_stereo_graph.h"
 #include "serenity_stereo_graph.h"
 #include <Serenity/gui/render/renderer.h>
+#include <Serenity/gui/render/swapchain_render_target.h>
 #include <Serenity/gui/render/algorithm/building_blocks/bind_groups.h>
 
 using namespace Serenity;
 
 using namespace KDGpu;
 
-KDGpu::Handle<KDGpu::GpuSemaphore_t> all::serenity::StereoRenderAlgorithm::submitCommandBuffers(uint32_t frameInFlightIndex, const std::vector<KDGpu::Handle<KDGpu::GpuSemaphore_t>>& presentationCompleteSemaphores, KDGpu::Handle<KDGpu::Fence_t> frameFence)
+namespace all::serenity {
+
+StereoRenderAlgorithm::StereoRenderAlgorithm()
+{
+    // FIFO == VSync
+    auto forceFIFOPresentModel = [](const std::vector<KDGpu::PresentMode>&) {
+        return KDGpu::PresentMode::Fifo; // Always garanteed to be availble
+    };
+    SwapchainRenderTarget::setPresentModeSelectionFunction(forceFIFOPresentModel);
+}
+
+KDGpu::Handle<KDGpu::GpuSemaphore_t> StereoRenderAlgorithm::submitCommandBuffers(uint32_t frameInFlightIndex, const std::vector<KDGpu::Handle<KDGpu::GpuSemaphore_t>>& presentationCompleteSemaphores, KDGpu::Handle<KDGpu::Fence_t> frameFence)
 {
     m_captureRecorder.clearCompletedCaptures(frameInFlightIndex);
 
@@ -120,7 +132,7 @@ KDGpu::Handle<KDGpu::GpuSemaphore_t> all::serenity::StereoRenderAlgorithm::submi
     return m_renderFinishedSemaphores[frameInFlightIndex];
 }
 
-void all::serenity::StereoRenderAlgorithm::compositeAndOverlayNonStereo(KDGpu::CommandRecorder& commandRecorder, uint32_t frameInFlightIndex)
+void StereoRenderAlgorithm::compositeAndOverlayNonStereo(KDGpu::CommandRecorder& commandRecorder, uint32_t frameInFlightIndex)
 {
     const glm::vec4 clearCol = clearColor();
     const Render::RenderTargetResource* offscreenRenderTargetResource = renderTargetResourceForRefIndex(offscreenMultiViewRenderTargetRefIndex());
@@ -262,7 +274,7 @@ void all::serenity::StereoRenderAlgorithm::compositeAndOverlayNonStereo(KDGpu::C
     finalizeOverlaysAfterRecording(&commandRecorder, frameInFlightIndex);
 }
 
-void all::serenity::StereoRenderAlgorithm::overlayForStereo(KDGpu::CommandRecorder& commandRecorder, uint32_t frameInFlightIndex)
+void StereoRenderAlgorithm::overlayForStereo(KDGpu::CommandRecorder& commandRecorder, uint32_t frameInFlightIndex)
 {
     const Render::RenderTargetResource* presentRenderTargetResource = renderTargetResourceForRefIndex(presentRenderTargetRefIndex());
     const RenderTarget* presentRt = presentRenderTargetResource->renderTarget();
@@ -371,7 +383,7 @@ void all::serenity::StereoRenderAlgorithm::overlayForStereo(KDGpu::CommandRecord
     finalizeOverlaysAfterRecording(&commandRecorder, frameInFlightIndex);
 }
 
-void all::serenity::StereoRenderAlgorithm::Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
+void StereoRenderAlgorithm::Screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
 {
     m_captureRecorder.requestCapture({ offscreenMultiViewRenderTargetRefIndex(), [this, in](const uint8_t* data, uint32_t width, uint32_t height, Format format, const SubresourceLayout& layout) {
                                           uint32_t arrayLayers = layout.rowPitch / (width * 4); // 4 bytes per pixel
@@ -384,3 +396,5 @@ void all::serenity::StereoRenderAlgorithm::Screenshot(const std::function<void(c
                                           in(data_unpacked.data(), width * arrayLayers, height);
                                       } });
 }
+
+} // namespace all::serenity
