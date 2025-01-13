@@ -4,6 +4,7 @@
 #include "shared/cursor.h"
 #include "cursor.h"
 #include "focus_plane_preview.h"
+#include "focus_area.h"
 
 #include <Serenity/gui/imgui/overlay.h>
 #ifdef FLUTTER_UI_ASSET_DIR
@@ -126,9 +127,8 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
         // m_leftFrustum->setEnabled(frustumEnabled);
         // m_rightFrustum->setEnabled(frustumEnabled);
     } else if (name == "show_focus_area") {
-        // TODO
-        // const bool showFocusArea = std::any_cast<bool>(value);
-        // m_focusArea->setEnabled(showFocusArea);
+        const bool showFocusArea = std::any_cast<bool>(value);
+        m_focusArea->enabled = showFocusArea;
     } else if (name == "auto_focus") {
         // TODO
         // const bool useAF = std::any_cast<bool>(value);
@@ -174,7 +174,7 @@ glm::vec3 SerenityRenderer::sceneExtent() const
 
 bool SerenityRenderer::hoversFocusArea(int x, int y) const
 {
-    return false;
+    return m_focusArea->containsMouse();
 }
 
 void SerenityRenderer::viewChanged()
@@ -202,7 +202,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     KDGpu::Device device = m_window->createDevice();
 
     m_layerManager = m_engine.createChild<Serenity::LayerManager>();
-    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage" })
+    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea" })
         m_layerManager->addLayer(layerName);
 
     auto rootEntityPtr = std::make_unique<Entity>();
@@ -407,8 +407,12 @@ void SerenityRenderer::createScene()
     // TODO: Frustums
     {
     }
-    // TODO: FocusArea
+    // FocusArea
     {
+        m_focusArea = m_sceneRoot->createChildEntity<FocusArea>();
+        m_focusArea->camera = m_camera;
+        m_focusArea->window = m_window;
+        m_focusArea->layerMask = m_layerManager->layerMask({ "FocusArea" });
     }
     // FocusPlanePreview
     {
@@ -423,7 +427,7 @@ void SerenityRenderer::updateRenderPhases()
     auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
     switch (m_mode) {
     case Mode::Scene:
-        algo->renderPhases = { createOpaquePhase(), createTransparentPhase() };
+        algo->renderPhases = { createOpaquePhase(), createTransparentPhase(), createFocusAreaPhase() };
         break;
     case Mode::StereoImage:
         algo->renderPhases = { createStereoImagePhase() };
@@ -463,6 +467,22 @@ Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createOpaquePhas
     depthState.depthTestEnabled = true;
     depthState.depthWritesEnabled = true;
     depthState.depthCompareOperation = KDGpu::CompareOperation::Less;
+    phase.renderStates.setDepthStencilState(std::move(depthState));
+
+    return phase;
+}
+
+Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createFocusAreaPhase() const
+{
+    StereoForwardAlgorithm::RenderPhase phase{
+        m_layerManager->layerMask({ "FocusArea" }), StereoForwardAlgorithm::RenderPhase::Type::Opaque,
+        LayerFilterType::AcceptAll
+    };
+
+    DepthStencilState depthState;
+    depthState.depthTestEnabled = false;
+    depthState.depthWritesEnabled = false;
+    depthState.depthCompareOperation = KDGpu::CompareOperation::Always;
     phase.renderStates.setDepthStencilState(std::move(depthState));
 
     return phase;

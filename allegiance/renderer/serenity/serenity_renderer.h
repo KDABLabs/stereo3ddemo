@@ -19,6 +19,7 @@ class StereoCamera;
 
 namespace all::serenity {
 class Cursor;
+class FocusArea;
 class FocusPlanePreview;
 class PickingApplicationLayer;
 class SerenityRenderer
@@ -77,6 +78,7 @@ protected:
 
     Serenity::StereoForwardAlgorithm::RenderPhase createOpaquePhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createTransparentPhase() const;
+    Serenity::StereoForwardAlgorithm::RenderPhase createFocusAreaPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createStereoImagePhase() const;
 
     SerenityWindow* m_window{ nullptr };
@@ -90,6 +92,7 @@ protected:
     Serenity::Entity* m_sceneRoot{ nullptr };
     all::serenity::Cursor* m_cursor{ nullptr };
     FocusPlanePreview* m_focusPlanePreview{ nullptr };
+    FocusArea* m_focusArea{ nullptr };
     all::StereoCamera& m_stereoCamera;
     bool m_supportsStereoSwapchain {false};
 

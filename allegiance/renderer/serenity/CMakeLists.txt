@@ -31,6 +31,7 @@ target_sources(
            "picking_application_layer.h"
            "cursor.h"
            "focus_plane_preview.h"
+           "focus_area.h"
     PRIVATE "picking_application_layer.cpp"
             "serenity_stereo_graph.cpp"
             "window_extent_watcher.cpp"
@@ -38,6 +39,7 @@ target_sources(
             "serenity_renderer.cpp"
             "cursor.cpp"
             "focus_plane_preview.cpp"
+            "focus_area.cpp"
 )
 
 # if(BUILD_SERENITY_RENDERER_QT)
