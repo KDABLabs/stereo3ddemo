@@ -137,6 +137,7 @@ public:
 
                              const QPointF mousePos = e->position();
                              // Let the renderer a chance to steal mouse events
+                             m_renderer->onMouseEvent(e);
                              if (m_renderer->hoversFocusArea(mousePos.x(), mousePos.y())) {
                                  return;
                              }
@@ -159,6 +160,7 @@ public:
                                          m_cameraController->setFocusDistance(zDistanceNormalized * 100.0f);
                                      }
                                  }
+
                                  break;
 
                              case QEvent::MouseButtonRelease:
@@ -189,7 +191,6 @@ public:
                                      break;
                                  }
                                  m_mouseInputTracker.last_pos = pos;
-                                 m_renderer->updateMouse();
                              } break;
                              default:
                                  break;

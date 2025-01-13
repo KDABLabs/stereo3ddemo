@@ -50,12 +50,13 @@ public:
     QWindow* window() { return m_view; }
 
     bool hoversFocusArea(int x, int y) const;
-    void updateMouse();
     void showImage();
     void showModel();
     void screenshot(const std::function<void(const uint8_t* data, uint32_t width, uint32_t height)>& in)
     { /*tbd*/
     }
+
+    void onMouseEvent(::QMouseEvent* event);
 
     void propertyChanged(std::string_view name, std::any value);
     glm::vec3 cursorWorldPosition() const;

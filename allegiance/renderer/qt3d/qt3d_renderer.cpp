@@ -31,6 +31,7 @@
 #include <QImageReader>
 #include <shared/stereo_camera.h>
 #include <QTimer>
+#include <QMouseEvent>
 
 #include <ranges>
 
@@ -284,6 +285,27 @@ void Qt3DRenderer::showModel()
 {
     m_renderer->setMode(QStereoForwardRenderer::Mode::Scene);
     loadModel();
+}
+
+void Qt3DRenderer::onMouseEvent(::QMouseEvent* event)
+{
+    switch (event->type()) {
+    case QEvent::MouseButtonPress:
+        m_focusArea->onMousePressed(event);
+        break;
+    case QEvent::MouseButtonRelease:
+        m_focusArea->onMouseReleased(event);
+        break;
+    case QEvent::MouseMove: {
+        m_focusArea->onMouseMoved(event);
+        // Note: ScreenRayCaster takes care of Qt -> OpenGL Y coordinate conversion
+        const QPoint cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
+        m_cursorRaycaster->trigger(cursorPos);
+        break;
+    }
+    default:
+        break;
+    }
 }
 
 void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
@@ -669,13 +691,6 @@ void Qt3DRenderer::cursorHitResult(const Qt3DRender::QAbstractRayCaster::Hits& h
         return;
     }
     m_cursor->setPosition(nearestHitIterator->worldIntersection());
-}
-
-void Qt3DRenderer::updateMouse()
-{
-    // Note: ScreenRayCaster takes care of Qt -> OpenGL Y coordinate conversion
-    const QPoint cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
-    m_cursorRaycaster->trigger(cursorPos);
 }
 
 } // namespace all::qt3d

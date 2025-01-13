@@ -3,6 +3,8 @@
 #include <Qt3DCore/QEntity>
 #include <QVector3D>
 
+class QMouseEvent;
+
 namespace Qt3DCore {
 class QBuffer;
 } // namespace Qt3DCore
@@ -20,10 +22,6 @@ class QPlaneMesh;
 namespace Qt3DCore {
 class QTransform;
 } // namespace Qt3DCore
-
-namespace Qt3DInput {
-class QMouseEvent;
-} // namespace Qt3DInput
 
 class QWindow;
 
@@ -49,6 +47,10 @@ public:
     bool containsMouse() const { return m_containedArea != ContainedArea::None; }
     void update();
 
+    void onMousePressed(::QMouseEvent* mouse);
+    void onMouseMoved(::QMouseEvent* mouse);
+    void onMouseReleased(::QMouseEvent* mouse);
+
 Q_SIGNALS:
     void centerChanged();
     void extentChanged();
@@ -57,10 +59,7 @@ Q_SIGNALS:
 private:
     Q_INVOKABLE void updateMesh();
 
-    void onMousePressed(Qt3DInput::QMouseEvent* mouse);
-    void onMouseMoved(Qt3DInput::QMouseEvent* mouse);
-    void onMouseReleased(Qt3DInput::QMouseEvent* mouse);
-    void updateContainsMouse(Qt3DInput::QMouseEvent* mouse);
+    void updateContainsMouse(::QMouseEvent* mouse);
 
     Qt3DCore::QBuffer* m_buffer{ nullptr };
     const Qt3DRender::QCamera* m_camera{ nullptr };

@@ -1,6 +1,8 @@
 #include "qt3d_focusarea.h"
 #include "qt3d_shaders.h"
 
+#include <QMouseEvent>
+
 #include <Qt3DExtras/QSphereMesh>
 #include <Qt3DExtras/Qt3DWindow>
 #include <Qt3DExtras/QPlaneMesh>
@@ -21,7 +23,6 @@
 #include <Qt3DRender/QTechnique>
 #include <Qt3DRender/QGraphicsApiFilter>
 #include <Qt3DInput/QMouseDevice>
-#include <Qt3DInput/QMouseHandler>
 
 namespace all::qt3d {
 
@@ -83,15 +84,6 @@ FocusArea::FocusArea(Qt3DCore::QNode* parent)
         material->setEffect(effect);
     }
 
-    // Mouse Handling
-    auto* mouseHandler = new Qt3DInput::QMouseHandler;
-    {
-        mouseHandler->setSourceDevice(new Qt3DInput::QMouseDevice);
-        QObject::connect(mouseHandler, &Qt3DInput::QMouseHandler::positionChanged, this, &FocusArea::onMouseMoved);
-        QObject::connect(mouseHandler, &Qt3DInput::QMouseHandler::pressed, this, &FocusArea::onMousePressed);
-        QObject::connect(mouseHandler, &Qt3DInput::QMouseHandler::released, this, &FocusArea::onMouseReleased);
-    }
-
     QObject::connect(this, &FocusArea::extentChanged, this, &FocusArea::update);
     QObject::connect(this, &FocusArea::centerChanged, this, &FocusArea::update);
 
@@ -106,7 +98,6 @@ FocusArea::FocusArea(Qt3DCore::QNode* parent)
 
     addComponent(geometryRenderer);
     addComponent(material);
-    addComponent(mouseHandler);
 }
 
 void FocusArea::setCamera(const Qt3DRender::QCamera* camera)
@@ -193,7 +184,7 @@ void FocusArea::updateMesh()
     m_buffer->setData(rawData);
 }
 
-void FocusArea::onMousePressed(Qt3DInput::QMouseEvent* mouse)
+void FocusArea::onMousePressed(::QMouseEvent* mouse)
 {
     m_distToCenterOnPress = m_center - QVector3D(mouse->x(), mouse->y(), 0.0f);
     m_extentOnPress = m_extent;
@@ -204,7 +195,7 @@ void FocusArea::onMousePressed(Qt3DInput::QMouseEvent* mouse)
     }
 }
 
-void FocusArea::onMouseMoved(Qt3DInput::QMouseEvent* mouse)
+void FocusArea::onMouseMoved(::QMouseEvent* mouse)
 {
     if (m_operation == Operation::None) {
         updateContainsMouse(mouse);
@@ -216,12 +207,12 @@ void FocusArea::onMouseMoved(Qt3DInput::QMouseEvent* mouse)
     }
 }
 
-void FocusArea::onMouseReleased(Qt3DInput::QMouseEvent* mouse)
+void FocusArea::onMouseReleased(::QMouseEvent* mouse)
 {
     m_operation = Operation::None;
 }
 
-void FocusArea::updateContainsMouse(Qt3DInput::QMouseEvent* mouse)
+void FocusArea::updateContainsMouse(::QMouseEvent* mouse)
 {
     if (!isEnabled())
         return;

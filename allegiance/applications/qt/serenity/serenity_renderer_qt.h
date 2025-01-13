@@ -13,7 +13,5 @@ public:
 
     QWindow* window() const;
 
-    void updateMouse();
-
     void onMouseEvent(::QMouseEvent* event);
 };

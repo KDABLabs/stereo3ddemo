@@ -17,8 +17,6 @@ QWindow* SerenityRendererQt::window() const
     return static_cast<SerenityWindowQt*>(m_window)->window();
 }
 
-void SerenityRendererQt::updateMouse() { }
-
 void SerenityRendererQt::onMouseEvent(::QMouseEvent* event)
 {
     KDGui::MouseButtons buttons = KDGui::NoButton;

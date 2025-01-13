@@ -25,9 +25,13 @@ public:
 
     inline bool containsMouse() const { return m_containedArea != ContainedArea::None; }
 
+    void onMousePressed(const KDGui::MousePressEvent& mouse);
+    void onMouseMoved(const KDGui::MouseMoveEvent& mouse);
+    void onMouseReleased(const KDGui::MouseReleaseEvent& mouse);
+
 private:
     void updateGeometry();
-    bool onMouseEvent(KDFoundation::Event* mouse);
+    void updateContainsMouse(const KDGui::MouseMoveEvent& mouse);
 
     enum class ContainedArea {
         Center,

@@ -553,6 +553,23 @@ void SerenityRenderer::onMouseEvent(const KDFoundation::Event& event)
 {
     auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
 
+    switch (event.type()) {
+    case KDFoundation::Event::Type::MousePress: {
+        m_focusArea->onMousePressed(*static_cast<const KDGui::MousePressEvent*>(&event));
+        break;
+    }
+    case KDFoundation::Event::Type::MouseRelease: {
+        m_focusArea->onMouseReleased(*static_cast<const KDGui::MouseReleaseEvent*>(&event));
+        break;
+    }
+    case KDFoundation::Event::Type::MouseMove: {
+        m_focusArea->onMouseMoved(*static_cast<const KDGui::MouseMoveEvent*>(&event));
+        break;
+    }
+    default:
+        break;
+    }
+
     // Forward Events to the Overlays
     for (Serenity::AbstractOverlay* overlay : algo->overlays())
         overlay->event(overlay, const_cast<KDFoundation::Event*>(&event));
