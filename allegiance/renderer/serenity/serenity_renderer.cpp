@@ -5,6 +5,8 @@
 #include "cursor.h"
 #include "focus_plane_preview.h"
 #include "focus_area.h"
+#include "frustum.h"
+#include "frustum_rect.h"
 
 #include <Serenity/gui/imgui/overlay.h>
 #ifdef FLUTTER_UI_ASSET_DIR
@@ -120,12 +122,10 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
             .ambient = { color[0], color[1], color[2], color[3] },
         };
     } else if (name == "frustum_view_enabled") {
-        // TODO
-        // const bool frustumEnabled = std::any_cast<bool>(value);
-        // m_frustumRect->setEnabled(frustumEnabled);
-        // m_centerFrustum->setEnabled(frustumEnabled);
-        // m_leftFrustum->setEnabled(frustumEnabled);
-        // m_rightFrustum->setEnabled(frustumEnabled);
+        const bool frustumEnabled = std::any_cast<bool>(value);
+        m_frustumRect->enabled = frustumEnabled;
+        m_leftFrustum->enabled = frustumEnabled;
+        m_rightFrustum->enabled = frustumEnabled;
     } else if (name == "show_focus_area") {
         const bool showFocusArea = std::any_cast<bool>(value);
         m_focusArea->enabled = showFocusArea;
@@ -183,6 +183,25 @@ void SerenityRenderer::viewChanged()
     m_camera->interocularDistance = interocularDistance;
     m_camera->convergencePlaneDistance = m_stereoCamera.convergencePlaneDistance();
     m_camera->toeIn = m_stereoCamera.mode() == all::StereoCamera::Mode::ToeIn;
+
+    // Frustum
+    {
+        m_frustumAmplifiedCamera->lookAt(m_stereoCamera.position(), m_stereoCamera.viewCenter(), m_stereoCamera.upVector());
+
+        const glm::vec3 position = m_frustumAmplifiedCamera->position();
+        const float centerPlaneDist = m_frustumAmplifiedCamera->lens()->nearPlane() + (m_frustumAmplifiedCamera->lens()->farPlane() - m_frustumAmplifiedCamera->lens()->nearPlane()) * 0.5f;
+        const glm::vec3 viewCenter = position + m_frustumAmplifiedCamera->viewDirection() * centerPlaneDist;
+        glm::vec3 viewVector = viewCenter - position;
+        glm::vec3 upVector = m_frustumAmplifiedCamera->up();
+
+        const glm::vec3 rotationAxis = glm::normalize(glm::cross(upVector, m_frustumAmplifiedCamera->viewDirection()));
+        const glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), rotationAxis);
+
+        upVector = rotationMat * glm::vec4(upVector, 0.0f);
+        viewVector = rotationMat * glm::vec4(viewVector, 0.0f);
+
+        m_frustumTopViewCamera->lookAt(viewCenter - viewVector, viewCenter, glm::normalize(upVector));
+    }
 }
 
 void SerenityRenderer::projectionChanged()
@@ -191,6 +210,33 @@ void SerenityRenderer::projectionChanged()
                                                m_stereoCamera.aspectRatio(),
                                                m_stereoCamera.nearPlane(),
                                                m_stereoCamera.farPlane());
+
+    // Frustum
+    {
+        m_frustumAmplifiedCamera->lens()->setPerspectiveProjection(m_stereoCamera.fov(),
+                                                                   m_stereoCamera.aspectRatio(),
+                                                                   m_stereoCamera.nearPlane(),
+                                                                   m_stereoCamera.farPlane());
+
+        const float frustumLength = (m_frustumAmplifiedCamera->lens()->farPlane() - m_frustumAmplifiedCamera->lens()->nearPlane());
+        const float vFov = glm::radians(m_frustumAmplifiedCamera->lens()->verticalFieldOfView());
+        const float hFov = 2.0f * std::atan(m_frustumAmplifiedCamera->lens()->aspectRatio() * tan(vFov * 0.5f));
+
+        float frustumShiftAtFarPlane = 0.0f;
+        if (!m_frustumAmplifiedCamera->toeIn()) {
+            frustumShiftAtFarPlane = 2.0f * std::fabs(m_frustumAmplifiedCamera->interocularDistance());
+        }
+
+        const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f) + frustumShiftAtFarPlane;
+        const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumLength * 0.5f);
+
+        m_frustumTopViewCamera->lens()->setOrthographicProjection(-frustumMaxHalfSize,
+                                                                  frustumMaxHalfSize,
+                                                                  frustumMaxHalfSize * m_frustumAmplifiedCamera->lens()->aspectRatio(),
+                                                                  -frustumMaxHalfSize * m_frustumAmplifiedCamera->lens()->aspectRatio(),
+                                                                  m_frustumAmplifiedCamera->lens()->nearPlane(),
+                                                                  m_frustumAmplifiedCamera->lens()->farPlane() * 3.0f);
+    }
 }
 
 void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
@@ -199,7 +245,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     KDGpu::Device device = m_window->createDevice();
 
     m_layerManager = m_engine.createChild<Serenity::LayerManager>();
-    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea" })
+    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea", "Frustums" })
         m_layerManager->addLayer(layerName);
 
     auto rootEntityPtr = std::make_unique<Entity>();
@@ -208,6 +254,8 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
 
     // Add Camera into the Scene
     m_camera = m_sceneRoot->createChildEntity<Serenity::StereoCamera>();
+    m_frustumAmplifiedCamera = m_sceneRoot->createChildEntity<Serenity::StereoCamera>();
+    m_frustumTopViewCamera = m_sceneRoot->createChildEntity<Serenity::Camera>();
 
     // Create Scene Content
     createScene();
@@ -411,8 +459,30 @@ void SerenityRenderer::createScene()
     m_cursor->type = CursorType::Ball;
     m_cursor->camera = m_camera;
 
-    // TODO: Frustums
+    // Frustums
     {
+        m_frustumAmplifiedCamera->convergencePlaneDistance = KDBindings::makeBinding(m_camera->convergencePlaneDistance);
+        m_frustumAmplifiedCamera->interocularDistance = KDBindings::makeBinding(m_camera->interocularDistance * 20.0f);
+        m_frustumAmplifiedCamera->toeIn = KDBindings::makeBinding(m_camera->toeIn);
+
+        m_frustumRect = m_sceneRoot->createChildEntity<FrustumRect>();
+        m_frustumRect->layerMask = m_layerManager->layerMask({ "Frustums" });
+
+        m_leftFrustum = m_sceneRoot->createChildEntity<Frustum>();
+        m_leftFrustum->color = glm::vec4(0xff, 0x80, 0x80, 0x90) / 255.0f;
+        m_leftFrustum->topViewCamera = m_frustumTopViewCamera;
+        m_leftFrustum->viewMatrix = KDBindings::makeBinding(m_frustumAmplifiedCamera->leftViewMatrix);
+        m_leftFrustum->projectionMatrix = KDBindings::makeBinding(m_frustumAmplifiedCamera->lens()->leftProjectionMatrix);
+        m_leftFrustum->convergence = KDBindings::makeBinding(m_frustumAmplifiedCamera->convergencePlaneDistance);
+        m_leftFrustum->layerMask = m_layerManager->layerMask({ "Frustums" });
+
+        m_rightFrustum = m_sceneRoot->createChildEntity<Frustum>();
+        m_rightFrustum->color = glm::vec4(0x00, 0x80, 0xff, 0x90) / 255.0f;
+        m_rightFrustum->topViewCamera = m_frustumTopViewCamera;
+        m_rightFrustum->viewMatrix = KDBindings::makeBinding(m_frustumAmplifiedCamera->rightViewMatrix);
+        m_rightFrustum->projectionMatrix = KDBindings::makeBinding(m_frustumAmplifiedCamera->lens()->rightProjectionMatrix);
+        m_rightFrustum->convergence = KDBindings::makeBinding(m_frustumAmplifiedCamera->convergencePlaneDistance);
+        m_rightFrustum->layerMask = m_layerManager->layerMask({ "Frustums" });
     }
     // FocusArea
     {
@@ -434,7 +504,7 @@ void SerenityRenderer::updateRenderPhases()
     auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
     switch (m_mode) {
     case Mode::Scene:
-        algo->renderPhases = { createOpaquePhase(), createTransparentPhase(), createFocusAreaPhase() };
+        algo->renderPhases = { createOpaquePhase(), createTransparentPhase(), createFocusAreaPhase(), createFrustumPhase() };
         break;
     case Mode::StereoImage:
         algo->renderPhases = { createStereoImagePhase() };
@@ -491,6 +561,36 @@ Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createFocusAreaP
     depthState.depthWritesEnabled = false;
     depthState.depthCompareOperation = KDGpu::CompareOperation::Always;
     phase.renderStates.setDepthStencilState(std::move(depthState));
+
+    return phase;
+}
+
+StereoForwardAlgorithm::RenderPhase SerenityRenderer::createFrustumPhase() const
+{
+    StereoForwardAlgorithm::RenderPhase phase{
+        m_layerManager->layerMask({ "Frustums" }), StereoForwardAlgorithm::RenderPhase::Type::Alpha,
+        LayerFilterType::AcceptAll
+    };
+
+    DepthStencilState depthState;
+    depthState.depthTestEnabled = false;
+    depthState.depthWritesEnabled = false;
+    phase.renderStates.setDepthStencilState(std::move(depthState));
+
+    ColorBlendState blendState;
+    ColorBlendState::AttachmentBlendState attachmentBlendState;
+
+    attachmentBlendState.format = KDGpu::Format::UNDEFINED;
+    attachmentBlendState.blending.blendingEnabled = true;
+    attachmentBlendState.blending.alpha.operation = KDGpu::BlendOperation::Add;
+    attachmentBlendState.blending.color.operation = KDGpu::BlendOperation::Add;
+    attachmentBlendState.blending.alpha.srcFactor = KDGpu::BlendFactor::SrcAlpha;
+    attachmentBlendState.blending.color.srcFactor = KDGpu::BlendFactor::SrcAlpha;
+    attachmentBlendState.blending.alpha.dstFactor = KDGpu::BlendFactor::DstAlpha;
+    attachmentBlendState.blending.color.dstFactor = KDGpu::BlendFactor::DstAlpha;
+    blendState.attachmentBlendStates = { attachmentBlendState };
+
+    phase.renderStates.setColorBlendState(std::move(blendState));
 
     return phase;
 }

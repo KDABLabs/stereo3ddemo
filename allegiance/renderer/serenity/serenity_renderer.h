@@ -21,6 +21,8 @@ namespace all::serenity {
 class Cursor;
 class FocusArea;
 class FocusPlanePreview;
+class Frustum;
+class FrustumRect;
 class PickingApplicationLayer;
 class SerenityRenderer
 {
@@ -79,6 +81,7 @@ protected:
     Serenity::StereoForwardAlgorithm::RenderPhase createOpaquePhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createTransparentPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createFocusAreaPhase() const;
+    Serenity::StereoForwardAlgorithm::RenderPhase createFrustumPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createStereoImagePhase() const;
 
     SerenityWindow* m_window{ nullptr };
@@ -93,6 +96,9 @@ protected:
     all::serenity::Cursor* m_cursor{ nullptr };
     FocusPlanePreview* m_focusPlanePreview{ nullptr };
     FocusArea* m_focusArea{ nullptr };
+    Frustum* m_leftFrustum{ nullptr };
+    Frustum* m_rightFrustum{ nullptr };
+    FrustumRect *m_frustumRect { nullptr };
     all::StereoCamera& m_stereoCamera;
     bool m_supportsStereoSwapchain {false};
 
@@ -100,6 +106,8 @@ protected:
 
     // Camera
     Serenity::StereoCamera* m_camera{ nullptr };
+    Serenity::StereoCamera* m_frustumAmplifiedCamera{ nullptr };
+    Serenity::Camera* m_frustumTopViewCamera{ nullptr };
     all::serenity::PickingApplicationLayer* m_pickingLayer{ nullptr };
     all::serenity::StereoRenderAlgorithm* m_renderAlgorithm{ nullptr };
 

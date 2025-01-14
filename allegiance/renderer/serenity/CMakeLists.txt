@@ -32,6 +32,8 @@ target_sources(
            "cursor.h"
            "focus_plane_preview.h"
            "focus_area.h"
+           "frustum.h"
+           "frustum_rect.h"
     PRIVATE "picking_application_layer.cpp"
             "serenity_stereo_graph.cpp"
             "window_extent_watcher.cpp"
@@ -40,6 +42,8 @@ target_sources(
             "cursor.cpp"
             "focus_plane_preview.cpp"
             "focus_area.cpp"
+            "frustum.cpp"
+            "frustum_rect.cpp"
 )
 
 # if(BUILD_SERENITY_RENDERER_QT)

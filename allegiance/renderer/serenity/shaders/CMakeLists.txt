@@ -9,6 +9,10 @@ CompileShaderSet(serenity_color color)
 CompileShaderSet(serenity_stereoimage stereoimage)
 CompileShaderSet(serenity_focusplane focus_plane)
 CompileShaderSet(serenity_focusarea focus_area)
+CompileShaderSet(serenity_frustumtris frustum_tris)
+CompileShaderSet(serenity_frustumlines frustum_lines)
+CompileShaderSet(serenity_frustumrect frustum_rect)
+
 add_dependencies(
     ${PROJECT_NAME}
     serenity_bbShaders
@@ -18,6 +22,9 @@ add_dependencies(
     serenity_stereoimageShaders
     serenity_focusplaneShaders
     serenity_focusareaShaders
+    serenity_frustumtrisShaders
+    serenity_frustumlinesShaders
+    serenity_frustumrectShaders
 )
 
 set(SHADER_FILES
@@ -35,6 +42,12 @@ set(SHADER_FILES
     "${CMAKE_CURRENT_BINARY_DIR}/focus_plane.frag.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/focus_area.vert.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/focus_area.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/frustum_lines.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/frustum_lines.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/frustum_tris.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/frustum_tris.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/frustum_rect.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/frustum_rect.frag.spv"
 )
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/serenity/shaders)
