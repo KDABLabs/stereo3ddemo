@@ -205,6 +205,7 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     m_cursorRaycaster->addLayer(m_renderer->frustumLayer());
     m_cursorRaycaster->addLayer(m_renderer->cursorLayer());
     m_cursorRaycaster->addLayer(m_renderer->focusAreaLayer());
+    m_cursorRaycaster->addLayer(m_renderer->focusPlaneLayer());
     m_sceneEntity->addComponent(m_cursorRaycaster);
     QObject::connect(m_cursorRaycaster, &Qt3DRender::QScreenRayCaster::hitsChanged, this, &Qt3DRenderer::cursorHitResult);
 
@@ -235,8 +236,8 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
         for (size_t i = 0, m = m_afRayCasters.size(); i < m; ++i) {
             m_afRayCasters[i] = new Qt3DRender::QScreenRayCaster(m_sceneEntity);
             m_afRayCasters[i]->setRunMode(Qt3DRender::QAbstractRayCaster::SingleShot);
-            // m_afRayCaster->setFilterMode(Qt3DRender::QAbstractRayCaster::AcceptAnyMatchingLayers);
-            // m_afRayCaster->addLayer(m_renderer->sceneLayer());
+            m_afRayCasters[i]->setFilterMode(Qt3DRender::QAbstractRayCaster::AcceptAnyMatchingLayers);
+            m_afRayCasters[i]->addLayer(m_renderer->sceneLayer());
             QObject::connect(m_afRayCasters[i], &Qt3DRender::QScreenRayCaster::hitsChanged, [this, idx = i](const Qt3DRender::QAbstractRayCaster::Hits& hits) {
                 afRaycasterHitResult(idx, hits);
             });
@@ -250,7 +251,7 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     // FocusPlanePreview
     {
         m_focusPlanePreview = new FocusPlanePreview(root);
-        m_focusPlanePreview->addComponent(m_renderer->sceneLayer());
+        m_focusPlanePreview->addComponent(m_renderer->focusPlaneLayer());
     }
 
     loadModel();
@@ -621,9 +622,6 @@ void Qt3DRenderer::afRaycasterHitResult(size_t idx, const Qt3DRender::QAbstractR
 
     // Average result of hits distance (or we could keep smallest one)
     for (const auto& hit : hits) {
-        // Check we didn't hit the focus plane (which is in the sceneLayer like the rest of the entities we want to pick against)
-        if (hit.entity() == m_focusPlanePreview)
-            continue;
         nearestHitDistanceFromCamera = std::min(hit.distance(), nearestHitDistanceFromCamera);
     }
 
@@ -658,13 +656,9 @@ void Qt3DRenderer::afRaycasterHitResult(size_t idx, const Qt3DRender::QAbstractR
 
 void Qt3DRenderer::cursorHitResult(const Qt3DRender::QAbstractRayCaster::Hits& hits)
 {
-    // Check we didn't hit the focus plane (which is in the sceneLayer like the rest of the entities we want to pick against)
-    auto filteredHits = hits | std::ranges::views::filter([this](const Qt3DRender::QRayCasterHit& hit) {
-                            return hit.entity() != m_focusPlanePreview;
-                        });
-    auto nearestHitIterator = std::ranges::min_element(filteredHits, {}, &Qt3DRender::QRayCasterHit::distance);
+    auto nearestHitIterator = std::ranges::min_element(hits, {}, &Qt3DRender::QRayCasterHit::distance);
 
-    if (nearestHitIterator == filteredHits.end()) {
+    if (nearestHitIterator == hits.end()) {
         auto frame = m_view->frameGeometry();
         auto cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
         const QVector3D cursorScreenPos(cursorPos.x(), frame.height() - cursorPos.y(), 1.0f);

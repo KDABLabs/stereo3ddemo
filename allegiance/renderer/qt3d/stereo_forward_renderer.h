@@ -37,6 +37,7 @@ public:
     inline Qt3DRender::QLayer* cursorLayer() const { return m_cursorLayer; }
     inline Qt3DRender::QLayer* frustumLayer() const { return m_frustumLayer; }
     inline Qt3DRender::QLayer* focusAreaLayer() const { return m_focusAreaLayer; }
+    inline Qt3DRender::QLayer* focusPlaneLayer() const { return m_focusPlaneLayer; }
 
     void setMode(Mode mode);
     inline Mode mode() const { return m_mode; }
@@ -64,6 +65,7 @@ private:
     Qt3DRender::QLayer* m_cursorLayer;
     Qt3DRender::QLayer* m_frustumLayer;
     Qt3DRender::QLayer* m_focusAreaLayer;
+    Qt3DRender::QLayer* m_focusPlaneLayer;
 
     Qt3DRender::QNoDraw* m_sceneNoDraw;
     Qt3DRender::QNoDraw* m_stereoImageNoDraw;

@@ -28,6 +28,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     , m_cursorLayer(new Qt3DRender::QLayer(this))
     , m_frustumLayer(new Qt3DRender::QLayer(this))
     , m_focusAreaLayer(new Qt3DRender::QLayer(this))
+    , m_focusPlaneLayer(new Qt3DRender::QLayer(this))
 {
     m_sceneLayer->setObjectName(QStringLiteral("SceneLayer"));
     m_sceneLayer->setRecursive(true);
@@ -112,6 +113,11 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         sceneLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
         sceneLayerFilter->addLayer(m_sceneLayer);
 
+        auto* focusPlaneLayerFilter = new Qt3DRender::QLayerFilter();
+        focusPlaneLayerFilter->setObjectName("FocusPlaneFilter");
+        focusPlaneLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
+        focusPlaneLayerFilter->addLayer(m_focusPlaneLayer);
+
         auto* cursorLayerFilter = new Qt3DRender::QLayerFilter();
         cursorLayerFilter->setObjectName("CursorLayerFilter");
         cursorLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
@@ -132,6 +138,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         clearBuffers->setParent(rts);
         sceneLayerFilter->setParent(rts);
         cursorLayerFilter->setParent(rts);
+        focusPlaneLayerFilter->setParent(rts);
         focusAreaLayerFilter->setParent(rts);
 
         return cameraSelector;
