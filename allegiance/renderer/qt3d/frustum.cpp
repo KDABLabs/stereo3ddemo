@@ -75,20 +75,14 @@ void Frustum::updateGeometry()
 
     const std::vector<QVector3D> screenSpaceFrustumPoint{
         // Near
-        QVector3D(-1.0f, 1.0f, -1.0f),
-        QVector3D(1.0f, 1.0f, -1.0f),
-        QVector3D(1.0f, -1.0f, -1.0f),
-        QVector3D(-1.0f, -1.0f, -1.0f),
+        QVector3D(-1.0f, 0.5f, -1.0f),
+        QVector3D(1.0f, 0.5f, -1.0f),
         // Focus
-        QVector3D(-1.0f, 1.0f, zFocus),
-        QVector3D(1.0f, 1.0f, zFocus),
-        QVector3D(1.0f, -1.0f, zFocus),
-        QVector3D(-1.0f, -1.0f, zFocus),
+        QVector3D(-1.0f, 0.5f, zFocus),
+        QVector3D(1.0f, 0.5f, zFocus),
         // Far
-        QVector3D(-1.0f, 1.0f, 1.0f),
-        QVector3D(1.0f, 1.0f, 1.0f),
-        QVector3D(1.0f, -1.0f, 1.0f),
-        QVector3D(-1.0f, -1.0f, 1.0f),
+        QVector3D(-1.0f, 0.5f, 1.0f),
+        QVector3D(1.0f, 0.5f, 1.0f),
     };
 
     std::vector<QVector3D> worldFrustumPoints;
@@ -104,39 +98,18 @@ void Frustum::updateGeometry()
     const std::vector<QVector3D> frustumLineVertices{
         worldFrustumPoints[0],
         worldFrustumPoints[1],
-        worldFrustumPoints[1],
-        worldFrustumPoints[2],
+
         worldFrustumPoints[2],
         worldFrustumPoints[3],
-        worldFrustumPoints[3],
-        worldFrustumPoints[0],
 
         worldFrustumPoints[4],
         worldFrustumPoints[5],
-        worldFrustumPoints[5],
-        worldFrustumPoints[6],
-        worldFrustumPoints[6],
-        worldFrustumPoints[7],
-        worldFrustumPoints[7],
-        worldFrustumPoints[4],
-
-        worldFrustumPoints[8],
-        worldFrustumPoints[9],
-        worldFrustumPoints[9],
-        worldFrustumPoints[10],
-        worldFrustumPoints[10],
-        worldFrustumPoints[11],
-        worldFrustumPoints[11],
-        worldFrustumPoints[8],
 
         worldFrustumPoints[0],
-        worldFrustumPoints[8],
+        worldFrustumPoints[4],
+
         worldFrustumPoints[1],
-        worldFrustumPoints[9],
-        worldFrustumPoints[2],
-        worldFrustumPoints[10],
-        worldFrustumPoints[3],
-        worldFrustumPoints[11],
+        worldFrustumPoints[5],
 
         camPosition,
         viewCenter,
@@ -145,13 +118,13 @@ void Frustum::updateGeometry()
 
     if (m_frustumTriangles != nullptr) {
         const std::vector<QVector3D> frustumTriangleVertices{
-            worldFrustumPoints[3],
-            worldFrustumPoints[2],
-            worldFrustumPoints[11],
+            worldFrustumPoints[0],
+            worldFrustumPoints[1],
+            worldFrustumPoints[4],
 
-            worldFrustumPoints[2],
-            worldFrustumPoints[10],
-            worldFrustumPoints[11],
+            worldFrustumPoints[4],
+            worldFrustumPoints[1],
+            worldFrustumPoints[5],
         };
         m_frustumTriangles->setVertices(frustumTriangleVertices);
     }
@@ -179,7 +152,7 @@ FrustumLines::FrustumLines(const QColor& color, QNode* parent)
         vertexPosAttribute->setVertexBaseType(Qt3DCore::QAttribute::VertexBaseType::Float);
         vertexPosAttribute->setVertexSize(3);
         vertexPosAttribute->setByteStride(3 * sizeof(float));
-        vertexPosAttribute->setCount(34);
+        vertexPosAttribute->setCount(12);
         vertexPosAttribute->setName(Qt3DCore::QAttribute::defaultPositionAttributeName());
 
         auto* geometry = new Qt3DCore::QGeometry;

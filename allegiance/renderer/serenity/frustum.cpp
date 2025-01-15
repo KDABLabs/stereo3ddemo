@@ -37,7 +37,7 @@ Frustum::Frustum()
 
     {
         m_linesVertexBuffer = createChild<Serenity::StaticVertexBuffer>();
-        m_linesVertexBuffer->size = 34 * sizeof(glm::vec3);
+        m_linesVertexBuffer->size = 12 * sizeof(glm::vec3);
 
         m_lineMesh = std::make_unique<Serenity::Mesh>();
         m_lineMesh->setObjectName("FrustumLines");
@@ -132,20 +132,14 @@ void Frustum::updateGeometry()
 
     const std::vector<glm::vec3> screenSpaceFrustumPoint{
         // Near
-        glm::vec3(-1.0f, 1.0f, -1.0f),
-        glm::vec3(1.0f, 1.0f, -1.0f),
-        glm::vec3(1.0f, -1.0f, -1.0f),
-        glm::vec3(-1.0f, -1.0f, -1.0f),
+        glm::vec3(-1.0f, 0.5f, -1.0f),
+        glm::vec3(1.0f, 0.5f, -1.0f),
         // Focus
-        glm::vec3(-1.0f, 1.0f, zFocus),
-        glm::vec3(1.0f, 1.0f, zFocus),
-        glm::vec3(1.0f, -1.0f, zFocus),
-        glm::vec3(-1.0f, -1.0f, zFocus),
+        glm::vec3(-1.0f, 0.5f, zFocus),
+        glm::vec3(1.0f, 0.5f, zFocus),
         // Far
-        glm::vec3(-1.0f, 1.0f, 1.0f),
-        glm::vec3(1.0f, 1.0f, 1.0f),
-        glm::vec3(1.0f, -1.0f, 1.0f),
-        glm::vec3(-1.0f, -1.0f, 1.0f),
+        glm::vec3(-1.0f, 0.5f, 1.0f),
+        glm::vec3(1.0f, 0.5f, 1.0f),
     };
 
     std::vector<glm::vec3> worldFrustumPoints;
@@ -161,39 +155,18 @@ void Frustum::updateGeometry()
     const std::vector<glm::vec3> frustumLineVertices{
         worldFrustumPoints[0],
         worldFrustumPoints[1],
-        worldFrustumPoints[1],
-        worldFrustumPoints[2],
+
         worldFrustumPoints[2],
         worldFrustumPoints[3],
-        worldFrustumPoints[3],
-        worldFrustumPoints[0],
 
         worldFrustumPoints[4],
         worldFrustumPoints[5],
-        worldFrustumPoints[5],
-        worldFrustumPoints[6],
-        worldFrustumPoints[6],
-        worldFrustumPoints[7],
-        worldFrustumPoints[7],
-        worldFrustumPoints[4],
-
-        worldFrustumPoints[8],
-        worldFrustumPoints[9],
-        worldFrustumPoints[9],
-        worldFrustumPoints[10],
-        worldFrustumPoints[10],
-        worldFrustumPoints[11],
-        worldFrustumPoints[11],
-        worldFrustumPoints[8],
 
         worldFrustumPoints[0],
-        worldFrustumPoints[8],
+        worldFrustumPoints[4],
+
         worldFrustumPoints[1],
-        worldFrustumPoints[9],
-        worldFrustumPoints[2],
-        worldFrustumPoints[10],
-        worldFrustumPoints[3],
-        worldFrustumPoints[11],
+        worldFrustumPoints[5],
 
         camPosition,
         viewCenter,
@@ -205,13 +178,13 @@ void Frustum::updateGeometry()
     m_linesVertexBuffer->data = lineVertexBufferData;
 
     const std::vector<glm::vec3> frustumTriangleVertices{
-        worldFrustumPoints[3],
-        worldFrustumPoints[2],
-        worldFrustumPoints[11],
+        worldFrustumPoints[0],
+        worldFrustumPoints[1],
+        worldFrustumPoints[4],
 
-        worldFrustumPoints[2],
-        worldFrustumPoints[10],
-        worldFrustumPoints[11],
+        worldFrustumPoints[4],
+        worldFrustumPoints[1],
+        worldFrustumPoints[5],
     };
 
     Serenity::Mesh::VertexBufferData triangleVertexBufferData;
