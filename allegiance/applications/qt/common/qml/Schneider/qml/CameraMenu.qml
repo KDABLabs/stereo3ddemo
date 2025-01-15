@@ -120,6 +120,7 @@ ColumnLayout {
 
             CheckBoxX {
                 title: "Show AF Area"
+                enabled: Camera.autoFocus
                 initial: Camera.showAutoFocusArea
                 onChecked: checkValue => Camera.showAutoFocusArea = checkValue
                 ToolTip.text: join(["Shows the auto focus area handle.",
