@@ -80,7 +80,10 @@ public:
                          });
         QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::scrollEvent,
                          [this](::QWheelEvent* e) {
-                             const glm::vec3 viewCenterBeforeZoom = m_camera.viewCenter();
+                             const float focusDistancePercentage = m_cameraController->focusDistance();
+                             const float focusDistanceFromNearPlane = m_camera.nearPlane() + (focusDistancePercentage * 0.01) * (m_camera.farPlane() - m_camera.nearPlane());
+                             // Without taking pop out into account
+                             const glm::vec3 viewCenterBeforeZoom = m_camera.position() + m_camera.forwardVector() * focusDistanceFromNearPlane;
 
                              const float distanceToCenter = glm::length(m_camera.position() - m_renderer->sceneCenter());
                              const glm::vec3 sceneExtent = m_renderer->sceneExtent();
@@ -340,7 +343,6 @@ public:
         // Convert this distance as % or near to far plane distance
         float zDistanceNormalized = std::clamp((worldDistanceToCamera - m_camera.nearPlane()) / (m_camera.farPlane() - m_camera.nearPlane()), 0.0f, 1.0f);
 
-        m_cameraController->setPopOut(0.0f);
         m_cameraController->setFocusDistance(zDistanceNormalized * 100.0f);
     }
 
