@@ -10,7 +10,7 @@
 
 namespace all {
 struct ModelNavParameters;
-struct StereoCamera;
+class StereoCamera;
 } // namespace all
 
 namespace Serenity {
@@ -24,6 +24,24 @@ class FocusPlanePreview;
 class Frustum;
 class FrustumRect;
 class PickingApplicationLayer;
+
+struct TopViewCameraLookAtInfo {
+    glm::vec3 position;
+    glm::vec3 viewCenter;
+    glm::vec3 upVector;
+
+    friend bool operator==(const TopViewCameraLookAtInfo &, const TopViewCameraLookAtInfo &) = default;
+};
+
+struct TopViewCameraProjInfo {
+    float left;
+    float top;
+    float nearPlane;
+    float farPlane;
+
+    friend bool operator==(const TopViewCameraProjInfo &, const TopViewCameraProjInfo &) = default;
+};
+
 class SerenityRenderer
 {
 public:
@@ -110,6 +128,9 @@ protected:
     Serenity::Camera* m_frustumTopViewCamera{ nullptr };
     all::serenity::PickingApplicationLayer* m_pickingLayer{ nullptr };
     all::serenity::StereoRenderAlgorithm* m_renderAlgorithm{ nullptr };
+
+    KDBindings::Property<TopViewCameraLookAtInfo> m_topViewCameraLookAtInfo;
+    KDBindings::Property<TopViewCameraProjInfo> m_topViewCameraProjInfo;
 
     float scale_factor = 1.0f;
 

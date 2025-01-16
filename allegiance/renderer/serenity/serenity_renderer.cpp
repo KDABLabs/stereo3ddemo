@@ -65,6 +65,57 @@ Serenity::Flutter::Overlay* createFlutterOverlay(SerenityWindow* w, StereoForwar
 
 #endif
 
+TopViewCameraLookAtInfo updateFrustumTopViewLookAtInfo(const glm::vec3& position,
+                                                       const glm::vec3& viewDirection,
+                                                       const glm::vec3& up,
+                                                       float nearPlane, float farPlane)
+{
+    const float centerPlaneDist = nearPlane + (farPlane - nearPlane) * 0.5f;
+    const glm::vec3 viewCenter = position + viewDirection * centerPlaneDist;
+    glm::vec3 viewVector = viewCenter - position;
+    glm::vec3 upVector = up;
+
+    const glm::vec3 rotationAxis = glm::normalize(glm::cross(upVector, viewDirection));
+    const glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), rotationAxis);
+
+    upVector = rotationMat * glm::vec4(upVector, 0.0f);
+    viewVector = rotationMat * glm::vec4(viewVector, 0.0f);
+
+    return TopViewCameraLookAtInfo{
+        .position = viewCenter - viewVector,
+        .viewCenter = viewCenter,
+        .upVector = glm::normalize(upVector),
+    };
+}
+KDBINDINGS_DECLARE_FUNCTION(updateFrustumTopViewLookAtInfoBinding, updateFrustumTopViewLookAtInfo)
+
+TopViewCameraProjInfo updateFrustumTopViewProjInfo(float nearPlane, float farPlane,
+                                                   float verticalFieldOfView,
+                                                   float aspectRatio,
+                                                   float interocularDistance,
+                                                   bool toeIn)
+{
+    const float frustumLength = (farPlane - nearPlane);
+    const float vFov = glm::radians(verticalFieldOfView);
+    const float hFov = 2.0f * std::atan(aspectRatio * tan(vFov * 0.5f));
+
+    float frustumShiftAtFarPlane = 0.0f;
+    if (!toeIn) {
+        frustumShiftAtFarPlane = 2.0f * std::fabs(interocularDistance);
+    }
+
+    const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f) + frustumShiftAtFarPlane;
+    const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumLength * 0.5f);
+
+    return TopViewCameraProjInfo{
+        .left = -frustumMaxHalfSize,
+        .top = frustumMaxHalfSize * aspectRatio,
+        .nearPlane = nearPlane,
+        .farPlane = farPlane * 3.0f,
+    };
+}
+KDBINDINGS_DECLARE_FUNCTION(updateFrustumTopViewProjInfoBinding, updateFrustumTopViewProjInfo)
+
 } // namespace
 
 SerenityRenderer::SerenityRenderer(SerenityWindow* window,
@@ -176,32 +227,13 @@ bool SerenityRenderer::hoversFocusArea(int x, int y) const
 
 void SerenityRenderer::viewChanged()
 {
-    m_camera->lookAt(m_stereoCamera.position(), m_stereoCamera.viewCenter(), m_stereoCamera.upVector());
-
     const float flippedCorrection = m_stereoCamera.flipped() ? -1.0f : 1.0f;
     const float interocularDistance = flippedCorrection * m_stereoCamera.interocularDistance();
     m_camera->interocularDistance = interocularDistance;
     m_camera->convergencePlaneDistance = m_stereoCamera.convergencePlaneDistance();
     m_camera->toeIn = m_stereoCamera.mode() == all::StereoCamera::Mode::ToeIn;
 
-    // Frustum
-    {
-        m_frustumAmplifiedCamera->lookAt(m_stereoCamera.position(), m_stereoCamera.viewCenter(), m_stereoCamera.upVector());
-
-        const glm::vec3 position = m_frustumAmplifiedCamera->position();
-        const float centerPlaneDist = m_frustumAmplifiedCamera->lens()->nearPlane() + (m_frustumAmplifiedCamera->lens()->farPlane() - m_frustumAmplifiedCamera->lens()->nearPlane()) * 0.5f;
-        const glm::vec3 viewCenter = position + m_frustumAmplifiedCamera->viewDirection() * centerPlaneDist;
-        glm::vec3 viewVector = viewCenter - position;
-        glm::vec3 upVector = m_frustumAmplifiedCamera->up();
-
-        const glm::vec3 rotationAxis = glm::normalize(glm::cross(upVector, m_frustumAmplifiedCamera->viewDirection()));
-        const glm::mat4 rotationMat = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), rotationAxis);
-
-        upVector = rotationMat * glm::vec4(upVector, 0.0f);
-        viewVector = rotationMat * glm::vec4(viewVector, 0.0f);
-
-        m_frustumTopViewCamera->lookAt(viewCenter - viewVector, viewCenter, glm::normalize(upVector));
-    }
+    m_camera->lookAt(m_stereoCamera.position(), m_stereoCamera.position() + m_stereoCamera.forwardVector(), m_stereoCamera.upVector());
 }
 
 void SerenityRenderer::projectionChanged()
@@ -210,33 +242,6 @@ void SerenityRenderer::projectionChanged()
                                                m_stereoCamera.aspectRatio(),
                                                m_stereoCamera.nearPlane(),
                                                m_stereoCamera.farPlane());
-
-    // Frustum
-    {
-        m_frustumAmplifiedCamera->lens()->setPerspectiveProjection(m_stereoCamera.fov(),
-                                                                   m_stereoCamera.aspectRatio(),
-                                                                   m_stereoCamera.nearPlane(),
-                                                                   m_stereoCamera.farPlane());
-
-        const float frustumLength = (m_frustumAmplifiedCamera->lens()->farPlane() - m_frustumAmplifiedCamera->lens()->nearPlane());
-        const float vFov = glm::radians(m_frustumAmplifiedCamera->lens()->verticalFieldOfView());
-        const float hFov = 2.0f * std::atan(m_frustumAmplifiedCamera->lens()->aspectRatio() * tan(vFov * 0.5f));
-
-        float frustumShiftAtFarPlane = 0.0f;
-        if (!m_frustumAmplifiedCamera->toeIn()) {
-            frustumShiftAtFarPlane = 2.0f * std::fabs(m_frustumAmplifiedCamera->interocularDistance());
-        }
-
-        const float frustumHalfWidth = frustumLength * std::tan(hFov * 0.5f) + frustumShiftAtFarPlane;
-        const float frustumMaxHalfSize = std::max(frustumHalfWidth, frustumLength * 0.5f);
-
-        m_frustumTopViewCamera->lens()->setOrthographicProjection(-frustumMaxHalfSize,
-                                                                  frustumMaxHalfSize,
-                                                                  frustumMaxHalfSize * m_frustumAmplifiedCamera->lens()->aspectRatio(),
-                                                                  -frustumMaxHalfSize * m_frustumAmplifiedCamera->lens()->aspectRatio(),
-                                                                  m_frustumAmplifiedCamera->lens()->nearPlane(),
-                                                                  m_frustumAmplifiedCamera->lens()->farPlane() * 3.0f);
-    }
 }
 
 void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> nav_params)
@@ -461,9 +466,40 @@ void SerenityRenderer::createScene()
 
     // Frustums
     {
+        // Mirror m_camera with amplified eye separation
         m_frustumAmplifiedCamera->convergencePlaneDistance = KDBindings::makeBinding(m_camera->convergencePlaneDistance);
         m_frustumAmplifiedCamera->interocularDistance = KDBindings::makeBinding(m_camera->interocularDistance * 20.0f);
         m_frustumAmplifiedCamera->toeIn = KDBindings::makeBinding(m_camera->toeIn);
+        m_frustumAmplifiedCamera->lens()->verticalFieldOfView = KDBindings::makeBinding(m_camera->lens()->verticalFieldOfView);
+        m_frustumAmplifiedCamera->lens()->aspectRatio = KDBindings::makeBinding(m_camera->lens()->aspectRatio);
+        m_frustumAmplifiedCamera->lens()->nearPlane = KDBindings::makeBinding(m_camera->lens()->nearPlane);
+        m_frustumAmplifiedCamera->lens()->farPlane = KDBindings::makeBinding(m_camera->lens()->farPlane);
+        m_frustumAmplifiedCamera->transform()->localTransform = KDBindings::makeBinding(m_camera->transform()->localTransform);
+
+        // Create Binding to update frustum top view camera whenever m_frustumAmplifiedCamera changes
+        m_topViewCameraLookAtInfo = KDBindings::makeBoundProperty(updateFrustumTopViewLookAtInfoBinding(m_frustumAmplifiedCamera->position,
+                                                                                                        m_frustumAmplifiedCamera->viewDirection,
+                                                                                                        m_frustumAmplifiedCamera->up,
+                                                                                                        m_frustumAmplifiedCamera->lens()->nearPlane,
+                                                                                                        m_frustumAmplifiedCamera->lens()->farPlane));
+        m_topViewCameraProjInfo = KDBindings::makeBoundProperty(updateFrustumTopViewProjInfoBinding(m_frustumAmplifiedCamera->lens()->nearPlane,
+                                                                                                    m_frustumAmplifiedCamera->lens()->farPlane,
+                                                                                                    m_frustumAmplifiedCamera->lens()->verticalFieldOfView,
+                                                                                                    m_frustumAmplifiedCamera->lens()->aspectRatio,
+                                                                                                    m_frustumAmplifiedCamera->interocularDistance,
+                                                                                                    m_frustumAmplifiedCamera->toeIn));
+
+        m_topViewCameraLookAtInfo.valueChanged().connect([this](const TopViewCameraLookAtInfo& info) {
+                                                    m_frustumTopViewCamera->lookAt(info.position, info.viewCenter, info.upVector);
+                                                })
+                .release();
+
+        m_topViewCameraProjInfo.valueChanged().connect([this](const TopViewCameraProjInfo& info) {
+                                                  m_frustumTopViewCamera->lens()->setOrthographicProjection(info.left, -info.left,
+                                                                                                            info.top, -info.top,
+                                                                                                            info.nearPlane, info.farPlane);
+                                              })
+                .release();
 
         m_frustumRect = m_sceneRoot->createChildEntity<FrustumRect>();
         m_frustumRect->layerMask = m_layerManager->layerMask({ "Frustums" });

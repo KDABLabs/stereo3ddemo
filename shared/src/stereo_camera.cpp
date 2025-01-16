@@ -29,8 +29,8 @@ namespace all {
 
 StereoCamera::StereoCamera()
 {
-    horizontalFov = KDBindings::makeBoundProperty(horizontalFovBinding(fov, aspectRatio));
-    viewCenter = KDBindings::makeBoundProperty(viewCenterBinding(position, forwardVector, convergencePlaneDistance));
+    horizontalFov = KDBindings::makeBinding(horizontalFovBinding(fov, aspectRatio));
+    viewCenter = KDBindings::makeBinding(viewCenterBinding(position, forwardVector, convergencePlaneDistance));
 
     forwardVector.valueChanged().connect([this] {
                                     viewChanged.emit(this);
