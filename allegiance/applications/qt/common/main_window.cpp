@@ -73,6 +73,7 @@ void MainWindow::createDockWidget()
     dock->setWidget(m_sideMenu);
     addDockWidget(Qt::RightDockWidgetArea, dock);
     dock->setFeatures(QDockWidget::DockWidgetMovable | QDockWidget::DockWidgetFloatable);
+    connect(dock, &QDockWidget::dockLocationChanged, m_sideMenu, &SideMenu::setClearColor);
 }
 
 } // namespace all::qt

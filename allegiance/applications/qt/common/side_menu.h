@@ -41,9 +41,14 @@ public:
         assert(m_cursorController);
         assert(m_appStyle);
 
-        m_quickWidget->setClearColor(m_appStyle->backgroundColor());
+        setClearColor();
 
         m_layout->addWidget(m_quickWidget);
+    }
+
+    void setClearColor()
+    {
+        m_quickWidget->setClearColor(m_appStyle->backgroundColor());
     }
 
     inline SceneController* sceneController() const { return m_sceneController; }
