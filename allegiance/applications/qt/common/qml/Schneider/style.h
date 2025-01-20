@@ -35,7 +35,7 @@ class AppStyle : public QObject
 
 public:
     static constexpr uint32_t kDefaultFontSize = 11;
-    static constexpr uint32_t kButtonFontSize = 20;
+    static constexpr uint32_t kButtonFontSize = 10;
     static constexpr uint32_t kH1FontSize = 40;
     static constexpr uint32_t kH2FontSize = 30;
 
@@ -70,7 +70,7 @@ public:
     QColor toolTipTextColor() const noexcept { return m_palette.color(QPalette::ToolTipText); }
     QColor textColor() const noexcept { return m_palette.color(QPalette::Text); }
     QColor buttonColor() const noexcept { return m_palette.color(QPalette::Button); }
-    QColor buttonHover() const noexcept { return QColor(0x35, 0x35, 0x35); }
+    QColor buttonHover() const noexcept { return QColor(0x45, 0x45, 0x45); }
     QColor buttonDisabled() const noexcept { return QColor(0x3A, 0x3A, 0x3A); }
     QColor accent() const noexcept { return QColor("#783DBC"); }
     QColor buttonText() const noexcept { return m_palette.color(QPalette::ButtonText); }

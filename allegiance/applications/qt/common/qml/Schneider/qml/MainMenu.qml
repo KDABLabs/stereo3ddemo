@@ -29,6 +29,10 @@ ScrollView {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
 
+            background: Rectangle {
+                color: Style.background
+            }
+
             RowLayout {
                 SectionTitle {
                     Layout.maximumWidth: 40
@@ -38,8 +42,11 @@ ScrollView {
                 Label {
                     text: "Camera"
                     font: Style.fontButton
+                    leftPadding: 10
                 }
             }
+            topPadding: 0
+            bottomPadding: 0
         }
         CameraMenu {
             Layout.fillWidth: true
@@ -52,6 +59,10 @@ ScrollView {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
 
+            background: Rectangle {
+                color: Style.background
+            }
+
             RowLayout {
                 SectionTitle {
                     Layout.maximumWidth: 40
@@ -61,8 +72,11 @@ ScrollView {
                 Label {
                     text: "Cursor"
                     font: Style.fontButton
+                    leftPadding: 10
                 }
             }
+            topPadding: 0
+            bottomPadding: 0
         }
         CursorMenu {
             visible: cursor_section_title.isVisible
@@ -73,6 +87,10 @@ ScrollView {
             Layout.fillWidth: true
             Layout.alignment: Qt.AlignTop
 
+            background: Rectangle {
+                color: Style.background
+            }
+
             RowLayout {
                 SectionTitle {
                     Layout.maximumWidth: 40
@@ -82,8 +100,11 @@ ScrollView {
                 Label {
                     text: "Navigation"
                     font: Style.fontButton
+                    leftPadding: 10
                 }
             }
+            topPadding: 0
+            bottomPadding: 0
         }
 
         GroupBox {
