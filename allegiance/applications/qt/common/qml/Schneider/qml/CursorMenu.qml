@@ -80,13 +80,23 @@ GroupBox {
                             }
                         }
                     }
-                    onClicked: colorDialog.open()
                 }
-                ColorDialog {
-                    id: colorDialog
-                    selectedColor: Cursor.cursorTint
-                    onAccepted: Cursor.cursorTint = selectedColor
-                }
+            }
+
+            SliderValue {
+                id: cursorhue
+                Layout.fillWidth: true
+                from: 1
+                to: 360
+                title: "Hue"
+                unit: "°"
+                precision: 1
+                value: Cursor.hue
+                enabled: true
+                defaultValue: 180
+                onMoved: current => Cursor.hue = current
+                onAdjusted: adjustedValue => Cursor.hue += adjustedValue
+                ToolTip.text: "Set cursor Hue."
             }
 
             // Cursor Scaling

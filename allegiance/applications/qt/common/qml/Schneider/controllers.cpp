@@ -322,6 +322,21 @@ QColor CursorController::cursorTint() const
     return m_tint;
 }
 
+void CursorController::setHue(float hue)
+{
+    if (m_cursorHue == hue)
+        return;
+
+    m_cursorHue = hue;
+    cursorHueChanged(m_cursorHue);
+    setCursorTint(QColor::fromHsv(hue, 200, 255, 255));
+}
+
+float CursorController::hue()
+{
+    return m_cursorHue;
+}
+
 bool CameraController::showFocusPlane() const
 {
     return m_showFocusPlane;

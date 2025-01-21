@@ -218,6 +218,8 @@ class CursorController : public QObject
     Q_PROPERTY(CursorType cursor READ cursor WRITE setCursorType NOTIFY cursorChanged)
     Q_PROPERTY(bool scalingEnabled READ scalingEnabled WRITE setScalingEnabled NOTIFY cursorScalingEnableChanged)
     Q_PROPERTY(float scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY cursorScaleChanged)
+    Q_PROPERTY(float hue READ hue WRITE setHue NOTIFY cursorHueChanged)
+
     Q_PROPERTY(QColor cursorTint READ cursorTint WRITE setCursorTint NOTIFY cursorTintChanged)
     QML_SINGLETON
     QML_NAMED_ELEMENT(Cursor)
@@ -248,17 +250,22 @@ public:
     void setCursorTint(QColor color);
     [[nodiscard]] QColor cursorTint() const;
 
+    void setHue(float hue);
+    [[nodiscard]] float hue();
+
 Q_SIGNALS:
     void cursorVisibilityChanged(bool state);
     void cursorChanged(all::CursorType cursorType);
     void cursorScaleChanged(float scale);
     void cursorScalingEnableChanged(bool enabled);
     void cursorTintChanged(QColor color);
+    void cursorHueChanged(float);
 
 private:
     bool m_visible = true;
     all::CursorType m_cursorType = all::CursorType::Ball;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
-    QColor m_tint = QColor(0, 255, 200);
+    QColor m_tint = QColor::fromHsv(180, 200, 255, 255);
+    float m_cursorHue = 180.0f;
 };
