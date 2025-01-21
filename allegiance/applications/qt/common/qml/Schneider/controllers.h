@@ -1,5 +1,4 @@
 #pragma once
-#include <QUrl>
 #include <QObject>
 #include <QColor>
 #include <shared/cursor.h>
@@ -184,13 +183,13 @@ Q_SIGNALS:
 private:
     void updateFovFromDims();
 
-    inline static constexpr float ms_eyeDistanceDefaultValue = 0.06f;
-    inline static constexpr int ms_separationBasedOnFocusDistanceDividerDefaultValue = 30;
-    inline static constexpr float ms_focusDistanceDefaultValue = 10.0f;
-    inline static constexpr float ms_popOutDefaultValue = 0.0f;
-    inline static constexpr float ms_screenHeightDefaultValue = 0.3f;
-    inline static constexpr float ms_viewerDistanceDefaultValue = 0.6f;
-    inline static constexpr float ms_fovDefaultValue = 30.0f;
+    static constexpr float ms_eyeDistanceDefaultValue = 0.06f;
+    static constexpr int ms_separationBasedOnFocusDistanceDividerDefaultValue = 30;
+    static constexpr float ms_focusDistanceDefaultValue = 10.0f;
+    static constexpr float ms_popOutDefaultValue = 0.0f;
+    static constexpr float ms_screenHeightDefaultValue = 0.3f;
+    static constexpr float ms_viewerDistanceDefaultValue = 0.6f;
+    static constexpr float ms_fovDefaultValue = 30.0f;
 
     DisplayMode m_displayMode = DisplayMode::Stereo;
     StereoMode m_stereoMode = StereoMode::AsymmetricFrustum;
@@ -235,19 +234,19 @@ public:
     CursorController(QObject* parent = nullptr);
 
     void setVisible(bool visible);
-    bool visible() const;
+    [[nodiscard]] bool visible() const;
 
     void setCursorType(CursorType cursorType);
-    CursorType cursor() const;
+    [[nodiscard]] CursorType cursor() const;
 
     void setScalingEnabled(bool enabled);
     void setScaleFactor(float scale_factor);
 
-    bool scalingEnabled() const;
-    float scaleFactor() const;
+    [[nodiscard]] bool scalingEnabled() const;
+    [[nodiscard]] float scaleFactor() const;
 
     void setCursorTint(QColor color);
-    QColor cursorTint() const;
+    [[nodiscard]] QColor cursorTint() const;
 
 Q_SIGNALS:
     void cursorVisibilityChanged(bool state);
