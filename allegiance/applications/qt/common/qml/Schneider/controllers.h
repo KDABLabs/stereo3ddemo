@@ -190,7 +190,7 @@ private:
     inline static constexpr float ms_popOutDefaultValue = 0.0f;
     inline static constexpr float ms_screenHeightDefaultValue = 0.3f;
     inline static constexpr float ms_viewerDistanceDefaultValue = 0.6f;
-    inline static constexpr float ms_fovDefaultValue = 45.0f;
+    inline static constexpr float ms_fovDefaultValue = 30.0f;
 
     DisplayMode m_displayMode = DisplayMode::Stereo;
     StereoMode m_stereoMode = StereoMode::AsymmetricFrustum;
