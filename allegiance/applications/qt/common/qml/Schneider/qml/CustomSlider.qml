@@ -8,6 +8,7 @@ Item {
     id: root
 
     signal moved(real proposedValue)
+    signal adjusted(real adjustedValue)
 
     property real from: 0
     property real to: 1
@@ -15,6 +16,7 @@ Item {
     property real padding: 5
     property real stepSize: 1
     property real defaultValue
+    property real fineAdjustmentFactor: 0.01
 
     readonly property bool hovered: ma.containsMouse
 
@@ -111,18 +113,36 @@ Item {
             property real valueOnShiftPressed: 0
 
             onShiftPressedChanged: { valueOnShiftPressed = (shiftPressed) ? priv.toNormalized(root.value) : 0 }
-            onPressed: (mouse) => { active = true }
-            onReleased: (mouse) => { active = false }
+            onPressed: (mouse) => {
+                if (shiftPressed)
+                    Scene.lockMouseInPlace = true
+                active = true
+            }
+            onReleased: (mouse) => {
+                if (shiftPressed)
+                    Scene.lockMouseInPlace = false
+                active = false
+            }
 
-            onPositionChanged:
-                (mouse) =>  {
-                    if (active) {
-                        var normalizedValue = Math.min(Math.max(0, mouse.x / root.width), 1)
-                        if (shiftPressed)
-                            normalizedValue = valueOnShiftPressed + (normalizedValue - valueOnShiftPressed) * 0.1
-                        root.moved(priv.fromNormalized(normalizedValue))
-                    }
+            onPositionChanged: (mouse) => {
+                if (!active)
+                    return;
+
+                // fine, incremental adjustment
+                if (shiftPressed) {
+                    var globXY = mapToGlobal(mouse.x, mouse.y);
+                    var calculatedAdjustedValue = (globXY.x - Scene.mousePressedX) * root.fineAdjustmentFactor
+                    if (root.value + calculatedAdjustedValue < root.from) return;
+                    if (root.value + calculatedAdjustedValue > root.to) return;
+
+                    root.adjusted(calculatedAdjustedValue)
+                    return;
                 }
+
+                // direct, coarse adjustment
+                var normalizedValue = Math.min(Math.max(0, mouse.x / root.width), 1)
+                root.moved(priv.fromNormalized(normalizedValue))
+            }
 
             onDoubleClicked: root.moved(root.defaultValue)
         }

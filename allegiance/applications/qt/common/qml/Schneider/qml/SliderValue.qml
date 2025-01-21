@@ -12,11 +12,13 @@ RowLayout {
     property alias value: slider.value
     property alias stepSize: slider.stepSize
     property alias defaultValue: slider.defaultValue
+    property alias fineAdjustmentFactor: slider.fineAdjustmentFactor
     readonly property bool hovered: slider.hovered || label.hovered
     property int precision: 2
     property string unit: ""
 
     signal moved(real fvalue)
+    signal adjusted(real adjustedValue)
 
     ToolTip.visible: hovered && ToolTip.text.length > 0
     ToolTip.timeout: 5000
@@ -40,6 +42,7 @@ RowLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
         onMoved: (proposedValue) => root.moved(proposedValue)
+        onAdjusted: (adjustedValue) => root.adjusted(adjustedValue)
         enabled: root.enabled
     }
     TextField {

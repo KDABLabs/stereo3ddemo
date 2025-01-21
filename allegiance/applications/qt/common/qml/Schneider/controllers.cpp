@@ -27,6 +27,25 @@ void SceneController::setShiftPressed(bool newShiftPressed)
     Q_EMIT shiftPressedChanged();
 }
 
+float SceneController::mousePressedX() const
+{
+    return m_mousePressedX;
+}
+
+void SceneController::setMousePressedX(float newMousePressedX)
+{
+    m_mousePressedX = newMousePressedX;
+}
+bool SceneController::lockMouseInPlace() const
+{
+    return m_lockMouseInPlace;
+}
+
+void SceneController::setLockMouseInPlace(bool newLockMouseInPlace)
+{
+    m_lockMouseInPlace = newLockMouseInPlace;
+}
+
 ////////// CameraController //////////
 CameraController::CameraController(QObject* parent)
     : QObject(parent)

@@ -66,6 +66,39 @@ bool MainWindow::onKeyRelease(QKeyEvent* e)
     return false;
 }
 
+bool MainWindow::isShiftPressed() const
+{
+    return m_sideMenu->isShiftPressed();
+}
+
+void MainWindow::setMouseGlobalPosition(int x, int y)
+{
+    m_mouseGlobalPositionX = x;
+    m_mouseGlobalPositionY = y;
+
+    m_sideMenu->sceneController()->setMousePressedX(static_cast<float>(x));
+}
+
+QPoint MainWindow::mouseGlobalPosition() const
+{
+    return {m_mouseGlobalPositionX, m_mouseGlobalPositionY};
+}
+
+void MainWindow::setMousePressed(bool pressed)
+{
+    m_mousePressed = pressed;
+}
+
+bool MainWindow::mousePressed() const
+{
+    return m_mousePressed;
+}
+
+bool MainWindow::lockMouseInPlace() const
+{
+    return m_sideMenu->sceneController()->lockMouseInPlace();
+}
+
 void MainWindow::createDockWidget()
 {
     QDockWidget* dock = new QDockWidget("Camera", this);

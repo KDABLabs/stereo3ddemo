@@ -1,4 +1,5 @@
 #pragma once
+#include <QQuickWidget>
 #include <applications/qt/common/main_window.h>
 #include <QWindow>
 
@@ -35,12 +36,44 @@ public:
                 Q_EMIT scrollEvent(static_cast<::QWheelEvent*>(event));
             }
             break;
-        case QEvent::Type::MouseMove:
+
         case QEvent::Type::MouseButtonPress:
-        case QEvent::Type::MouseButtonRelease:
             if (obj == m_window->embeddedWindow()) {
-                Q_EMIT mouseEvent(static_cast<::QMouseEvent*>(event));
+                Q_EMIT mouseEvent(dynamic_cast<::QMouseEvent*>(event));
             }
+
+            // when a slider requests the mouse to be locked in place for gradual adjustments,
+            // record the position where the mouse was clicked in case the widget wants to reset it
+            if (qobject_cast<QQuickWidget*>(obj)) {
+                auto e = dynamic_cast<::QMouseEvent*>(event);
+                auto globalPos = e->globalPosition();
+                m_window->setMousePressed(true);
+                if (m_window->isShiftPressed()) {
+                    m_window->setMouseGlobalPosition(static_cast<size_t>(globalPos.x()), static_cast<size_t>(globalPos.y()));
+                }
+            }
+            break;
+
+        case QEvent::Type::MouseButtonRelease:
+            m_window->setMousePressed(false);
+            if (obj == m_window->embeddedWindow())
+                Q_EMIT mouseEvent(dynamic_cast<::QMouseEvent*>(event));
+            break;
+
+        case QEvent::Type::MouseMove:
+            if (obj == m_window->embeddedWindow()) {
+                auto e = dynamic_cast<::QMouseEvent*>(event);
+                Q_EMIT mouseEvent(e);
+            }
+
+            // when a slider requests the mouse to be locked in place for gradual adjustments,
+            // reposition mouse cursor back to the position it was clicked
+            if (qobject_cast<QQuickWidget*>(obj)) {
+                if (m_window->mousePressed() && m_window->lockMouseInPlace()) {
+                    QCursor::setPos(m_window->mouseGlobalPosition());
+                }
+            }
+
             break;
         default:
             break;

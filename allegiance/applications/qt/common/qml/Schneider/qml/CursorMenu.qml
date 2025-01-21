@@ -107,8 +107,10 @@ GroupBox {
                 to: 2.0
                 value: Cursor.scaleFactor
                 title: "Factor"
+                fineAdjustmentFactor: 0.001
 
                 onMoved: current => Cursor.scaleFactor = current
+                onAdjusted: adjustedValue => Cursor.scaleFactor += adjustedValue
             }
         }
     }

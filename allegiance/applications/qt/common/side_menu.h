@@ -120,6 +120,11 @@ public:
         return false;
     }
 
+    bool isShiftPressed() const
+    {
+        return m_sceneController->shiftPressed();
+    }
+
 Q_SIGNALS:
     void onLoadImage();
     void onLoadModel();
