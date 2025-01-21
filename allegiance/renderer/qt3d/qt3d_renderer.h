@@ -45,6 +45,7 @@ public:
     void createAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
     void loadModel(std::filesystem::path path = "assets/motorbike.fbx");
+    void viewAll();
     void setCursorEnabled(bool /* enabled */);
 
     QWindow* window() { return m_view; }
@@ -62,6 +63,8 @@ public:
     glm::vec3 cursorWorldPosition() const;
     glm::vec3 sceneCenter() const;
     glm::vec3 sceneExtent() const;
+    float fieldOfView() const;
+    float aspectRatio() const;
 
 private:
     static void addDirectionalLight(Qt3DCore::QNode* node, QVector3D position);

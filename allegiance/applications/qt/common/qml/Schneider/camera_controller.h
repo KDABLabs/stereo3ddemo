@@ -142,6 +142,8 @@ Q_SIGNALS:
     void screenHeightChanged(float);
     void viewerDistanceChanged(float);
 
+    void viewAll();
+
 private:
     void updateFovFromDims();
 

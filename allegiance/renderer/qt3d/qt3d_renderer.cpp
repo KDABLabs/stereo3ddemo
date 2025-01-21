@@ -358,6 +358,16 @@ glm::vec3 Qt3DRenderer::sceneExtent() const
     return toGlmVec3(m_sceneExtent);
 }
 
+float Qt3DRenderer::fieldOfView() const
+{
+    return m_camera->centerCamera()->fieldOfView();
+}
+
+float Qt3DRenderer::aspectRatio() const
+{
+    return m_camera->centerCamera()->aspectRatio();
+}
+
 void Qt3DRenderer::loadImage(QUrl path)
 {
     QImageReader::setAllocationLimit(0);
@@ -416,17 +426,6 @@ void Qt3DRenderer::loadModel(std::filesystem::path path)
     }
     sceneRoot->setParent(m_userEntity);
 
-    if (isFbx) {
-        constexpr float scale = 0.007;
-        auto l = m_userEntity->componentsOfType<Qt3DCore::QTransform>();
-        if (l.size() > 0) {
-            l[0]->setScale(scale);
-        } else {
-            auto t = new Qt3DCore::QTransform;
-            t->setScale(scale);
-            m_userEntity->addComponent(t);
-        }
-    }
 #define MMat(name) m_materials[QStringLiteral(#name)] = new GlossyMaterial(name##ST, name##SU, m_rootEntity.get())
     MMat(CarPaint);
     MMat(DarkGlass);
@@ -471,6 +470,11 @@ void Qt3DRenderer::loadModel(std::filesystem::path path)
     // For AutoFocus Intersection Testing
     for (auto* rayCaster : m_afRayCasters)
         m_userEntity->addComponent(rayCaster);
+}
+
+void Qt3DRenderer::viewAll()
+{
+    setupCameraBasedOnSceneExtent();
 }
 
 void Qt3DRenderer::setCursorEnabled(bool enabled)

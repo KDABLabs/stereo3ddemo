@@ -294,4 +294,13 @@ ColumnLayout {
             }
         }
     }
+
+    ButtonX {
+        Layout.fillWidth: true
+        Layout.alignment: Qt.AlignTop
+        text: "View All"
+        onClicked: {
+            Camera.viewAll()
+        }
+    }
 }

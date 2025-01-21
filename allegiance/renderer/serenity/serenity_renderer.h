@@ -55,6 +55,7 @@ public:
 
     void loadModel(std::filesystem::path file);
     void loadImage(std::filesystem::path url);
+    void viewAll();
 
     void propertyChanged(std::string_view name, std::any value);
     void setCursorEnabled(bool enabled);
@@ -72,6 +73,8 @@ public:
     glm::vec3 cursorWorldPosition() const;
     glm::vec3 sceneCenter() const;
     glm::vec3 sceneExtent() const;
+    float fieldOfView() const;
+    float aspectRatio() const;
 
     bool hoversFocusArea(int x, int y) const;
 

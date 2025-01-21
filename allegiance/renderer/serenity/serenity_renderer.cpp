@@ -157,6 +157,11 @@ void SerenityRenderer::loadModel(std::filesystem::path file)
     m_propertyUpdateNofitier("scene_loaded", {});
 }
 
+void SerenityRenderer::viewAll()
+{
+    // TODO
+}
+
 void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
 {
     if (name == "scale_factor") {
@@ -218,6 +223,16 @@ glm::vec3 SerenityRenderer::sceneCenter() const
 glm::vec3 SerenityRenderer::sceneExtent() const
 {
     return m_sceneExtent;
+}
+
+float SerenityRenderer::fieldOfView() const
+{
+    return m_camera->lens()->verticalFieldOfView();
+}
+
+float SerenityRenderer::aspectRatio() const
+{
+    return m_camera->lens()->aspectRatio();
 }
 
 bool SerenityRenderer::hoversFocusArea(int x, int y) const

@@ -11,6 +11,7 @@
 #include <QStyleFactory>
 #include <QFileDialog>
 #include <QMouseEvent>
+#include <QApplication>
 #include <QClipboard>
 
 #include <any>
@@ -274,6 +275,9 @@ public:
         QObject::connect(m_cameraController, &CameraController::autoFocusChanged, [this](bool afEnabled) {
             m_mouseInputTracker.cursor_changes_focus = !afEnabled;
         });
+        QObject::connect(m_cameraController, &CameraController::viewAll, [this]() {
+            m_renderer->viewAll();
+        });
         QObject::connect(m_sceneController, &SceneController::OpenLoadModelDialog, [this]() {
             auto fn = QFileDialog::getOpenFileName(m_mainWindow, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
             if (!fn.isEmpty()) {
@@ -333,12 +337,15 @@ public:
             const glm::vec3 sceneExtent = m_renderer->sceneExtent();
             const float radius = std::max(sceneExtent.x, std::max(sceneExtent.y, sceneExtent.z)) * 0.5f;
 
-            const glm::vec3 cameraPosition = sceneCenter - glm::vec3(0.0f, 0.0f, 1.0f) * radius;
-            const glm::vec3 viewVector = sceneCenter - cameraPosition;
+            float height = (1.05f * radius) / (m_renderer->aspectRatio() < 1.0f ? m_renderer->aspectRatio() : 1.0f);
+            float dist = (height / std::sin(m_renderer->fieldOfView() / 2.0f)) * 2.f;
+
+            const auto cameraPosition = sceneCenter - glm::vec3(0.0f, 0.0f, 1.0f) * dist;
+            const auto viewVector = sceneCenter - cameraPosition;
 
             m_camera.position = cameraPosition;
             m_camera.forwardVector = glm::normalize(viewVector);
-            m_camera.farPlane = (5 * radius);
+            m_camera.farPlane = (6.f * radius);
             m_camera.upVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
             setAbsolutePlaneDistance(glm::length(viewVector));
