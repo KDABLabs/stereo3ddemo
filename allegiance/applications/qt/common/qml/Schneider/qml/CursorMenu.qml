@@ -52,42 +52,22 @@ GroupBox {
                 }
             }
 
-            // Cursor Color
-            RowLayout{
-                id: colorlayout
-                Layout.fillWidth: true
-                Label {
-                    id: colorLabel
-                    Layout.alignment: Qt.AlignLeft
-                    text: "Color"
-                    font: Style.fontDefault
-                }
-                Item {
-                    Layout.fillWidth: true
-                }
-                Button {
-                    id: button
-                    text: "            "
-                    background: Rectangle {
-                        id: rect
-                        color: Cursor.cursorTint
-                        border.color: Style.link
-                        border.width: 2
-                        radius: 2
-                        Behavior on color {
-                            ColorAnimation {
-                                duration: 200
-                            }
-                        }
-                    }
-                }
-            }
-
             SliderValue {
                 id: cursorhue
                 Layout.fillWidth: true
                 from: 1
                 to: 360
+                fillSliderBar: false
+                enableTextField: false
+                background.gradient: Gradient {
+                    GradientStop { position: 0.0; color: "#FF3A37" }
+                    GradientStop { position: 0.25; color: "#9BFF37"}
+                    GradientStop { position: 0.5; color: "#37FCFF" }
+                    GradientStop { position: 0.75; color: "#9B37FF"}
+                    GradientStop { position: 1.0; color: "#FF3A37" }
+                    orientation: Gradient.Horizontal
+                }
+
                 title: "Hue"
                 unit: "°"
                 precision: 1

@@ -17,6 +17,9 @@ Item {
     property real stepSize: 1
     property real defaultValue
     property real fineAdjustmentFactor: 0.01
+    property bool fillSliderBar: true
+    property bool hueGradient: false
+    property alias background: sliderBar
 
     readonly property bool hovered: ma.containsMouse
 
@@ -70,7 +73,7 @@ Item {
                 }
                 width: priv.handlePos
                 height: 4
-                visible: root.enabled
+                visible: root.enabled && root.fillSliderBar
                 color: priv.activeColor
                 radius: 15
             }

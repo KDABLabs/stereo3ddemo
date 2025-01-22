@@ -13,6 +13,9 @@ RowLayout {
     property alias stepSize: slider.stepSize
     property alias defaultValue: slider.defaultValue
     property alias fineAdjustmentFactor: slider.fineAdjustmentFactor
+    property alias fillSliderBar: slider.fillSliderBar
+    property alias background: slider.background
+    property bool enableTextField: true
     readonly property bool hovered: slider.hovered || label.hovered
     property int precision: 2
     property string unit: ""
@@ -62,5 +65,6 @@ RowLayout {
         }
         font: Style.fontDefault
         enabled: root.enabled
+        visible: root.enableTextField
     }
 }
