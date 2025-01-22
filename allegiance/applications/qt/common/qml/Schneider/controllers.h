@@ -187,9 +187,9 @@ private:
     static constexpr int ms_separationBasedOnFocusDistanceDividerDefaultValue = 30;
     static constexpr float ms_focusDistanceDefaultValue = 10.0f;
     static constexpr float ms_popOutDefaultValue = 0.0f;
-    static constexpr float ms_screenHeightDefaultValue = 0.3f;
-    static constexpr float ms_viewerDistanceDefaultValue = 0.6f;
-    static constexpr float ms_fovDefaultValue = 30.0f;
+    static constexpr float ms_screenHeightDefaultValue = 0.4f;
+    static constexpr float ms_viewerDistanceDefaultValue = 1.0f;
+    static constexpr float ms_fovDefaultValue = 40.0f;
 
     DisplayMode m_displayMode = DisplayMode::Stereo;
     StereoMode m_stereoMode = StereoMode::AsymmetricFrustum;
