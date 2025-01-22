@@ -206,7 +206,7 @@ private:
     bool m_fovByPhysicalDim = false;
     float m_screenHeight = ms_screenHeightDefaultValue;
     float m_viewerDistance = ms_viewerDistanceDefaultValue;
-    bool m_separationBasedOnFocusDistance = false;
+    bool m_separationBasedOnFocusDistance = true;
     bool m_showFocusPlane = false;
     int m_separationBasedOnFocusDistanceDivider = ms_separationBasedOnFocusDistanceDividerDefaultValue;
 };
