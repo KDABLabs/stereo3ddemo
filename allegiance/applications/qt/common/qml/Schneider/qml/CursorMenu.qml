@@ -73,7 +73,7 @@ GroupBox {
                 precision: 1
                 value: Cursor.hue
                 enabled: true
-                defaultValue: 180
+                defaultValue: 167
                 onMoved: current => Cursor.hue = current
                 onAdjusted: adjustedValue => Cursor.hue += adjustedValue
                 ToolTip.text: "Set cursor Hue."

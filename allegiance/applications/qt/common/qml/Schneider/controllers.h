@@ -266,6 +266,6 @@ private:
     all::CursorType m_cursorType = all::CursorType::Ball;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
-    QColor m_tint = QColor::fromHsv(180, 200, 255, 255);
-    float m_cursorHue = 180.0f;
+    QColor m_tint = QColor::fromHsv(167, 200, 255, 255);
+    float m_cursorHue = 167.0f;
 };
