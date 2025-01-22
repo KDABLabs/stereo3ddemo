@@ -329,7 +329,7 @@ void CursorController::setHue(float hue)
 
     m_cursorHue = hue;
     cursorHueChanged(m_cursorHue);
-    setCursorTint(QColor::fromHsv(hue, 200, 255, 255));
+    setCursorTint(QColor::fromHsv(std::clamp(hue, 0.0f, 359.0f), 200, 255, 255));
 }
 
 float CursorController::hue()
