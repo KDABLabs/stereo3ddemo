@@ -10,6 +10,12 @@ enum class CursorType {
     Dot
 };
 
+enum class CursorDisplayMode {
+    Both,
+    ThreeDimensionalOnly,
+    SystemCursorOnly
+};
+
 struct ModelNavParameters {
 public:
     std::function<glm::vec3(glm::vec3, glm::vec3)> hit_test = [](glm::vec3, glm::vec3) { return glm::vec3{ -1 }; };

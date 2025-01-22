@@ -214,8 +214,8 @@ private:
 class CursorController : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(float visible READ visible WRITE setVisible NOTIFY cursorVisibilityChanged)
     Q_PROPERTY(CursorType cursor READ cursor WRITE setCursorType NOTIFY cursorChanged)
+    Q_PROPERTY(CursorDisplayMode displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(bool scalingEnabled READ scalingEnabled WRITE setScalingEnabled NOTIFY cursorScalingEnableChanged)
     Q_PROPERTY(float scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY cursorScaleChanged)
     Q_PROPERTY(float hue READ hue WRITE setHue NOTIFY cursorHueChanged)
@@ -233,10 +233,14 @@ public:
     };
     Q_ENUM(CursorType);
 
-    CursorController(QObject* parent = nullptr);
+    enum class CursorDisplayMode {
+        Both = int(all::CursorDisplayMode::Both),
+        ThreeDimensionalOnly = int(all::CursorDisplayMode::ThreeDimensionalOnly),
+        SystemCursorOnly = int(all::CursorDisplayMode::SystemCursorOnly),
+    };
+    Q_ENUM(CursorDisplayMode);
 
-    void setVisible(bool visible);
-    [[nodiscard]] bool visible() const;
+    CursorController(QObject* parent = nullptr);
 
     void setCursorType(CursorType cursorType);
     [[nodiscard]] CursorType cursor() const;
@@ -253,17 +257,22 @@ public:
     void setHue(float hue);
     [[nodiscard]] float hue();
 
+    CursorDisplayMode displayMode() const;
+    void setDisplayMode(CursorDisplayMode displayMode);
+    void cycleDisplayMode();
+
 Q_SIGNALS:
-    void cursorVisibilityChanged(bool state);
     void cursorChanged(all::CursorType cursorType);
     void cursorScaleChanged(float scale);
     void cursorScalingEnableChanged(bool enabled);
     void cursorTintChanged(QColor color);
     void cursorHueChanged(float);
+    void displayModeChanged(all::CursorDisplayMode cursorType);
 
 private:
     bool m_visible = true;
     all::CursorType m_cursorType = all::CursorType::Ball;
+    all::CursorDisplayMode m_displayMode = all::CursorDisplayMode::Both;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
     QColor m_tint = QColor::fromHsv(167, 200, 255, 255);

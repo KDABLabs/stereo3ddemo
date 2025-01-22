@@ -31,6 +31,8 @@ public:
     void setMousePressed(bool pressed);
     [[nodiscard]] bool mousePressed() const;
 
+    void mouseHoverOveringOver3DView();
+
     // This is controlled from within QML to request that mouse is to be "locked in place".
     // Used for the slider incremental adjustments.
     [[nodiscard]] bool lockMouseInPlace() const;

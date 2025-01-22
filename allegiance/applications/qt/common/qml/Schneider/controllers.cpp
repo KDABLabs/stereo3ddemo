@@ -262,14 +262,6 @@ CursorController::CursorController(QObject* parent)
 {
 }
 
-void CursorController::setVisible(bool visible)
-{
-    if (m_visible == visible)
-        return;
-    m_visible = visible;
-    cursorVisibilityChanged(visible);
-}
-
 void CursorController::setCursorType(CursorType cursorType)
 {
     if (m_cursorType == all::CursorType(cursorType))
@@ -317,10 +309,6 @@ CursorController::CursorType CursorController::cursor() const
     return CursorType(m_cursorType);
 }
 
-bool CursorController::visible() const
-{
-    return m_visible;
-}
 QColor CursorController::cursorTint() const
 {
     return m_tint;
@@ -339,6 +327,38 @@ void CursorController::setHue(float hue)
 float CursorController::hue()
 {
     return m_cursorHue;
+}
+
+CursorController::CursorDisplayMode CursorController::displayMode() const
+{
+    return CursorDisplayMode(m_displayMode);
+}
+
+void CursorController::setDisplayMode(CursorDisplayMode displayMode)
+{
+    if (m_displayMode == all::CursorDisplayMode(displayMode))
+        return;
+
+    m_displayMode = all::CursorDisplayMode(displayMode);
+    displayModeChanged(m_displayMode);
+}
+
+void CursorController::cycleDisplayMode()
+{
+    // both -> 3d cursor
+    if (m_displayMode == all::CursorDisplayMode::Both) {
+        setDisplayMode(CursorDisplayMode::ThreeDimensionalOnly);
+        return;
+    }
+
+    // 3d cursor -> default
+    if (m_displayMode == all::CursorDisplayMode::ThreeDimensionalOnly) {
+        setDisplayMode(CursorDisplayMode::SystemCursorOnly);
+        return;
+    }
+
+    // default -> both
+    setDisplayMode(CursorDisplayMode::Both);
 }
 
 bool CameraController::showFocusPlane() const

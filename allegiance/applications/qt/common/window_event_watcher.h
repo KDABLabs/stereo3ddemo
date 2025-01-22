@@ -64,6 +64,7 @@ public:
             if (obj == m_window->embeddedWindow()) {
                 auto e = dynamic_cast<::QMouseEvent*>(event);
                 Q_EMIT mouseEvent(e);
+                m_window->mouseHoverOveringOver3DView();
             }
 
             // when a slider requests the mouse to be locked in place for gradual adjustments,

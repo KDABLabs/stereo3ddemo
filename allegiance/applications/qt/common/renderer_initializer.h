@@ -251,8 +251,12 @@ public:
         QObject::connect(m_cameraController, &CameraController::autoFocusChanged, [this](bool enabled) {
             m_renderer->propertyChanged("auto_focus", enabled);
         });
-        QObject::connect(m_cursorController, &CursorController::cursorVisibilityChanged, [this](bool checked) {
-            m_renderer->setCursorEnabled(checked);
+        QObject::connect(m_cursorController, &CursorController::displayModeChanged, [this](CursorDisplayMode displayMode) {
+            m_renderer->setCursorEnabled(
+                displayMode == CursorDisplayMode::Both
+                ||
+                displayMode == CursorDisplayMode::ThreeDimensionalOnly
+            );
         });
         QObject::connect(m_cursorController, &CursorController::cursorChanged, [this](CursorType type) {
             m_renderer->propertyChanged("cursor_type", type);

@@ -45,8 +45,7 @@ bool MainWindow::onKeyPress(QKeyEvent* e)
             setWindowState(Qt::WindowNoState);
         return true;
     case Qt::Key_Space:
-        m_cursor = !m_cursor;
-        setCursor(m_cursor ? Qt::ArrowCursor : Qt::BlankCursor);
+        m_sideMenu->cursorController()->cycleDisplayMode();
         return true;
     case Qt::Key_F12:
         Q_EMIT onScreenshot();
@@ -81,7 +80,7 @@ void MainWindow::setMouseGlobalPosition(int x, int y)
 
 QPoint MainWindow::mouseGlobalPosition() const
 {
-    return {m_mouseGlobalPositionX, m_mouseGlobalPositionY};
+    return { m_mouseGlobalPositionX, m_mouseGlobalPositionY };
 }
 
 void MainWindow::setMousePressed(bool pressed)
@@ -92,6 +91,16 @@ void MainWindow::setMousePressed(bool pressed)
 bool MainWindow::mousePressed() const
 {
     return m_mousePressed;
+}
+
+void MainWindow::mouseHoverOveringOver3DView()
+{
+    if (
+            m_sideMenu->cursorController()->displayMode() == CursorController::CursorDisplayMode::Both ||
+            m_sideMenu->cursorController()->displayMode() == CursorController::CursorDisplayMode::SystemCursorOnly)
+        setCursor(Qt::ArrowCursor);
+    else
+        setCursor(Qt::BlankCursor);
 }
 
 bool MainWindow::lockMouseInPlace() const
