@@ -454,7 +454,7 @@ void SerenityRenderer::createScene()
     pointLight->intensity = 1.0f;
 
     // Create scene graph for the 3D scene
-    loadModel("assets/cottage.obj");
+    loadModel("assets/motorbike.obj");
 
     // Create scene graph for the stereo image
     loadImage("assets/13_3840x2160_sbs.jpg");
