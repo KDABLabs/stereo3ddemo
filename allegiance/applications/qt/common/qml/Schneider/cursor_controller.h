@@ -67,7 +67,7 @@ Q_SIGNALS:
 private:
     bool m_visible = true;
     all::CursorType m_cursorType = all::CursorType::Ball;
-    all::CursorDisplayMode m_displayMode = all::CursorDisplayMode::Both;
+    all::CursorDisplayMode m_displayMode = all::CursorDisplayMode::ThreeDimensionalOnly;
     bool m_scaling_enabled = true;
     float m_scale_factor = 1.0f;
     QColor m_tint = QColor::fromHsv(167, 200, 255, 255);
