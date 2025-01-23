@@ -166,29 +166,59 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
 {
     if (name == "scale_factor") {
         m_cursor->scaleFactor = std::any_cast<float>(value);
-    } else if (name == "scaling_enabled") {
+        return;
+    }
+
+    if (name == "scaling_enabled") {
         m_cursor->scalingEnabled = std::any_cast<bool>(value);
-    } else if (name == "cursor_type") {
+        return;
+    }
+
+    if (name == "cursor_type") {
         m_cursor->type = std::any_cast<CursorType>(value);
-    } else if (name == "display_mode") {
-        updateDisplayMode(std::any_cast<DisplayMode>(value));
-    } else if (name == "cursor_color") {
+        return;
+    }
+
+    if (name == "cursor_locked") {
+        m_cursor->locked = std::any_cast<bool>(value);
+        return;
+    }
+
+    if (name == "cursor_color") {
         auto color = std::any_cast<std::array<float, 4>>(value);
         m_cursor->color = ColorData{
             .ambient = { color[0], color[1], color[2], color[3] },
         };
-    } else if (name == "frustum_view_enabled") {
+        return;
+    }
+
+    if (name == "display_mode") {
+        updateDisplayMode(std::any_cast<DisplayMode>(value));
+        return;
+    }
+
+
+    if (name == "frustum_view_enabled") {
         const bool frustumEnabled = std::any_cast<bool>(value);
         m_frustumRect->enabled = frustumEnabled;
         m_leftFrustum->enabled = frustumEnabled;
         m_rightFrustum->enabled = frustumEnabled;
-    } else if (name == "show_focus_area") {
+        return;
+    }
+
+    if (name == "show_focus_area") {
         const bool showFocusArea = std::any_cast<bool>(value);
         m_focusArea->enabled = showFocusArea;
-    } else if (name == "auto_focus") {
+        return;
+    }
+
+    if (name == "auto_focus") {
         const bool useAF = std::any_cast<bool>(value);
         m_pickingLayer->autoFocus = useAF;
-    } else if (name == "show_focus_plane") {
+        return;
+    }
+
+    if (name == "show_focus_plane") {
         const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
         m_focusPlanePreview->enabled = focusPlanePreviewEnabled;
     }

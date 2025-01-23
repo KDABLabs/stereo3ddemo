@@ -147,12 +147,30 @@ public:
 
                              switch (e->type()) {
                              case QEvent::MouseButtonPress:
+                                 // Left + Right mouse buttons simultaneously
+                                 if (
+                                         (e->buttons() & Qt::MouseButton::LeftButton) &&
+                                         (e->buttons() & Qt::MouseButton::RightButton)) {
+                                     m_mouseInputTracker.is_pressed = true;
+                                     m_mouseInputTracker.skip_first = true;
 
-                                 if (e->buttons() & Qt::MouseButton::LeftButton) {
+                                     m_renderer->propertyChanged("cursor_locked", true);
+
+                                     // Set Camera Orbit Pivot to 3D Cursor Position
+                                     m_camera.target = m_renderer->cursorWorldPosition();
+
+                                     pnav_params->pivot_point = m_camera.target();
+                                     break;
+                                 }
+
+                                 // Only Left mouse button
+                                 if (e->buttons() == Qt::MouseButton::LeftButton) {
                                      m_mouseInputTracker.is_pressed = true;
                                      m_mouseInputTracker.skip_first = true;
 
                                      if (e->modifiers() & Qt::ControlModifier) {
+                                         m_renderer->propertyChanged("cursor_locked", true);
+
                                          // Set Camera Orbit Pivot to 3D Cursor Position
                                          m_camera.target = m_renderer->cursorWorldPosition();
                                      } else {
@@ -160,8 +178,11 @@ public:
                                          m_camera.target = m_renderer->sceneCenter();
                                      }
                                      pnav_params->pivot_point = m_camera.target();
+                                    break;
+                                 }
 
-                                 } else if (e->buttons() & Qt::MouseButton::RightButton && !m_cameraController->autoFocus()) {
+                                 // Only Right mouse button
+                                 if (e->buttons() == Qt::MouseButton::RightButton && !m_cameraController->autoFocus()) {
                                      if (m_mouseInputTracker.cursor_changes_focus && e->modifiers() & Qt::ControlModifier) {
                                          // Update Focus Plane Distance Based on distance from camera to 3D cursor
                                          const glm::vec3 pos = m_renderer->cursorWorldPosition();
@@ -175,6 +196,9 @@ public:
                              case QEvent::MouseButtonRelease:
                                  if (e->button() == Qt::MouseButton::LeftButton) {
                                      m_mouseInputTracker.is_pressed = false;
+
+                                     // release eventual cursor locking
+                                     m_renderer->propertyChanged("cursor_locked", false);
                                  }
                                  break;
                              case QEvent::MouseMove: {
@@ -189,16 +213,16 @@ public:
                                  float dx = (0.f + pos.x() - m_mouseInputTracker.last_pos.x()) / m_sceneController->mouseSensitivity();
                                  float dy = (0.f + pos.y() - m_mouseInputTracker.last_pos.y()) / m_sceneController->mouseSensitivity();
 
-                                 switch (e->buttons()) {
-                                 case Qt::LeftButton:
+                                 // left button is pressed
+                                 if (e->buttons() & Qt::LeftButton ) {
                                      if (flipped)
                                          dy = -dy;
                                      flipped = flipped ^ m_camera.rotate(dx, dy);
-                                     break;
-                                 case Qt::MiddleButton:
-                                     m_camera.translate(dx, dy);
-                                     break;
                                  }
+
+                                 if (e->buttons() == Qt::MiddleButton )
+                                     m_camera.translate(dx, dy);
+
                                  m_mouseInputTracker.last_pos = pos;
                              } break;
                              default:

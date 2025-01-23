@@ -80,6 +80,7 @@ public:
 
     KDBindings::Property<Serenity::StereoCamera*> camera{ nullptr };
     KDBindings::Property<all::CursorType> type{ all::CursorType::Ball };
+    KDBindings::Property<bool> locked{ false };
     KDBindings::Property<ColorData> color{ { 1.0f, 1.0f, 1.0f, 1.0f } };
     KDBindings::Property<float> scaleFactor{ 1.0f };
     KDBindings::Property<bool> scalingEnabled{ true };
