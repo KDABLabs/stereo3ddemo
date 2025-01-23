@@ -221,7 +221,7 @@ public:
                                  }
 
                                  if (e->buttons() == Qt::MiddleButton )
-                                     m_camera.translate(dx, dy);
+                                     m_camera.translate(-dx * 0.2, -dy * 0.2);
 
                                  m_mouseInputTracker.last_pos = pos;
                              } break;
