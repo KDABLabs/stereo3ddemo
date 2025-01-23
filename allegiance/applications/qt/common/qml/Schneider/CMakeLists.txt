@@ -5,8 +5,12 @@ qt_add_qml_module(
     VERSION
     1.0
     SOURCES
-    controllers.h
-    controllers.cpp
+    scene_controller.h
+    scene_controller.cpp
+    camera_controller.h
+    camera_controller.cpp
+    cursor_controller.h
+    cursor_controller.cpp
     style.h
     QML_FILES
     "qml/ButtonX.qml"

@@ -5,7 +5,10 @@
 #include <QQmlEngine>
 #include <QVBoxLayout>
 
-#include <applications/qt/common/qml/Schneider/controllers.h>
+#include <applications/qt/common/qml/Schneider/camera_controller.h>
+#include <applications/qt/common/qml/Schneider/cursor_controller.h>
+#include <applications/qt/common/qml/Schneider/scene_controller.h>
+
 #include <applications/qt/common/qml/Schneider/style.h>
 
 namespace all::qt {
