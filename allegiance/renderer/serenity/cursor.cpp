@@ -194,13 +194,15 @@ void Cursor::updateSize()
     constexpr int targetSize = 20;
     glm::vec3 cameraPosition = camera()->position();
 
-    const float distanceToCamera = (cameraPosition - position()).length();
+    const float distanceToCamera = glm::length(cameraPosition - position());
     const float vfov = glm::radians(camera()->lens()->verticalFieldOfView());
     const float pixelsToAngle = vfov / m_window->height();
     const float radius = distanceToCamera * tan(targetSize * pixelsToAngle / 2.0);
 
+    const float scaleValue = scaleFactor() * (scalingEnabled() ? radius : cursor_size);
+
     // Set the scale based on the calculated radius
-    m_transform->scale = glm::vec3(scaleFactor() * (scalingEnabled() ? radius : cursor_size));
+    m_transform->scale = glm::vec3(scaleValue);
 }
 
 void CursorBase::setColor(const ColorData& colorData)

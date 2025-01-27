@@ -169,12 +169,12 @@ void SerenityRenderer::viewAll()
 
 void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
 {
-    if (name == "scale_factor") {
+    if (name == "cursor_scale_factor") {
         m_cursor->scaleFactor = std::any_cast<float>(value);
         return;
     }
 
-    if (name == "scaling_enabled") {
+    if (name == "cursor_scaling_enabled") {
         m_cursor->scalingEnabled = std::any_cast<bool>(value);
         return;
     }

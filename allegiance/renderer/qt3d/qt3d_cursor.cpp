@@ -256,7 +256,8 @@ void CursorEntity::updateSize()
     float fov = 2.0 * atan(1.0 / m_projectionMatrix(0, 0));
     float pixelsToAngle = fov / m_window->width();
     float radius = distanceToCamera * tan(targetSize * pixelsToAngle / 2.0);
-    m_transform->setScale(m_scale_factor * (m_scaling_enabled ? radius : cursor_size)); // Set the scale based on the calculated radius
+    const float scaleValue = m_scale_factor * (m_scaling_enabled ? radius : cursor_size);
+    m_transform->setScale(scaleValue); // Set the scale based on the calculated radius
 
     auto direction = (m_cameraTransform->translation() - m_transform->translation()).normalized();
     auto cameraUp = QVector3D(viewMatrix.data()[4], viewMatrix.data()[5], viewMatrix.data()[6]); // Extract the up vector from the matrix
