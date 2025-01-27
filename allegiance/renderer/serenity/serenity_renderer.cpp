@@ -146,20 +146,25 @@ void SerenityRenderer::loadModel(std::filesystem::path file)
     bv->meshRenderer = entity->component<MeshRenderer>();
     bv->cacheTriangles = true; // Generate Octree for faster ray casting checks
 
+    m_sceneRoot->addChildEntity(std::move(entity));
+
+    viewAll();
+}
+
+void SerenityRenderer::viewAll()
+{
+    if (m_model == nullptr)
+        return;
+    auto* bv = m_model->component<TriangleBoundingVolume>();
+    if (bv == nullptr)
+        return;
     auto bb = bv->worldAxisAlignedBoundingBox.get();
     m_navParams->max_extent = bb.max;
     m_navParams->min_extent = bb.min;
     m_sceneCenter = (bb.max + bb.min) * 0.5f;
     m_sceneExtent = bb.max - bb.min;
 
-    m_sceneRoot->addChildEntity(std::move(entity));
-
     m_propertyUpdateNofitier("scene_loaded", {});
-}
-
-void SerenityRenderer::viewAll()
-{
-    // TODO
 }
 
 void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
