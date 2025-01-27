@@ -90,15 +90,20 @@ public:
                              const glm::vec3 sceneExtent = m_renderer->sceneExtent();
                              const float maxExtent = std::max(sceneExtent[0], std::max(sceneExtent[1], sceneExtent[2]));
                              const float minExtent = std::min(sceneExtent[0], std::min(sceneExtent[1], sceneExtent[2]));
-                             const float zoomCameraLimit = minExtent * 0.1f;
+                             const float zoomInCameraLimit = minExtent * 0.1f;
+                             const float zoomOutCameraLimit = maxExtent * 3.0f;
                              // We reduce zoom as we get closer to the scene center
                              const float correctionFactor = exp(std::clamp(distanceToCenter / maxExtent, 0.0f, 1.0f) - 1.0f);
-                             const float safeWheelDelta = std::clamp(float(e->angleDelta().y()), -20.0f, 20.0f); // Prevent dealing with too huge wheel deltas
-                             const float zoomFactor = safeWheelDelta / m_sceneController->mouseSensitivity() * correctionFactor;
-                             const float deltaLength = -1.0f * zoomFactor * distanceToCenter;
 
-                             // Check we don't try to zoom past scene center
-                             if (std::abs(distanceToCenter + deltaLength) < zoomCameraLimit)
+                             const float zoomDir = (e->angleDelta().y() > 0) ? 1.0f : -1.0f; // Zoom In or Out?
+                             constexpr float zoomStepPercentage = 1.0f / 100.0f; // % of of much we zoom toward the focus plane
+                             const float zoomAmount = distanceToCenter * zoomStepPercentage * zoomDir;
+                             const float zoomFactor = zoomAmount / correctionFactor;
+
+                             // Check we don't try to zoom past scene center or too far away
+                             if (zoomDir > 0.0f && std::abs(distanceToCenter - zoomAmount) < zoomInCameraLimit)
+                                 return;
+                             else if (zoomDir < 0.0f && std::abs(distanceToCenter - zoomAmount) > zoomOutCameraLimit)
                                  return;
 
                              m_camera.zoom(zoomFactor);
