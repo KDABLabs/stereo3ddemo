@@ -667,17 +667,31 @@ void Qt3DRenderer::cursorHitResult(const Qt3DRender::QAbstractRayCaster::Hits& h
     auto nearestHitIterator = std::ranges::min_element(hits, {}, &Qt3DRender::QRayCasterHit::distance);
 
     if (nearestHitIterator == hits.end()) {
-        auto frame = m_view->frameGeometry();
         auto cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
 
-        const QVector3D viewCenter = m_camera->centerCamera()->viewCenter();
+        const QVector3D viewCenter = m_camera->centerCamera()->position() + m_camera->centerCamera()->viewVector().normalized() * m_stereoCamera->convergencePlaneDistance();
         const QVector4D viewCenterScreen = m_camera->centerCamera()->projectionMatrix() * m_camera->centerCamera()->viewMatrix() * QVector4D(viewCenter, 1.0f);
         const float zFocus = viewCenterScreen.z() / viewCenterScreen.w();
-        const QVector3D cursorScreenPos(cursorPos.x(), frame.height() - cursorPos.y(), zFocus);
+        const QVector3D cursorScreenPos(cursorPos.x(), m_view->height() - cursorPos.y(), zFocus);
 
-        const QVector3D unv = cursorScreenPos.unproject(m_camera->centerCamera()->viewMatrix(),
-                                                        m_camera->centerCamera()->projectionMatrix(),
-                                                        QRect{ frame.x(), frame.y(), frame.width(), frame.height() });
+        auto unprojectZO = [](const QVector3D& p, const QMatrix4x4& viewMatrix, const QMatrix4x4& projectionMatrix, const QRect& viewport) {
+            const QMatrix4x4 inverse = QMatrix4x4(projectionMatrix * viewMatrix).inverted();
+            QVector4D tmp(p, 1.0f);
+            tmp.setX((tmp.x() - float(viewport.x())) / float(viewport.width()));
+            tmp.setY((tmp.y() - float(viewport.y())) / float(viewport.height()));
+            tmp.setX(tmp.x() * 2.0f - 1.0f);
+            tmp.setY(tmp.y() * 2.0f - 1.0f);
+            QVector4D obj = inverse * tmp;
+            if (qFuzzyIsNull(obj.w()))
+                obj.setW(1.0f);
+            obj /= obj.w();
+            return obj.toVector3D();
+        };
+
+        const QVector3D unv = unprojectZO(cursorScreenPos,
+                                          m_camera->centerCamera()->viewMatrix(),
+                                          m_camera->centerCamera()->projectionMatrix(),
+                                          QRect{ 0, 0, m_view->width(), m_view->height() });
         m_cursor->setPosition(unv);
         return;
     }
