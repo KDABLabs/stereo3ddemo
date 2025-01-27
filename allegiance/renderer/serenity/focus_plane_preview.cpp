@@ -12,6 +12,8 @@ FocusPlanePreview::FocusPlanePreview()
 {
     enabled.valueChanged().connect([this](bool isEnabled) {
                               component<Serenity::MeshRenderer>()->mesh = (isEnabled) ? m_mesh.get() : nullptr;
+                              if (isEnabled)
+                                  updateGeometry();
                           })
             .release();
 
