@@ -44,7 +44,7 @@ public:
     void projectionChanged();
     void createAspects(std::shared_ptr<all::ModelNavParameters> nav_params);
 
-    void loadModel(std::filesystem::path path = "assets/motorbike.fbx");
+    void loadModel(std::filesystem::path path = "assets/motorbike.obj");
     void viewAll();
     void setCursorEnabled(bool /* enabled */);
 
