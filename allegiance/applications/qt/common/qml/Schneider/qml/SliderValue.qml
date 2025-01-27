@@ -51,7 +51,7 @@ RowLayout {
     TextField {
         id: textBox
         Layout.alignment: Qt.AlignRight
-        Layout.preferredWidth: 70
+        Layout.preferredWidth: 80
         padding: 0
         validator: DoubleValidator {
             bottom: slider.from
