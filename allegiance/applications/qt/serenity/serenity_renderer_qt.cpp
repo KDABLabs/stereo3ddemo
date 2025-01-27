@@ -38,13 +38,15 @@ void SerenityRendererQt::onMouseEvent(::QMouseEvent* event)
 
     const std::time_t timestamp = std::time(nullptr);
 
+    const QPointF mousePos = window()->mapFromGlobal(event->globalPosition());
+
     switch (event->type()) {
     case QEvent::MouseButtonPress:
-        return SerenityRenderer::onMouseEvent(KDGui::MousePressEvent(timestamp, button, buttons, event->pos().x(), event->pos().y()));
+        return SerenityRenderer::onMouseEvent(KDGui::MousePressEvent(timestamp, button, buttons, mousePos.x(), mousePos.y()));
     case QEvent::MouseButtonRelease:
-        return SerenityRenderer::onMouseEvent(KDGui::MouseReleaseEvent(timestamp, button, buttons, event->pos().x(), event->pos().y()));
+        return SerenityRenderer::onMouseEvent(KDGui::MouseReleaseEvent(timestamp, button, buttons, mousePos.x(), mousePos.y()));
     case QEvent::MouseMove:
-        return SerenityRenderer::onMouseEvent(KDGui::MouseMoveEvent(timestamp, buttons, event->pos().x(), event->pos().y()));
+        return SerenityRenderer::onMouseEvent(KDGui::MouseMoveEvent(timestamp, buttons, mousePos.x(), mousePos.y()));
     default:
         break;
     }
