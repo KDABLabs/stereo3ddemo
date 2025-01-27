@@ -368,6 +368,10 @@ float Qt3DRenderer::aspectRatio() const
     return m_camera->centerCamera()->aspectRatio();
 }
 
+void Qt3DRenderer::completeInitialization()
+{
+}
+
 void Qt3DRenderer::loadImage(QUrl path)
 {
     QImageReader::setAllocationLimit(0);

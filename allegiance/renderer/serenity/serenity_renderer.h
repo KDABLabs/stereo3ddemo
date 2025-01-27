@@ -80,6 +80,8 @@ public:
 
     void onMouseEvent(const KDFoundation::Event& event);
 
+    void completeInitialization();
+
 protected:
     void createScene();
 

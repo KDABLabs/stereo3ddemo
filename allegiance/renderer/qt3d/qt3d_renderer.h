@@ -66,6 +66,8 @@ public:
     float fieldOfView() const;
     float aspectRatio() const;
 
+    void completeInitialization();
+
 private:
     static void addDirectionalLight(Qt3DCore::QNode* node, QVector3D position);
 

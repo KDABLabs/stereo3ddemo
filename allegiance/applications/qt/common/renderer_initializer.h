@@ -344,6 +344,8 @@ public:
 
         // load focus logic from controllers
         focusDistanceUpdated();
+
+        m_renderer->completeInitialization();
     }
 
     ~RendererInitializer()

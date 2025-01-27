@@ -761,4 +761,9 @@ void SerenityRenderer::onMouseEvent(const KDFoundation::Event& event)
         overlay->event(overlay, const_cast<KDFoundation::Event*>(&event));
 }
 
+void SerenityRenderer::completeInitialization()
+{
+    viewAll();
+}
+
 } // namespace all::serenity
