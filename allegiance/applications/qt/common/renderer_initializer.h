@@ -362,7 +362,8 @@ public:
             const float radius = std::max(sceneExtent.x, std::max(sceneExtent.y, sceneExtent.z)) * 0.5f;
 
             float height = (1.05f * radius) / (m_renderer->aspectRatio() < 1.0f ? m_renderer->aspectRatio() : 1.0f);
-            float dist = (height / std::sin(m_renderer->fieldOfView() / 2.0f)) * 2.f;
+            // We have tan(fov / 2) = height / dist => dist = height / tan(fov / 2)
+            float dist = height / std::tan(glm::radians(m_renderer->fieldOfView() / 2.0f));
 
             const auto cameraPosition = sceneCenter - glm::vec3(0.0f, 0.0f, 1.0f) * dist;
             const auto viewVector = sceneCenter - cameraPosition;
