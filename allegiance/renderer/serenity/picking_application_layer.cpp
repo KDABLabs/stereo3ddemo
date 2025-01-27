@@ -53,7 +53,11 @@ void PickingApplicationLayer::updateCursorWorldPosition()
         assert(closest != hits.end());
         cursor()->setPosition(closest->position);
     } else {
-        const glm::vec3 unv = glm::unProject(glm::vec3(cursorPos.x, cursorPos.y, 1.0f), camera()->viewMatrix(), camera()->lens()->projectionMatrix(), viewportRect);
+        const glm::vec3 viewCenter = camera()->position() + camera()->viewDirection() * camera()->convergencePlaneDistance();
+        const glm::vec4 viewCenterScreen = camera()->lens()->projectionMatrix() * camera()->viewMatrix() * glm::vec4(viewCenter, 1.0f);
+        const float zFocus = viewCenterScreen.z / viewCenterScreen.w;
+
+        const glm::vec3 unv = glm::unProject(glm::vec3(cursorPos.x, cursorPos.y, zFocus), camera()->viewMatrix(), camera()->lens()->projectionMatrix(), viewportRect);
         cursor()->setPosition(unv);
     }
 }

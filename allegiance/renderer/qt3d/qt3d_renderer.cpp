@@ -665,11 +665,16 @@ void Qt3DRenderer::cursorHitResult(const Qt3DRender::QAbstractRayCaster::Hits& h
     if (nearestHitIterator == hits.end()) {
         auto frame = m_view->frameGeometry();
         auto cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
-        const QVector3D cursorScreenPos(cursorPos.x(), frame.height() - cursorPos.y(), 1.0f);
+
+        const QVector3D viewCenter = m_camera->centerCamera()->viewCenter();
+        const QVector4D viewCenterScreen = m_camera->centerCamera()->projectionMatrix() * m_camera->centerCamera()->viewMatrix() * QVector4D(viewCenter, 1.0f);
+        const float zFocus = viewCenterScreen.z() / viewCenterScreen.w();
+        const QVector3D cursorScreenPos(cursorPos.x(), frame.height() - cursorPos.y(), zFocus);
+
         const QVector3D unv = cursorScreenPos.unproject(m_camera->centerCamera()->viewMatrix(),
                                                         m_camera->centerCamera()->projectionMatrix(),
                                                         QRect{ frame.x(), frame.y(), frame.width(), frame.height() });
-        m_cursor->setPosition(m_camera->centerCamera()->position() + 0.1f * (unv - m_camera->centerCamera()->position()));
+        m_cursor->setPosition(unv);
         return;
     }
     m_cursor->setPosition(nearestHitIterator->worldIntersection());
