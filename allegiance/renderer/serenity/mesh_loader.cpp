@@ -139,7 +139,8 @@ std::unique_ptr<Serenity::Material> all::serenity::MeshLoader::MakeMaterial(cons
     m->shaderProgram = spref;
 
     aiColor3D ambient = { 0.05f, 0.05f, 0.05f };
-    // material.Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+    material.Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+    ambient = ambient * 0.05f; // Limit ambient contributions
 
     aiColor3D diffuse = { 0.45f, 0.45f, 0.85f };
     material.Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
@@ -149,9 +150,6 @@ std::unique_ptr<Serenity::Material> all::serenity::MeshLoader::MakeMaterial(cons
 
     float shininess = 0.2f;
     material.Get(AI_MATKEY_SHININESS, shininess);
-    if (shininess > 1.0f) {
-        shininess /= 255.0f;
-    }
 
     struct PhongData {
         glm::vec4 ambient;

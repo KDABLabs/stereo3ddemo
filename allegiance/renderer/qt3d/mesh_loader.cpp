@@ -39,7 +39,8 @@ QMatrix4x4 toQMatrix4x4(const aiMatrix4x4& matrix)
 Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QString& modelPath)
 {
     aiColor3D ambient = { 0.05f, 0.05f, 0.05f };
-    // materialInfo->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+    materialInfo->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+    ambient = ambient * 0.05f; // Limit ambient contributions
 
     aiColor3D diffuse = { 0.45f, 0.45f, 0.85f };
     materialInfo->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
@@ -49,9 +50,6 @@ Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QStrin
 
     float shininess = 0.2f;
     materialInfo->Get(AI_MATKEY_SHININESS, shininess);
-    if (shininess > 1.0f) {
-        shininess /= 255.0f;
-    }
 
     auto *material = new Qt3DExtras::QDiffuseSpecularMaterial;
     material->setAmbient(toQColor(ambient));
