@@ -12,7 +12,7 @@
 #include <Qt3DRender/QGeometryRenderer>
 #include <Qt3DExtras/QDiffuseMapMaterial>
 #include <Qt3DExtras/QPhongMaterial>
-#include <Qt3DExtras/QTextureMaterial>
+#include <Qt3DExtras/QDiffuseSpecularMaterial>
 #include <Qt3DRender/QTexture>
 
 #include <assimp/Importer.hpp>
@@ -38,6 +38,9 @@ QMatrix4x4 toQMatrix4x4(const aiMatrix4x4& matrix)
 
 Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QString& modelPath)
 {
+    aiColor3D ambient = { 0.05f, 0.05f, 0.05f };
+    // materialInfo->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+
     aiColor3D diffuse = { 0.45f, 0.45f, 0.85f };
     materialInfo->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
 
@@ -46,17 +49,19 @@ Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QStrin
 
     float shininess = 0.2f;
     materialInfo->Get(AI_MATKEY_SHININESS, shininess);
-    if (shininess > 1) {
-        shininess /= 255;
+    if (shininess > 1.0f) {
+        shininess /= 255.0f;
     }
 
-    aiColor3D ambient = { 0.6f, 0.6f, 0.6f };
-    materialInfo->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+    auto *material = new Qt3DExtras::QDiffuseSpecularMaterial;
+    material->setAmbient(toQColor(ambient));
+    material->setDiffuse(toQColor(diffuse));
+    material->setSpecular(toQColor(specular));
+    material->setShininess(shininess);
 
     aiString texFilename;
     const bool hasDiffuseTexture = materialInfo->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE) > 0;
     if (hasDiffuseTexture && materialInfo->GetTexture(aiTextureType_DIFFUSE, 0, &texFilename) == aiReturn_SUCCESS) {
-        auto* material = new Qt3DExtras::QTextureMaterial;
 
         QString filename = texFilename.C_Str();
         if (filename.size() > 0) {
@@ -70,15 +75,10 @@ Qt3DRender::QMaterial* materialFrom(const aiMaterial* materialInfo, const QStrin
         auto* diffuseTexture = new Qt3DRender::QTextureLoader(material);
         diffuseTexture->setSource(QUrl::fromLocalFile(texturePath));
 
-        material->setTexture(diffuseTexture);
-        return material;
-    } else {
-        auto* material = new Qt3DExtras::QPhongMaterial;
-        material->setDiffuse(toQColor(diffuse));
-        material->setSpecular(toQColor(specular));
-        material->setShininess(shininess);
-        return material;
+        material->setDiffuse(QVariant::fromValue(diffuseTexture));
     }
+
+    return material;
 }
 
 void addMeshes(const aiScene* scene, const aiNode* node, const QMatrix4x4& transform, Qt3DCore::QEntity* root, const QString& path)

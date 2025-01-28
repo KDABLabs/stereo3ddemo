@@ -117,37 +117,29 @@ std::unique_ptr<Serenity::SpirVShaderProgram> MakeShaderProgram(std::string shad
 
 std::unique_ptr<Serenity::Material> all::serenity::MeshLoader::MakeMaterial(const aiMaterial& material, const std::filesystem::path& model_path)
 {
-    const auto root_path = model_path.parent_path().string() + "/";
     std::unique_ptr<Serenity::Material> m = std::make_unique<Serenity::Material>();
-    std::string shader_code{ "multiview" };
+
+    const bool hasDiffuseTexture = material.GetTextureCount(aiTextureType::aiTextureType_DIFFUSE) > 0;
 
     aiString tex_filename;
-    bool has_diffuse = material.GetTextureCount(aiTextureType::aiTextureType_DIFFUSE) > 0;
+    std::string shader_code{ "multiview." };
+    if (hasDiffuseTexture && material.GetTexture(aiTextureType_DIFFUSE, 0, &tex_filename) == aiReturn_SUCCESS) {
+        shader_code += "phong.texture";
 
-    if (material.GetTexture(aiTextureType_DIFFUSE, 0, &tex_filename) == aiReturn_SUCCESS) {
         auto texture = m->createChild<Serenity::Texture2D>();
+        const auto root_path = model_path.parent_path().string() + "/";
         texture->setPath(root_path + tex_filename.C_Str());
         m->setTexture(4, 0, texture);
-        shader_code += ".dif";
+    } else {
+        shader_code += "phong";
     }
-    //// specular
-    // if (material.GetTexture(aiTextureType_SPECULAR, 0, &tex_filename) == aiReturn_SUCCESS) {
-    //     auto texture = m->createChild<Serenity::Texture2D>();
-    //     texture->setPath(root_path + tex_filename.C_Str());
-    //     m->setTexture(5, 0, texture);
-    //     shader_code += ".spc";
-    // }
-    //// normal
-    // if (material.GetTexture(aiTextureType_NORMALS, 0, &tex_filename) == aiReturn_SUCCESS) {
-    //     auto texture = m->createChild<Serenity::Texture2D>();
-    //     texture->setPath(root_path + tex_filename.C_Str());
-    //     m->setTexture(6, 0, texture);
-    //     shader_code += ".nrm";
-    // }
 
     auto sp = MakeShaderProgram(shader_code);
     auto spref = static_cast<Serenity::SpirVShaderProgram*>(m->addChild(std::move(sp)));
     m->shaderProgram = spref;
+
+    aiColor3D ambient = { 0.05f, 0.05f, 0.05f };
+    // material.Get(AI_MATKEY_COLOR_AMBIENT, ambient);
 
     aiColor3D diffuse = { 0.45f, 0.45f, 0.85f };
     material.Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
@@ -155,8 +147,11 @@ std::unique_ptr<Serenity::Material> all::serenity::MeshLoader::MakeMaterial(cons
     aiColor3D specular = { 0.18f, 0.18f, 0.18f };
     material.Get(AI_MATKEY_COLOR_SPECULAR, specular);
 
-    float gloss = 8.0f;
-    material.Get(AI_MATKEY_SHININESS, gloss);
+    float shininess = 0.2f;
+    material.Get(AI_MATKEY_SHININESS, shininess);
+    if (shininess > 1.0f) {
+        shininess /= 255.0f;
+    }
 
     struct PhongData {
         glm::vec4 ambient;
@@ -167,34 +162,29 @@ std::unique_ptr<Serenity::Material> all::serenity::MeshLoader::MakeMaterial(cons
         float _pad[2];
     };
 
-    const Serenity::Material::UboDataBuilder materialDataBuilder = {
-        [=](uint32_t set, uint32_t binding) {
-            const PhongData data{
-                { 0.4f, 0.4f, 0.4f, 1.0f },
-                { diffuse[0],
-                  diffuse[1],
-                  diffuse[2],
-                  1.0f },
-                { specular[0],
-                  specular[1],
-                  specular[2],
-                  1.0f },
-                gloss,
-                has_diffuse,
-                { 0.0f, 0.0f }
-            };
-            std::vector<uint8_t> rawData(sizeof(PhongData));
-            std::memcpy(rawData.data(), &data, sizeof(PhongData));
-            return rawData;
-        },
+    const PhongData data{
+        { ambient[0], ambient[1], ambient[2], 1.0f },
+        { diffuse[0],
+          diffuse[1],
+          diffuse[2],
+          1.0f },
+        { specular[0],
+          specular[1],
+          specular[2],
+          1.0f },
+        shininess,
+        hasDiffuseTexture,
+        { 0.0f, 0.0f }
     };
 
     Serenity::StaticUniformBuffer* phongUbo = m->createChild<Serenity::StaticUniformBuffer>();
     phongUbo->size = sizeof(PhongData);
 
+    std::vector<uint8_t> rawData(sizeof(PhongData));
+    std::memcpy(rawData.data(), &data, sizeof(PhongData));
+    phongUbo->data = rawData;
+
     m->setUniformBuffer(3, 0, phongUbo);
 
-    // This is how we feed Material properties
-    m->setUniformBufferDataBuilder(materialDataBuilder);
     return m;
 }

@@ -2,8 +2,8 @@ project(shaders)
 
 add_custom_target(${PROJECT_NAME} ALL)
 
-CompileShaderSet(serenity_multiview multiview)
-CompileShaderSet(serenity_multiview2 multiview.dif)
+CompileShaderSet(serenity_multiview multiview.phong)
+CompileShaderSet(serenity_multiview2 multiview.phong.texture)
 CompileShaderSet(serenity_bb billboard)
 CompileShaderSet(serenity_color color)
 CompileShaderSet(serenity_stereoimage stereoimage)
@@ -28,10 +28,10 @@ add_dependencies(
 )
 
 set(SHADER_FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/multiview.vert.spv"
-    "${CMAKE_CURRENT_BINARY_DIR}/multiview.frag.spv"
-    "${CMAKE_CURRENT_BINARY_DIR}/multiview.dif.frag.spv"
-    "${CMAKE_CURRENT_BINARY_DIR}/multiview.dif.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/multiview.phong.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/multiview.phong.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/multiview.phong.texture.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/multiview.phong.texture.vert.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/color.vert.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/color.frag.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/billboard.vert.spv"

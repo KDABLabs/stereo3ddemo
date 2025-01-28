@@ -490,19 +490,16 @@ void SerenityRenderer::loadImage(std::filesystem::path url)
 void SerenityRenderer::createScene()
 {
     // Lights
-    auto directionalLight = m_sceneRoot->createComponent<Light>();
-    directionalLight->type = Light::Type::Directional;
-    directionalLight->color = glm::vec4(0.6, 0.6, 0.7, 1.0f);
-    directionalLight->worldDirection = glm::vec3(1.0f, -0.3f, 0.0f);
-
-    auto pointLightEntity = m_sceneRoot->createChildEntity<Entity>();
-    auto pointLightTransform =
-            pointLightEntity->createComponent<SrtTransform>();
-    pointLightTransform->translation = glm::vec3(0.0f, 10.0f, 0.0f);
-    auto pointLight = pointLightEntity->createComponent<Light>();
-    pointLight->type = Light::Type::Point;
-    pointLight->color = glm::vec4(0.7, 0.5, 0.5, 1.0f);
-    pointLight->intensity = 1.0f;
+    const std::vector<glm::vec3> lightPositions{
+        { 0, -1, 0 }, { 0, 1, 0 }, { 1, 0, 0 }, { -1, 0, 0 }, { 0, 0, -1 }, { 0, 0, 1 }
+    };
+    for (const glm::vec3& position : lightPositions) {
+        auto* directionalLight = m_sceneRoot->createComponent<Light>();
+        directionalLight->type = Light::Type::Directional;
+        directionalLight->color = glm::vec4(1.0f);
+        directionalLight->worldDirection = -position;
+        directionalLight->intensity = 0.3f;
+    }
 
     // Create scene graph for the 3D scene
     loadModel("assets/motorbike.obj");

@@ -14,7 +14,7 @@ const int TYPE_SPOT = 2;
 
 struct Light {
     vec4 color;
-    
+
     vec3 worldDirection;
     float intensity;
 
@@ -30,42 +30,48 @@ struct Light {
     float padding;
 };
 
-struct CameraData
-{
-  mat4 viewMatrix;
-  mat4 inverseViewMatrix;
-  mat4 projectionMatrix;
-  mat4 inverseProjectionMatrix;
-  mat4 viewProjectionMatrix;
-  mat4 inverseViewProjectionMatrix;
-  mat4 viewportMatrix;
+struct CameraData {
+    mat4 viewMatrix;
+    mat4 inverseViewMatrix;
+    mat4 projectionMatrix;
+    mat4 inverseProjectionMatrix;
+    mat4 viewProjectionMatrix;
+    mat4 inverseViewProjectionMatrix;
+    mat4 viewportMatrix;
 };
 
-layout(set = 1, binding = 0) uniform SerenityCamera {
-  CameraData data[2];
-} camera;
+layout(set = 1, binding = 0) uniform SerenityCamera
+{
+    CameraData data[2];
+}
+camera;
 
-layout(std140, set = 2, binding = 0) uniform SerenityLights {
-  Light data[MAX_LIGHTS];
-  int lightCount;
-} lights;
+layout(std140, set = 2, binding = 0) uniform SerenityLights
+{
+    Light data[MAX_LIGHTS];
+    int lightCount;
+}
+lights;
 
-layout(std140, set = 3, binding = 0) uniform SerenityPhongMaterial {
+layout(std140, set = 3, binding = 0) uniform SerenityPhongMaterial
+{
     vec4 ambient;
     vec4 diffuse;
     vec4 specular;
     float shininess;
     int hasDiffuseTexture;
-} material;
-
+}
+material;
 
 void adsModel(const in vec3 worldPos,
               const in vec3 worldNormal,
               const in vec3 worldView,
               const in float shininess,
+              out vec3 ambientColor,
               out vec3 diffuseColor,
               out vec3 specularColor)
 {
+    ambientColor = vec3(0.0);
     diffuseColor = vec3(0.0);
     specularColor = vec3(0.0);
 
@@ -87,13 +93,9 @@ void adsModel(const in vec3 worldPos,
             // Calculate the attenuation factor
             sDotN = dot(s, n);
             if (sDotN > 0.0) {
-                if (lights.data[i].constantAttenuation != 0.0
-                 || lights.data[i].linearAttenuation != 0.0
-                 || lights.data[i].quadraticAttenuation != 0.0) {
+                if (lights.data[i].constantAttenuation != 0.0 || lights.data[i].linearAttenuation != 0.0 || lights.data[i].quadraticAttenuation != 0.0) {
                     float dist = length(sUnnormalized);
-                    att = 1.0 / (lights.data[i].constantAttenuation +
-                                 lights.data[i].linearAttenuation * dist +
-                                 lights.data[i].quadraticAttenuation * dist * dist);
+                    att = 1.0 / (lights.data[i].constantAttenuation + lights.data[i].linearAttenuation * dist + lights.data[i].quadraticAttenuation * dist * dist);
                 }
 
                 // The light direction is in world space already
@@ -117,11 +119,12 @@ void adsModel(const in vec3 worldPos,
         float specular = 0.0;
         if (diffuse > 0.0 && shininess > 0.0) {
             float normFactor = (shininess + 2.0) / 2.0;
-            vec3 r = reflect(-s, n);   // Reflection direction in world space
+            vec3 r = reflect(-s, n); // Reflection direction in world space
             specular = normFactor * pow(max(dot(r, worldView), 0.0), shininess);
         }
 
         // Accumulate the diffuse and specular contributions
+        ambientColor += att * lights.data[i].intensity * 1.0 * lights.data[i].color.rgb;
         diffuseColor += att * lights.data[i].intensity * diffuse * lights.data[i].color.rgb;
         specularColor += att * lights.data[i].intensity * specular * lights.data[i].color.rgb;
     }
@@ -134,15 +137,14 @@ void main()
     vec3 worldView = normalize(worldPosition - eyePos);
 
     // Calculate the lighting model, keeping the specular component separate
-    vec3 diffuseColor, specularColor;
+    vec3 ambientColor, diffuseColor, specularColor;
     adsModel(worldPosition, worldNormal, worldView,
-             material.shininess, diffuseColor, specularColor);
-    
-    vec4 diffuseTex = vec4(material.diffuse.rgb, 1.0f);
+             material.shininess, ambientColor, diffuseColor, specularColor);
 
     // Combine spec with ambient+diffuse for final fragment color
-    vec3 color = (material.ambient.rgb + diffuseColor) * diffuseTex.rgb
-               + specularColor * material.specular.rgb;
+    vec3 color = ambientColor * material.ambient.rgb +
+            diffuseColor * material.diffuse.rgb +
+            specularColor * material.specular.rgb;
 
-    fragColor = vec4(color, diffuseTex.a);
+    fragColor = vec4(color, material.diffuse.a);
 }

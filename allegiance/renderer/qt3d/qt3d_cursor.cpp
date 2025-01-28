@@ -110,6 +110,7 @@ CursorSphere::CursorSphere(QNode* parent)
 void CursorSphere::setCursorTintColor(const QColor& color)
 {
     m_material->setAmbient(color);
+    m_material->setDiffuse(color);
 }
 
 CursorCross::CursorCross(QNode* parent)
@@ -150,6 +151,7 @@ CursorCross::CursorCross(QNode* parent)
 void CursorCross::setCursorTintColor(const QColor& color)
 {
     m_material->setAmbient(color);
+    m_material->setDiffuse(color);
 }
 
 CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window)
