@@ -4,54 +4,97 @@
 #include <assimp/scene.h>
 #include <Serenity/gui/render/mesh.h>
 #include <fmt/format.h>
+#include <glm/gtc/matrix_access.hpp>
+#include <algorithm>
 
-static Serenity::VertexFormat MakeVertexFormat(const aiMaterial& material)
+namespace {
+
+glm::mat4 toMatrix4x4(const aiMatrix4x4& matrix)
 {
-    bool has_diffuse = material.GetTextureCount(aiTextureType::aiTextureType_DIFFUSE) > 0;
+    return glm::mat4(
+            matrix.a1, matrix.b1, matrix.c1, matrix.d1,
+            matrix.a2, matrix.b2, matrix.c2, matrix.d2,
+            matrix.a3, matrix.b3, matrix.c3, matrix.d3,
+            matrix.a4, matrix.b4, matrix.c4, matrix.d4);
+}
 
+[[nodiscard]] std::string toLowerCase(std::string str)
+{
+    std::transform(str.begin(),
+                   str.end(),
+                   str.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+    return str;
+}
+
+} // namespace
+
+static Serenity::VertexFormat MakeVertexFormat()
+{
     Serenity::VertexFormat vertex_format;
     vertex_format.attributes.emplace_back(KDGpu::VertexAttribute{ 0, 0, KDGpu::Format::R32G32B32_SFLOAT, 0 }); // position
     vertex_format.buffers.emplace_back(KDGpu::VertexBufferLayout{ 0, 12 });
     vertex_format.attributes.emplace_back(KDGpu::VertexAttribute{ 1, 1, KDGpu::Format::R32G32B32_SFLOAT, 0 }); // normal
     vertex_format.buffers.emplace_back(KDGpu::VertexBufferLayout{ 1, 12 });
-
-    if (has_diffuse) {
-        vertex_format.attributes.emplace_back(KDGpu::VertexAttribute{ 2, 2, KDGpu::Format::R32G32B32_SFLOAT, 0 }); // uv
-        vertex_format.buffers.emplace_back(KDGpu::VertexBufferLayout{ 2, 12 });
-    }
+    vertex_format.attributes.emplace_back(KDGpu::VertexAttribute{ 2, 2, KDGpu::Format::R32G32B32_SFLOAT, 0 }); // uv
+    vertex_format.buffers.emplace_back(KDGpu::VertexBufferLayout{ 2, 12 });
 
     return vertex_format;
 }
 
-std::unique_ptr<Serenity::Entity> all::serenity::MeshLoader::load(std::filesystem::path path)
+std::unique_ptr<Serenity::Entity> all::serenity::MeshLoader::load(std::filesystem::path path, Serenity::LayerManager* layerManager)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path.string(),
-                                             aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices | aiProcess_PreTransformVertices);
+                                             aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_GenNormals | aiProcess_CalcTangentSpace | aiProcess_JoinIdenticalVertices);
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
         throw std::runtime_error(fmt::format("Failed to load mesh: {}", importer.GetErrorString()));
     }
 
     std::unique_ptr<Serenity::Entity> pRoot{ std::make_unique<Serenity::Entity>() };
 
-    for (size_t i = 0; i < scene->mNumMeshes; i++) {
-        const auto& mesh = *scene->mMeshes[i];
-        auto material = scene->mMaterials[mesh.mMaterialIndex];
-        auto m = MakeMaterial(*material, path);
+    std::function<void(const aiNode*, Serenity::Entity*, const glm::mat4&)> processMeshesForNode =
+            [&](const aiNode* node, Serenity::Entity* root, const glm::mat4& transform) {
+                const size_t nodeMeshCount = node->mNumMeshes;
+                const glm::mat4 worldTransform = transform * toMatrix4x4(node->mTransformation);
 
-        auto smesh = MakeMesh(mesh, *material);
-        auto renderer = pRoot->createComponent<Serenity::MeshRenderer>();
-        renderer->mesh = smesh.get();
-        renderer->material = m.get();
+                if (nodeMeshCount > 0) {
+                    Serenity::Entity* e = root->createChildEntity<Serenity::Entity>();
 
-        pRoot->addChild(std::move(smesh));
-        pRoot->addChild(std::move(m));
+                    for (size_t i = 0; i < nodeMeshCount; i++) {
+                        const auto& mesh = *scene->mMeshes[node->mMeshes[i]];
+                        const auto material = scene->mMaterials[mesh.mMaterialIndex];
 
-        auto bv = pRoot->createComponent<Serenity::TriangleBoundingVolume>();
-        bv->meshRenderer = renderer;
-        bv->cacheTriangles = true;
-        bv->cullBackFaces = false;
-    }
+                        auto m = MakeMaterial(*material, path);
+                        auto smesh = MakeMesh(mesh, worldTransform);
+                        auto renderer = e->createComponent<Serenity::MeshRenderer>();
+                        renderer->mesh = smesh.get();
+                        renderer->material = m.get();
+
+                        pRoot->addChild(std::move(smesh));
+                        pRoot->addChild(std::move(m));
+
+                        auto bv = e->createComponent<Serenity::TriangleBoundingVolume>();
+                        bv->meshRenderer = renderer;
+                        bv->cacheTriangles = true;
+                        bv->cullBackFaces = false;
+
+                        float opacity = 1.0f;
+                        material->Get(AI_MATKEY_OPACITY, opacity);
+                        if (opacity < 1.0f) {
+                            e->layerMask = layerManager->layerMask({ "Alpha" });
+                        } else {
+                            e->layerMask = layerManager->layerMask({ "Opaque" });
+                        }
+                    }
+                }
+
+                for (std::size_t i = 0; i < node->mNumChildren; ++i) {
+                    const aiNode* childNode = node->mChildren[i];
+                    processMeshesForNode(childNode, root, worldTransform);
+                }
+            };
+
+    processMeshesForNode(scene->mRootNode, pRoot.get(), glm::mat4(1.0f));
 
     return pRoot;
 }
@@ -69,10 +112,10 @@ std::vector<uint32_t> indices(const aiMesh& mesh)
     return indices;
 }
 
-std::unique_ptr<Serenity::Mesh> all::serenity::MeshLoader::MakeMesh(const aiMesh& mesh, const aiMaterial& material)
+std::unique_ptr<Serenity::Mesh> all::serenity::MeshLoader::MakeMesh(const aiMesh& mesh, const glm::mat4& transform)
 {
     std::unique_ptr<Serenity::Mesh> smesh = std::make_unique<Serenity::Mesh>();
-    auto vertex_format = MakeVertexFormat(material);
+    auto vertex_format = MakeVertexFormat();
     smesh->vertexFormat = vertex_format;
 
     std::vector<Serenity::Mesh::VertexBufferData> verts;
@@ -82,20 +125,41 @@ std::unique_ptr<Serenity::Mesh> all::serenity::MeshLoader::MakeMesh(const aiMesh
         verts[i].resize(mesh.mNumVertices * vertex_format.buffers[i].stride);
         switch (vertex_format.attributes[i].binding) {
         case 0: // position
-            std::ranges::copy_n((uint8_t*)mesh.mVertices, mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
+        {
+            glm::vec3* pos = reinterpret_cast<glm::vec3*>(verts[i].data());
+            for (size_t i = 0, mP = mesh.mNumVertices; i < mP; ++i) {
+                const aiVector3D v = mesh.mVertices[i];
+                const glm::vec3 transformed = transform * glm::vec4(v[0], v[1], v[2], 1.0f);
+                pos[i] = glm::vec3(transformed.x, transformed.y, transformed.z);
+            }
             break;
+        }
         case 1: // normal
-            std::ranges::copy_n((uint8_t*)mesh.mNormals, mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
+        {
+            const glm::mat3 normalMatrix = glm::transpose(glm::inverse(glm::mat3(transform)));
+            glm::vec3* norms = reinterpret_cast<glm::vec3*>(verts[i].data());
+            for (size_t i = 0, mN = mesh.mNumVertices; i < mN; ++i) {
+                const aiVector3D n = mesh.mNormals[i];
+                norms[i] = normalMatrix * glm::vec3(n[0], n[1], n[2]);
+            }
             break;
+        }
         case 2: // uv
-            std::ranges::copy_n((uint8_t*)mesh.mTextureCoords[0], mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
+        {
+            if (mesh.HasTextureCoords(0))
+                std::ranges::copy_n((uint8_t*)mesh.mTextureCoords[0], mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
             break;
+        }
         case 3: // tangent
+        {
             std::ranges::copy_n((uint8_t*)mesh.mTangents, mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
             break;
+        }
         case 4: // bitangent
+        {
             std::ranges::copy_n((uint8_t*)mesh.mBitangents, mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
             break;
+        }
         default:
             break;
         }

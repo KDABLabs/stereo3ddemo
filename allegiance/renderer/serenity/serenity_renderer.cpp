@@ -135,16 +135,10 @@ void SerenityRenderer::loadModel(std::filesystem::path file)
     m_sceneRoot->takeEntity(m_model);
 
     // Load Mesh
-    std::unique_ptr<Entity> entity = MeshLoader::load(file);
+    std::unique_ptr<Entity> entity = MeshLoader::load(file, m_layerManager);
     m_model = entity.get();
     if (m_model == nullptr)
         return;
-
-    // Set Layers
-    m_model->layerMask = m_layerManager->layerMask({ "Opaque" });
-    auto* bv = m_model->createComponent<TriangleBoundingVolume>();
-    bv->meshRenderer = entity->component<MeshRenderer>();
-    bv->cacheTriangles = true; // Generate Octree for faster ray casting checks
 
     m_sceneRoot->addChildEntity(std::move(entity));
 
@@ -155,14 +149,42 @@ void SerenityRenderer::viewAll()
 {
     if (m_model == nullptr)
         return;
-    auto* bv = m_model->component<TriangleBoundingVolume>();
-    if (bv == nullptr)
+
+    std::optional<Serenity::BoundingBox> accumulatedBV;
+
+    // Traverse all m_model tree
+    std::function<void(Serenity::Entity*)> traverseTree = [&](const Serenity::Entity* e) {
+        auto gatherExtentForEntity = [](const Serenity::Entity* e) -> std::optional<Serenity::BoundingBox> {
+            auto* bv = e->component<TriangleBoundingVolume>();
+            if (bv != nullptr)
+                return bv->worldAxisAlignedBoundingBox();
+            return {};
+        };
+
+        std::optional<Serenity::BoundingBox> bb = gatherExtentForEntity(e);
+        if (bb) {
+            if (!accumulatedBV)
+                accumulatedBV = bb;
+            accumulatedBV->max = glm::vec3(std::max(accumulatedBV->max[0], bb->max[0]),
+                                           std::max(accumulatedBV->max[1], bb->max[1]),
+                                           std::max(accumulatedBV->max[2], bb->max[2]));
+            accumulatedBV->min = glm::vec3(std::min(accumulatedBV->min[0], bb->min[0]),
+                                           std::min(accumulatedBV->min[1], bb->min[1]),
+                                           std::min(accumulatedBV->min[2], bb->min[2]));
+        }
+
+        for (const auto& cUPtr : e->childEntities()) // Recurse
+            traverseTree(cUPtr.get());
+    };
+
+    traverseTree(m_model);
+    if (!accumulatedBV)
         return;
-    auto bb = bv->worldAxisAlignedBoundingBox.get();
-    m_navParams->max_extent = bb.max;
-    m_navParams->min_extent = bb.min;
-    m_sceneCenter = (bb.max + bb.min) * 0.5f;
-    m_sceneExtent = bb.max - bb.min;
+
+    m_navParams->max_extent = accumulatedBV->max;
+    m_navParams->min_extent = accumulatedBV->min;
+    m_sceneCenter = (accumulatedBV->max + accumulatedBV->min) * 0.5f;
+    m_sceneExtent = accumulatedBV->max - accumulatedBV->min;
 
     m_propertyUpdateNofitier("scene_loaded", {});
 }
