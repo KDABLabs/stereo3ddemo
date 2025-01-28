@@ -8,6 +8,8 @@ int main(int argc, char** argv)
 {
     Q_INIT_RESOURCE(resources);
 
+    qputenv("QSG_RHI_BACKEND", "vulkan");
+
     SerenityGuiApplication app(argc, argv);
     QApplication::setApplicationName(QStringLiteral("Schneider Demo Qt Serenity/Vulkan - " ALLEGIANCE_BUILD_STR));
     QApplication::setApplicationVersion(QStringLiteral(ALLEGIANCE_PROJECT_VERSION));
