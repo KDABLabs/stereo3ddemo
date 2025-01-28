@@ -374,6 +374,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     // 1) Multiview Rendering (using the Offscreen Render Target
     // 2) Onscreen FullScreenQuad drawing of offscreen content + optional Overlays
 
+    algo->clearColor = glm::vec4(0x48 / 255.0f, 0x53 / 255.0f, 0x6a / 255.0f, 1.0f);
     algo->camera = m_camera;
     algo->msaaSamples = Serenity::RenderAlgorithm::SamplesCount::Samples_4;
 
