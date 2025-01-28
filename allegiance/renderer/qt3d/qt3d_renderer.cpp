@@ -412,8 +412,6 @@ void Qt3DRenderer::loadImage(QUrl path)
 
 void Qt3DRenderer::loadModel(std::filesystem::path path)
 {
-    delete m_skyBox;
-    m_skyBox = nullptr;
     delete m_userEntity;
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
@@ -427,39 +425,6 @@ void Qt3DRenderer::loadModel(std::filesystem::path path)
         return;
     }
     sceneRoot->setParent(m_userEntity);
-
-#define MMat(name) m_materials[QStringLiteral(#name)] = new GlossyMaterial(name##ST, name##SU, m_rootEntity.get())
-    MMat(CarPaint);
-    MMat(DarkGlass);
-    MMat(DarkGloss);
-    MMat(Dark);
-    MMat(Chrome);
-    MMat(Plate);
-    MMat(Tire);
-    MMat(ShadowPlane);
-#undef MMat
-    m_materials["Skybox"] = new SkyboxMaterial(SkyboxST, {}, m_rootEntity.get());
-
-    const auto sceneEntities = sceneRoot->findChildren<Qt3DCore::QEntity*>();
-    for (auto* e : sceneEntities) {
-        Qt3DRender::QMaterial* material = [e] {
-            auto components = e->componentsOfType<Qt3DRender::QMaterial>();
-            return !components.isEmpty() ? components.first() : nullptr;
-        }();
-        if (!material)
-            continue;
-        const auto materialName = material->property("name").toString();
-
-        if (materialName.contains("skybox", Qt::CaseInsensitive)) {
-            e->setParent(m_sceneEntity);
-            m_skyBox = e;
-        }
-
-        if (auto it = m_materials.find(materialName); it != m_materials.end()) {
-            e->removeComponent(material);
-            e->addComponent(it->second);
-        }
-    }
 
     // Give Qt3D Time to process mesh extents
     auto* frameAction = new Qt3DLogic::QFrameAction;
@@ -514,12 +479,19 @@ void Qt3DRenderer::_calculateSceneDimensions(Qt3DCore::QEntity* entity, QVector3
 
     // Check if the entity has a geometry renderer
     auto geometryRenderers = entity->componentsOfType<Qt3DRender::QGeometryRenderer>();
+    auto materials = entity->componentsOfType<Qt3DRender::QMaterial>();
     if (geometryRenderers.size() > 0) {
         Qt3DRender::QGeometryRenderer* geometryRenderer = geometryRenderers.first();
         Qt3DCore::QGeometry* geometry = geometryRenderer->geometry();
 
         if (geometry == nullptr)
             return;
+
+        // Skip the Skybox
+        if (materials.size() > 0) {
+            if (qobject_cast<SkyboxMaterial*>(materials.front()) != nullptr)
+                return;
+        }
 
         const QVector3D& bvMin = geometry->minExtent();
         const QVector3D& bvMax = geometry->maxExtent();

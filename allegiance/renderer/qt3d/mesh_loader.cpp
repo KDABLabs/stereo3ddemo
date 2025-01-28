@@ -1,5 +1,7 @@
 #include "mesh_loader.h"
 #include "scene_mesh.h"
+#include "qt3d_materials.h"
+#include "qt3d_shaders.h"
 
 #include <Qt3DCore/QGeometry>
 #include <Qt3DCore/QEntity>
@@ -150,5 +152,49 @@ Qt3DCore::QEntity* all::qt3d::MeshLoader::load(const QString& path)
 
     auto* root = new Qt3DCore::QEntity;
     addMeshes(scene, scene->mRootNode, {}, root, path);
+
+    // Handle Custom Material replacement
+    {
+        std::unordered_map<QString, Qt3DRender::QMaterial*> customMaterials;
+#define MMat(name) customMaterials[QStringLiteral(#name)] = new GlossyMaterial(name##ST, name##SU)
+        MMat(CarPaint);
+        MMat(DarkGlass);
+        MMat(DarkGloss);
+        MMat(Dark);
+        MMat(Chrome);
+        MMat(Plate);
+        MMat(Tire);
+        MMat(ShadowPlane);
+#undef MMat
+        customMaterials["Skybox"] = new SkyboxMaterial(SkyboxST, {});
+
+        const auto sceneEntities = root->findChildren<Qt3DCore::QEntity*>();
+        for (auto* e : sceneEntities) {
+            Qt3DRender::QMaterial* material = [e] {
+                auto components = e->componentsOfType<Qt3DRender::QMaterial>();
+                return !components.isEmpty() ? components.first() : nullptr;
+            }();
+            if (!material)
+                continue;
+            const auto materialName = material->property("name").toString();
+
+            if (materialName.contains("skybox", Qt::CaseInsensitive)) {
+                if (e->parent() != root)
+                    e->setParent(root);
+            }
+
+            if (auto it = customMaterials.find(materialName); it != customMaterials.end()) {
+                e->removeComponent(material);
+                e->addComponent(it->second);
+            }
+        }
+
+        // Delete Unused Materials
+        for (const auto& [key, value] : customMaterials) {
+            if (value->parent() == nullptr)
+                value->deleteLater();
+        }
+    }
+
     return root;
 }

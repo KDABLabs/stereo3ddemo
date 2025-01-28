@@ -93,10 +93,8 @@ private:
     std::unique_ptr<Qt3DCore::QEntity> m_rootEntity;
     Qt3DCore::QEntity* m_sceneEntity = nullptr;
     Qt3DCore::QEntity* m_userEntity = nullptr;
-    Qt3DCore::QEntity* m_skyBox = nullptr;
     Qt3DRender::QScreenRayCaster* m_cursorRaycaster;
 
-    std::unordered_map<QString, Qt3DRender::QMaterial*> m_materials;
     QStereoForwardRenderer* m_renderer;
     QStereoProxyCamera* m_camera;
     QStereoProxyCamera* m_frustumAmplifiedCamera;
