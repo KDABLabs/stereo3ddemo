@@ -157,7 +157,7 @@ void SerenityRenderer::viewAll()
         auto gatherExtentForEntity = [](const Serenity::Entity* e) -> std::optional<Serenity::BoundingBox> {
             auto* bv = e->component<TriangleBoundingVolume>();
             if (bv != nullptr)
-                return bv->worldAxisAlignedBoundingBox();
+                return bv->localAxisAlignedBoundingBox(); // Mesh Loader doesn't use Transforms
             return {};
         };
 
@@ -322,7 +322,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     KDGpu::Device device = m_window->createDevice();
 
     m_layerManager = m_engine.createChild<Serenity::LayerManager>();
-    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea", "Frustums" })
+    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea", "Frustums", "Skybox" })
         m_layerManager->addLayer(layerName);
 
     auto rootEntityPtr = std::make_unique<Entity>();
@@ -611,7 +611,7 @@ void SerenityRenderer::updateRenderPhases()
     auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
     switch (m_mode) {
     case Mode::Scene:
-        algo->renderPhases = { createOpaquePhase(), createTransparentPhase(), createFocusAreaPhase(), createFrustumPhase() };
+        algo->renderPhases = { createSkyboxPhase(), createOpaquePhase(), createTransparentPhase(), createFocusAreaPhase(), createFrustumPhase() };
         break;
     case Mode::StereoImage:
         algo->renderPhases = { createStereoImagePhase() };
@@ -638,6 +638,22 @@ void SerenityRenderer::updateDisplayMode(DisplayMode displayMode)
         m_renderAlgorithm->renderMode = StereoForwardAlgorithm::StereoRenderMode::CenterOnly;
         break;
     }
+}
+
+Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createSkyboxPhase() const
+{
+    StereoForwardAlgorithm::RenderPhase phase{
+        m_layerManager->layerMask({ "Skybox" }), StereoForwardAlgorithm::RenderPhase::Type::Opaque,
+        LayerFilterType::AcceptAll
+    };
+
+    DepthStencilState depthState;
+    depthState.depthTestEnabled = false;
+    depthState.depthWritesEnabled = false;
+    depthState.depthCompareOperation = KDGpu::CompareOperation::Always;
+    phase.renderStates.setDepthStencilState(std::move(depthState));
+
+    return phase;
 }
 
 Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createOpaquePhase() const

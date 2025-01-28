@@ -12,6 +12,8 @@ CompileShaderSet(serenity_focusarea focus_area)
 CompileShaderSet(serenity_frustumtris frustum_tris)
 CompileShaderSet(serenity_frustumlines frustum_lines)
 CompileShaderSet(serenity_frustumrect frustum_rect)
+CompileShaderSet(serenity_glossy glossy)
+CompileShaderSet(serenity_skybox skybox)
 
 add_dependencies(
     ${PROJECT_NAME}
@@ -25,6 +27,8 @@ add_dependencies(
     serenity_frustumtrisShaders
     serenity_frustumlinesShaders
     serenity_frustumrectShaders
+    serenity_glossyShaders
+    serenity_skyboxShaders
 )
 
 set(SHADER_FILES
@@ -48,6 +52,10 @@ set(SHADER_FILES
     "${CMAKE_CURRENT_BINARY_DIR}/frustum_tris.frag.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/frustum_rect.vert.spv"
     "${CMAKE_CURRENT_BINARY_DIR}/frustum_rect.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/glossy.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/glossy.frag.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/skybox.vert.spv"
+    "${CMAKE_CURRENT_BINARY_DIR}/skybox.frag.spv"
 )
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/serenity/shaders)

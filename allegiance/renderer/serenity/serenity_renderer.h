@@ -101,6 +101,7 @@ protected:
     void updateRenderPhases();
     void updateDisplayMode(all::DisplayMode displayMode);
 
+    Serenity::StereoForwardAlgorithm::RenderPhase createSkyboxPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createOpaquePhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createTransparentPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createFocusAreaPhase() const;

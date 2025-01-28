@@ -1,4 +1,5 @@
 #include "mesh_loader.h"
+#include "custom_materials.h"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -16,6 +17,11 @@ glm::mat4 toMatrix4x4(const aiMatrix4x4& matrix)
             matrix.a2, matrix.b2, matrix.c2, matrix.d2,
             matrix.a3, matrix.b3, matrix.c3, matrix.d3,
             matrix.a4, matrix.b4, matrix.c4, matrix.d4);
+}
+
+glm::mat4 skyboxTransform(const glm::mat4&)
+{
+    return glm::scale(glm::mat4(1.0f), glm::vec3(0.1f));
 }
 
 [[nodiscard]] std::string toLowerCase(std::string str)
@@ -37,11 +43,15 @@ static Serenity::VertexFormat MakeVertexFormat()
     vertex_format.buffers.emplace_back(KDGpu::VertexBufferLayout{ 1, 12 });
     vertex_format.attributes.emplace_back(KDGpu::VertexAttribute{ 2, 2, KDGpu::Format::R32G32B32_SFLOAT, 0 }); // uv
     vertex_format.buffers.emplace_back(KDGpu::VertexBufferLayout{ 2, 12 });
+    vertex_format.attributes.emplace_back(KDGpu::VertexAttribute{ 3, 3, KDGpu::Format::R32G32B32A32_SFLOAT, 0 }); // uv
+    vertex_format.buffers.emplace_back(KDGpu::VertexBufferLayout{ 3, 16 });
 
     return vertex_format;
 }
 
-std::unique_ptr<Serenity::Entity> all::serenity::MeshLoader::load(std::filesystem::path path, Serenity::LayerManager* layerManager)
+namespace all::serenity {
+
+std::unique_ptr<Serenity::Entity> MeshLoader::load(std::filesystem::path path, Serenity::LayerManager* layerManager)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path.string(),
@@ -64,8 +74,15 @@ std::unique_ptr<Serenity::Entity> all::serenity::MeshLoader::load(std::filesyste
                         const auto& mesh = *scene->mMeshes[node->mMeshes[i]];
                         const auto material = scene->mMaterials[mesh.mMaterialIndex];
 
+                        const auto materialRawName = material->GetName();
+                        const auto materialName = toLowerCase(std::string(materialRawName.C_Str()));
+                        const bool isSkybox = materialName.find("skybox") != std::string::npos;
+
+                        // remove translations and scales if skybox
+                        const glm::mat4 meshTransform = isSkybox ? skyboxTransform(worldTransform) : worldTransform;
+
                         auto m = MakeMaterial(*material, path);
-                        auto smesh = MakeMesh(mesh, worldTransform);
+                        auto smesh = MakeMesh(mesh, meshTransform);
                         auto renderer = e->createComponent<Serenity::MeshRenderer>();
                         renderer->mesh = smesh.get();
                         renderer->material = m.get();
@@ -73,17 +90,21 @@ std::unique_ptr<Serenity::Entity> all::serenity::MeshLoader::load(std::filesyste
                         pRoot->addChild(std::move(smesh));
                         pRoot->addChild(std::move(m));
 
-                        auto bv = e->createComponent<Serenity::TriangleBoundingVolume>();
-                        bv->meshRenderer = renderer;
-                        bv->cacheTriangles = true;
-                        bv->cullBackFaces = false;
-
-                        float opacity = 1.0f;
-                        material->Get(AI_MATKEY_OPACITY, opacity);
-                        if (opacity < 1.0f) {
-                            e->layerMask = layerManager->layerMask({ "Alpha" });
+                        if (isSkybox) {
+                            e->layerMask = layerManager->layerMask({ "Skybox" });
                         } else {
-                            e->layerMask = layerManager->layerMask({ "Opaque" });
+                            auto bv = e->createComponent<Serenity::TriangleBoundingVolume>();
+                            bv->meshRenderer = renderer;
+                            bv->cacheTriangles = true;
+                            bv->cullBackFaces = false;
+
+                            float opacity = 1.0f;
+                            material->Get(AI_MATKEY_OPACITY, opacity);
+                            if (opacity < 1.0f) {
+                                e->layerMask = layerManager->layerMask({ "Alpha" });
+                            } else {
+                                e->layerMask = layerManager->layerMask({ "Opaque" });
+                            }
                         }
                     }
                 }
@@ -112,7 +133,7 @@ std::vector<uint32_t> indices(const aiMesh& mesh)
     return indices;
 }
 
-std::unique_ptr<Serenity::Mesh> all::serenity::MeshLoader::MakeMesh(const aiMesh& mesh, const glm::mat4& transform)
+std::unique_ptr<Serenity::Mesh> MeshLoader::MakeMesh(const aiMesh& mesh, const glm::mat4& transform)
 {
     std::unique_ptr<Serenity::Mesh> smesh = std::make_unique<Serenity::Mesh>();
     auto vertex_format = MakeVertexFormat();
@@ -148,16 +169,16 @@ std::unique_ptr<Serenity::Mesh> all::serenity::MeshLoader::MakeMesh(const aiMesh
         {
             if (mesh.HasTextureCoords(0))
                 std::ranges::copy_n((uint8_t*)mesh.mTextureCoords[0], mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
+            else
+                std::memset(verts[i].data(), 0, mesh.mNumVertices * sizeof(aiVector3D));
             break;
         }
-        case 3: // tangent
+        case 3: // color
         {
-            std::ranges::copy_n((uint8_t*)mesh.mTangents, mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
-            break;
-        }
-        case 4: // bitangent
-        {
-            std::ranges::copy_n((uint8_t*)mesh.mBitangents, mesh.mNumVertices * sizeof(aiVector3D), verts[i].data());
+            if (mesh.HasVertexColors(0))
+                std::ranges::copy_n((uint8_t*)mesh.mColors[0], mesh.mNumVertices * sizeof(aiColor4D), verts[i].data());
+            else
+                std::memset(verts[i].data(), 0, mesh.mNumVertices * sizeof(aiColor4D));
             break;
         }
         default:
@@ -179,74 +200,110 @@ std::unique_ptr<Serenity::SpirVShaderProgram> MakeShaderProgram(std::string shad
     return program;
 }
 
-std::unique_ptr<Serenity::Material> all::serenity::MeshLoader::MakeMaterial(const aiMaterial& material, const std::filesystem::path& model_path)
+namespace {
+
+using CustomMaterialCreator = std::function<std::unique_ptr<Serenity::Material>()>;
+
+std::unordered_map<std::string, CustomMaterialCreator> customMaterialFactory()
 {
-    std::unique_ptr<Serenity::Material> m = std::make_unique<Serenity::Material>();
+    std::unordered_map<std::string, CustomMaterialCreator> customMaterials;
+
+#define MMat(name) customMaterials[std::string(#name)] = []() { return std::make_unique<GlossyMaterial>(name##ST, name##SU); }
+    MMat(CarPaint);
+    MMat(DarkGlass);
+    MMat(DarkGloss);
+    MMat(Dark);
+    MMat(Chrome);
+    MMat(Plate);
+    MMat(Tire);
+    MMat(ShadowPlane);
+#undef MMat
+    customMaterials["Skybox"] = []() { return std::make_unique<SkyboxMaterial>(SkyboxST, shader_uniforms{}); };
+
+    return customMaterials;
+}
+
+} // namespace
+
+std::unique_ptr<Serenity::Material> MeshLoader::MakeMaterial(const aiMaterial& material, const std::filesystem::path& model_path)
+{
+
+    static const std::unordered_map<std::string, CustomMaterialCreator> factory = customMaterialFactory();
 
     const bool hasDiffuseTexture = material.GetTextureCount(aiTextureType::aiTextureType_DIFFUSE) > 0;
+    const std::string materialName = std::string(material.GetName().C_Str());
 
-    aiString tex_filename;
-    std::string shader_code{ "multiview." };
-    if (hasDiffuseTexture && material.GetTexture(aiTextureType_DIFFUSE, 0, &tex_filename) == aiReturn_SUCCESS) {
-        shader_code += "phong.texture";
-
-        auto texture = m->createChild<Serenity::Texture2D>();
-        const auto root_path = model_path.parent_path().string() + "/";
-        texture->setPath(root_path + tex_filename.C_Str());
-        m->setTexture(4, 0, texture);
+    auto customMatIt = factory.find(materialName);
+    const bool useCustomMaterial = customMatIt != factory.end();
+    if (useCustomMaterial) {
+        return std::invoke(customMatIt->second);
     } else {
-        shader_code += "phong";
+        // Standard Phong Material
+        std::unique_ptr<Serenity::Material> m = std::make_unique<Serenity::Material>();
+        aiString tex_filename;
+        std::string shader_code{ "multiview." };
+        if (hasDiffuseTexture && material.GetTexture(aiTextureType_DIFFUSE, 0, &tex_filename) == aiReturn_SUCCESS) {
+            shader_code += "phong.texture";
+
+            auto texture = m->createChild<Serenity::Texture2D>();
+            const auto root_path = model_path.parent_path().string() + "/";
+            texture->setPath(root_path + tex_filename.C_Str());
+            m->setTexture(4, 0, texture);
+        } else {
+            shader_code += "phong";
+        }
+
+        auto sp = MakeShaderProgram(shader_code);
+        auto spref = static_cast<Serenity::SpirVShaderProgram*>(m->addChild(std::move(sp)));
+        m->shaderProgram = spref;
+
+        aiColor3D ambient = { 0.05f, 0.05f, 0.05f };
+        material.Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+        ambient = ambient * 0.05f; // Limit ambient contributions
+
+        aiColor3D diffuse = { 0.45f, 0.45f, 0.85f };
+        material.Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+
+        aiColor3D specular = { 0.18f, 0.18f, 0.18f };
+        material.Get(AI_MATKEY_COLOR_SPECULAR, specular);
+
+        float shininess = 0.2f;
+        material.Get(AI_MATKEY_SHININESS, shininess);
+
+        struct PhongData {
+            glm::vec4 ambient;
+            glm::vec4 diffuse;
+            glm::vec4 specular;
+            float shininess;
+            int useTexture = true;
+            float _pad[2];
+        };
+
+        const PhongData data{
+            { ambient[0], ambient[1], ambient[2], 1.0f },
+            { diffuse[0],
+              diffuse[1],
+              diffuse[2],
+              1.0f },
+            { specular[0],
+              specular[1],
+              specular[2],
+              1.0f },
+            shininess,
+            hasDiffuseTexture,
+            { 0.0f, 0.0f }
+        };
+
+        Serenity::StaticUniformBuffer* phongUbo = m->createChild<Serenity::StaticUniformBuffer>();
+        phongUbo->size = sizeof(PhongData);
+
+        std::vector<uint8_t> rawData(sizeof(PhongData));
+        std::memcpy(rawData.data(), &data, sizeof(PhongData));
+        phongUbo->data = rawData;
+
+        m->setUniformBuffer(3, 0, phongUbo);
+        return m;
     }
-
-    auto sp = MakeShaderProgram(shader_code);
-    auto spref = static_cast<Serenity::SpirVShaderProgram*>(m->addChild(std::move(sp)));
-    m->shaderProgram = spref;
-
-    aiColor3D ambient = { 0.05f, 0.05f, 0.05f };
-    material.Get(AI_MATKEY_COLOR_AMBIENT, ambient);
-    ambient = ambient * 0.05f; // Limit ambient contributions
-
-    aiColor3D diffuse = { 0.45f, 0.45f, 0.85f };
-    material.Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
-
-    aiColor3D specular = { 0.18f, 0.18f, 0.18f };
-    material.Get(AI_MATKEY_COLOR_SPECULAR, specular);
-
-    float shininess = 0.2f;
-    material.Get(AI_MATKEY_SHININESS, shininess);
-
-    struct PhongData {
-        glm::vec4 ambient;
-        glm::vec4 diffuse;
-        glm::vec4 specular;
-        float shininess;
-        int useTexture = true;
-        float _pad[2];
-    };
-
-    const PhongData data{
-        { ambient[0], ambient[1], ambient[2], 1.0f },
-        { diffuse[0],
-          diffuse[1],
-          diffuse[2],
-          1.0f },
-        { specular[0],
-          specular[1],
-          specular[2],
-          1.0f },
-        shininess,
-        hasDiffuseTexture,
-        { 0.0f, 0.0f }
-    };
-
-    Serenity::StaticUniformBuffer* phongUbo = m->createChild<Serenity::StaticUniformBuffer>();
-    phongUbo->size = sizeof(PhongData);
-
-    std::vector<uint8_t> rawData(sizeof(PhongData));
-    std::memcpy(rawData.data(), &data, sizeof(PhongData));
-    phongUbo->data = rawData;
-
-    m->setUniformBuffer(3, 0, phongUbo);
-
-    return m;
 }
+
+} // namespace all::serenity

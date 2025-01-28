@@ -34,6 +34,7 @@ target_sources(
            "focus_area.h"
            "frustum.h"
            "frustum_rect.h"
+           "custom_materials.h"
     PRIVATE "picking_application_layer.cpp"
             "serenity_stereo_graph.cpp"
             "window_extent_watcher.cpp"
@@ -44,6 +45,7 @@ target_sources(
             "focus_area.cpp"
             "frustum.cpp"
             "frustum_rect.cpp"
+            "custom_materials.cpp"
 )
 
 # if(BUILD_SERENITY_RENDERER_QT)
