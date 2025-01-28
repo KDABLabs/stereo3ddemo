@@ -273,13 +273,14 @@ public:
             m_renderer->propertyChanged("frustum_view_enabled", enabled);
         });
         QObject::connect(m_cameraController, &CameraController::showAutoFocusAreaChanged, [this](bool enabled) {
-            m_renderer->propertyChanged("show_focus_area", enabled);
+            m_renderer->propertyChanged("show_focus_area", enabled && m_cameraController->autoFocus());
         });
         QObject::connect(m_cameraController, &CameraController::showFocusPlaneChanged, [this](bool enabled) {
             m_renderer->propertyChanged("show_focus_plane", enabled);
         });
         QObject::connect(m_cameraController, &CameraController::autoFocusChanged, [this](bool enabled) {
             m_renderer->propertyChanged("auto_focus", enabled);
+            m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea() && m_cameraController->autoFocus());
         });
         QObject::connect(m_cursorController, &CursorController::displayModeChanged, [this](CursorDisplayMode displayMode) {
             m_renderer->setCursorEnabled(

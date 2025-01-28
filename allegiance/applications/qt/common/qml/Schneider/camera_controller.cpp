@@ -98,10 +98,6 @@ void CameraController::setAutoFocus(bool newAutoFocus)
         return;
     m_autoFocus = newAutoFocus;
     Q_EMIT autoFocusChanged(m_autoFocus);
-
-    // Don't leave "show autofocus area" enabled when disabling autofocus
-    if (!m_autoFocus && m_showAutoFocusArea)
-        setShowAutoFocusArea(false);
 }
 
 bool CameraController::showAutoFocusArea() const
