@@ -239,9 +239,10 @@ ColumnLayout {
                 ToolTip.text: "Set FOV by physical dimension of projection area and viewer distance."
             }
 
-            SliderValue {
+            NonLinearSliderValue {
                 Layout.fillWidth: true
                 from: 0.1
+                mid: 0.5
                 to: 2
                 title: "Screen Height"
                 enabled: fovByPhysicalDimCheckBox.isChecked
@@ -254,9 +255,10 @@ ColumnLayout {
                 ToolTip.text: "The physical HEIGHT of the screen or projection area respectively in meters."
             }
 
-            SliderValue {
+            NonLinearSliderValue {
                 Layout.fillWidth: true
                 from: 0.1
+                mid: 2
                 to: 10.0
                 title: "Viewer Distance"
                 enabled: fovByPhysicalDimCheckBox.isChecked
