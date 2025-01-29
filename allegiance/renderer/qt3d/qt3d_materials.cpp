@@ -7,6 +7,8 @@
 #include <Qt3DRender/QRenderPass>
 #include <Qt3DRender/QTechnique>
 #include <Qt3DRender/QGraphicsApiFilter>
+#include <Qt3DRender/QNoDepthMask>
+#include <Qt3DRender/QDepthTest>
 
 using namespace all::qt3d;
 
@@ -135,6 +137,14 @@ SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const
         auto* rp = new Qt3DRender::QRenderPass();
         rp->setShaderProgram(shader);
 
+        auto* noDepthWrite = new Qt3DRender::QNoDepthMask{};
+
+        auto* depthState = new Qt3DRender::QDepthTest{};
+        depthState->setDepthFunction(Qt3DRender::QDepthTest::Less);
+
+        rp->addRenderState(noDepthWrite);
+        rp->addRenderState(depthState);
+
         auto* t = new Qt3DRender::QTechnique();
         t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::OpenGL);
         t->graphicsApiFilter()->setProfile(Qt3DRender::QGraphicsApiFilter::CoreProfile);
@@ -152,6 +162,14 @@ SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const
 
         auto* rp = new Qt3DRender::QRenderPass();
         rp->setShaderProgram(shader);
+
+        auto* noDepthWrite = new Qt3DRender::QNoDepthMask{};
+
+        auto* depthState = new Qt3DRender::QDepthTest{};
+        depthState->setDepthFunction(Qt3DRender::QDepthTest::Less);
+
+        rp->addRenderState(noDepthWrite);
+        rp->addRenderState(depthState);
 
         auto* t = new Qt3DRender::QTechnique();
         t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::RHI);

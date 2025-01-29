@@ -95,24 +95,14 @@ void addMeshes(const aiScene* scene, const aiNode* node, const QMatrix4x4& trans
         const bool isSkybox = materialName.contains("skybox", Qt::CaseInsensitive);
         const QMatrix4x4 meshTransform = [worldTransform, isSkybox] {
             if (isSkybox) {
-                // remove translations and scales if skybox
-                const auto r0 = QVector3D(worldTransform.row(0)).normalized();
-                const auto r1 = QVector3D(worldTransform.row(1)).normalized();
-                const auto r2 = QVector3D(worldTransform.row(2)).normalized();
-
-                QMatrix4x4 transform;
-                transform.setRow(0, QVector4D(QVector3D::crossProduct(r1, r2), 0));
-                transform.setRow(1, QVector4D(QVector3D::crossProduct(r2, r0), 0));
-                transform.setRow(2, QVector4D(QVector3D::crossProduct(r0, r1), 0));
-                return transform;
+                QMatrix4x4 m;
+                m.scale(0.1f);
+                return m;
             }
-
             return worldTransform;
         }();
 
         auto* childEntity = new Qt3DCore::QEntity(root);
-
-        const bool hasDiffuseTexture = materialInfo->GetTextureCount(aiTextureType::aiTextureType_DIFFUSE) > 0;
 
         SceneMesh::VertexFlags vertexFlags;
         if (meshInfo->HasTextureCoords(0)) {
