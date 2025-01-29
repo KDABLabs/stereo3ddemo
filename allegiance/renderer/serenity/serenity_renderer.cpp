@@ -116,6 +116,13 @@ TopViewCameraProjInfo updateFrustumTopViewProjInfo(float nearPlane, float farPla
 }
 KDBINDINGS_DECLARE_FUNCTION(updateFrustumTopViewProjInfoBinding, updateFrustumTopViewProjInfo)
 
+Serenity::PrimitiveRasterizerState createWireframePrimitiveState()
+{
+    Serenity::PrimitiveRasterizerState s;
+    s.polygonMode = KDGpu::PolygonMode::Line;
+    return s;
+}
+
 } // namespace
 
 SerenityRenderer::SerenityRenderer(SerenityWindow* window,
@@ -244,6 +251,12 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
         const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
         m_focusPlanePreview->enabled = focusPlanePreviewEnabled;
     }
+
+    if (name == "wireframe_enabled") {
+        const bool wireframeEnabled = std::any_cast<bool>(value);
+        m_wireframeEnabled = wireframeEnabled;
+        updateRenderPhases();
+    }
 }
 
 void SerenityRenderer::setCursorEnabled(bool enabled)
@@ -317,7 +330,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     KDGpu::Device device = m_window->createDevice();
 
     m_layerManager = m_engine.createChild<Serenity::LayerManager>();
-    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea", "Frustums", "Skybox" })
+    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea", "Frustums", "Skybox", "FocusPlane" })
         m_layerManager->addLayer(layerName);
 
     auto rootEntityPtr = std::make_unique<Entity>();
@@ -596,7 +609,7 @@ void SerenityRenderer::createScene()
     // FocusPlanePreview
     {
         m_focusPlanePreview = m_sceneRoot->createChildEntity<FocusPlanePreview>();
-        m_focusPlanePreview->layerMask = m_layerManager->layerMask({ "Alpha" });
+        m_focusPlanePreview->layerMask = m_layerManager->layerMask({ "FocusPlane" });
         m_focusPlanePreview->camera = m_camera;
     }
 }
@@ -606,7 +619,7 @@ void SerenityRenderer::updateRenderPhases()
     auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
     switch (m_mode) {
     case Mode::Scene:
-        algo->renderPhases = { createSkyboxPhase(), createOpaquePhase(), createTransparentPhase(), createFocusAreaPhase(), createFrustumPhase() };
+        algo->renderPhases = { createSkyboxPhase(), createOpaquePhase(), createTransparentPhase(), createFocusPlanePreviewPhase(), createFocusAreaPhase(), createFrustumPhase() };
         break;
     case Mode::StereoImage:
         algo->renderPhases = { createStereoImagePhase() };
@@ -648,6 +661,9 @@ Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createSkyboxPhas
     depthState.depthCompareOperation = KDGpu::CompareOperation::Always;
     phase.renderStates.setDepthStencilState(std::move(depthState));
 
+    if (m_wireframeEnabled)
+        phase.renderStates.setPrimitiveRasterizerState(createWireframePrimitiveState());
+
     return phase;
 }
 
@@ -663,6 +679,9 @@ Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createOpaquePhas
     depthState.depthWritesEnabled = true;
     depthState.depthCompareOperation = KDGpu::CompareOperation::Less;
     phase.renderStates.setDepthStencilState(std::move(depthState));
+
+    if (m_wireframeEnabled)
+        phase.renderStates.setPrimitiveRasterizerState(createWireframePrimitiveState());
 
     return phase;
 }
@@ -717,6 +736,40 @@ Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createTransparen
 {
     StereoForwardAlgorithm::RenderPhase phase{
         m_layerManager->layerMask({ "Alpha" }), StereoForwardAlgorithm::RenderPhase::Type::Alpha,
+        LayerFilterType::AcceptAll
+    };
+
+    DepthStencilState depthState;
+    depthState.depthTestEnabled = true;
+    depthState.depthWritesEnabled = false;
+    depthState.depthCompareOperation = KDGpu::CompareOperation::Less;
+    phase.renderStates.setDepthStencilState(std::move(depthState));
+
+    ColorBlendState blendState;
+    ColorBlendState::AttachmentBlendState attachmentBlendState;
+
+    attachmentBlendState.format = KDGpu::Format::UNDEFINED;
+    attachmentBlendState.blending.blendingEnabled = true;
+    attachmentBlendState.blending.alpha.operation = KDGpu::BlendOperation::Add;
+    attachmentBlendState.blending.color.operation = KDGpu::BlendOperation::Add;
+    attachmentBlendState.blending.alpha.srcFactor = KDGpu::BlendFactor::SrcAlpha;
+    attachmentBlendState.blending.color.srcFactor = KDGpu::BlendFactor::SrcAlpha;
+    attachmentBlendState.blending.alpha.dstFactor = KDGpu::BlendFactor::OneMinusSrcAlpha;
+    attachmentBlendState.blending.color.dstFactor = KDGpu::BlendFactor::OneMinusSrcAlpha;
+    blendState.attachmentBlendStates = { attachmentBlendState };
+
+    phase.renderStates.setColorBlendState(std::move(blendState));
+
+    if (m_wireframeEnabled)
+        phase.renderStates.setPrimitiveRasterizerState(createWireframePrimitiveState());
+
+    return phase;
+}
+
+Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createFocusPlanePreviewPhase() const
+{
+    StereoForwardAlgorithm::RenderPhase phase{
+        m_layerManager->layerMask({ "FocusPlane" }), StereoForwardAlgorithm::RenderPhase::Type::Alpha,
         LayerFilterType::AcceptAll
     };
 

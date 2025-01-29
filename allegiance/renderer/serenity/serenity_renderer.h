@@ -106,6 +106,7 @@ protected:
     Serenity::StereoForwardAlgorithm::RenderPhase createTransparentPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createFocusAreaPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createFrustumPhase() const;
+    Serenity::StereoForwardAlgorithm::RenderPhase createFocusPlanePreviewPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createStereoImagePhase() const;
 
     SerenityWindow* m_window{ nullptr };
@@ -142,6 +143,7 @@ protected:
 
     glm::vec3 m_sceneCenter;
     glm::vec3 m_sceneExtent;
+    bool m_wireframeEnabled{ false };
 
     std::function<void(std::string_view, std::any)> m_propertyUpdateNofitier;
 };
