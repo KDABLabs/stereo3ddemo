@@ -311,8 +311,6 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
 {
     if (name == "cursor_scale_factor") {
         m_cursor->setScaleFactor(std::any_cast<float>(value));
-    } else if (name == "cursor_scaling_enabled") {
-        m_cursor->setScalingEnabled(std::any_cast<bool>(value));
     } else if (name == "cursor_type") {
         m_cursor->setType(std::any_cast<CursorType>(value));
     } else if (name == "display_mode") {

@@ -13,14 +13,6 @@ void CursorController::setCursorType(CursorType cursorType)
     cursorChanged(m_cursorType);
 }
 
-void CursorController::setScalingEnabled(bool enabled)
-{
-    if (m_scaling_enabled == enabled)
-        return;
-    m_scaling_enabled = enabled;
-    cursorScalingEnableChanged(enabled);
-}
-
 void CursorController::setScaleFactor(float scale_factor)
 {
     if (m_scale_factor == scale_factor)
@@ -40,11 +32,6 @@ void CursorController::setCursorTint(QColor color)
 float CursorController::scaleFactor() const
 {
     return m_scale_factor;
-}
-
-bool CursorController::scalingEnabled() const
-{
-    return m_scaling_enabled;
 }
 
 CursorController::CursorType CursorController::cursor() const

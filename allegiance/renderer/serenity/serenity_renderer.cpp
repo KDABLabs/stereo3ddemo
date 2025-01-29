@@ -196,11 +196,6 @@ void SerenityRenderer::propertyChanged(std::string_view name, std::any value)
         return;
     }
 
-    if (name == "cursor_scaling_enabled") {
-        m_cursor->scalingEnabled = std::any_cast<bool>(value);
-        return;
-    }
-
     if (name == "cursor_type") {
         m_cursor->type = std::any_cast<CursorType>(value);
         return;

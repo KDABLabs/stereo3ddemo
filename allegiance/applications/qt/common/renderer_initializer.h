@@ -299,9 +299,6 @@ public:
             std::array<float, 4> c = { color.redF(), color.greenF(), color.blueF(), color.alphaF() };
             m_renderer->propertyChanged("cursor_color", c);
         });
-        QObject::connect(m_cursorController, &CursorController::cursorScalingEnableChanged, [this](bool enabled) {
-            m_renderer->propertyChanged("cursor_scaling_enabled", enabled);
-        });
         QObject::connect(m_cameraController, &CameraController::autoFocusChanged, [this](bool afEnabled) {
             m_mouseInputTracker.cursor_changes_focus = !afEnabled;
         });
@@ -346,7 +343,6 @@ public:
         m_renderer->propertyChanged("auto_focus", m_cameraController->autoFocus());
         m_renderer->propertyChanged("display_mode", all::DisplayMode(m_cameraController->displayMode()));
         m_renderer->propertyChanged("cursor_color", std::array<float, 4>{ m_cursorController->cursorTint().redF(), m_cursorController->cursorTint().greenF(), m_cursorController->cursorTint().blueF(), m_cursorController->cursorTint().alphaF() });
-        m_renderer->propertyChanged("cursor_scaling_enabled", m_cursorController->scalingEnabled());
         m_renderer->propertyChanged("cursor_scale_factor", m_cursorController->scaleFactor());
         m_mouseInputTracker.cursor_changes_focus = !m_cameraController->autoFocus();
 

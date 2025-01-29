@@ -129,20 +129,12 @@ GroupBox {
                         ToolTip.text: "Set cursor Hue."
                     }
 
-                    // Cursor Scaling
-                    CheckBoxX {
-                        Layout.fillWidth: true
-                        title: "Scaling"
-                        initial: Cursor.scalingEnabled
-                        onChecked: bchecked => Cursor.scalingEnabled = bchecked
-                    }
-
-                    // Cursor Factor
+                    // Cursor Scaling Factor
                     SliderValue {
                         id: scalefactor
-                        visible: Cursor.scalingEnabled
                         Layout.fillWidth: true
                         from: 0.1
+                        defaultValue: 1
                         to: 2.0
                         value: Cursor.scaleFactor
                         title: "Factor"

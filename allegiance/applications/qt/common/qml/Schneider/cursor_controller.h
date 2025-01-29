@@ -11,7 +11,6 @@ class CursorController : public QObject
     Q_OBJECT
     Q_PROPERTY(CursorType cursor READ cursor WRITE setCursorType NOTIFY cursorChanged)
     Q_PROPERTY(CursorDisplayMode displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
-    Q_PROPERTY(bool scalingEnabled READ scalingEnabled WRITE setScalingEnabled NOTIFY cursorScalingEnableChanged)
     Q_PROPERTY(float scaleFactor READ scaleFactor WRITE setScaleFactor NOTIFY cursorScaleChanged)
     Q_PROPERTY(float hue READ hue WRITE setHue NOTIFY cursorHueChanged)
 
@@ -40,10 +39,8 @@ public:
     void setCursorType(CursorType cursorType);
     [[nodiscard]] CursorType cursor() const;
 
-    void setScalingEnabled(bool enabled);
     void setScaleFactor(float scale_factor);
 
-    [[nodiscard]] bool scalingEnabled() const;
     [[nodiscard]] float scaleFactor() const;
 
     void setCursorTint(QColor color);
@@ -59,7 +56,6 @@ public:
 Q_SIGNALS:
     void cursorChanged(all::CursorType cursorType);
     void cursorScaleChanged(float scale);
-    void cursorScalingEnableChanged(bool enabled);
     void cursorTintChanged(QColor color);
     void cursorHueChanged(float);
     void displayModeChanged(all::CursorDisplayMode cursorType);
