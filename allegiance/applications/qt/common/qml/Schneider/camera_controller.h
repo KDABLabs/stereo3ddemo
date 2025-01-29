@@ -14,7 +14,6 @@ class CameraController : public QObject
     Q_PROPERTY(bool separationBasedOnFocusDistance READ separationBasedOnFocusDistance WRITE setSeparationBasedOnFocusDistance NOTIFY separationBasedOnFocusDistanceChanged)
     Q_PROPERTY(int separationBasedOnFocusDistanceDivider READ separationBasedOnFocusDistanceDivider WRITE setSeparationBasedOnFocusDistanceDivider NOTIFY separationBasedOnFocusDistanceDividerChanged)
 
-    Q_PROPERTY(bool frustumViewEnabled READ frustumViewEnabled WRITE setFrustumViewEnabled NOTIFY frustumViewEnabledChanged)
     Q_PROPERTY(DisplayMode displayMode READ displayMode WRITE setDisplayMode NOTIFY displayModeChanged)
     Q_PROPERTY(StereoMode stereoMode READ stereoMode WRITE setStereoMode NOTIFY stereoModeChanged)
 
@@ -80,9 +79,6 @@ public:
     StereoMode stereoMode() const;
     void setStereoMode(StereoMode newStereoMode);
 
-    bool frustumViewEnabled() const;
-    void setFrustumViewEnabled(bool newFrustumViewEnabled);
-
     bool autoFocus() const;
     void setAutoFocus(bool newAutoFocus);
 
@@ -129,7 +125,6 @@ Q_SIGNALS:
 
     void displayModeChanged(DisplayMode);
     void stereoModeChanged(StereoMode);
-    void frustumViewEnabledChanged(bool);
 
     void focusDistanceChanged(float);
     void popOutChanged(float);
@@ -157,7 +152,6 @@ private:
 
     DisplayMode m_displayMode = DisplayMode::Stereo;
     StereoMode m_stereoMode = StereoMode::AsymmetricFrustum;
-    bool m_frustumViewEnabled = true;
 
     float m_eyeDistance = ms_eyeDistanceDefaultValue;
     bool m_flipped = false;

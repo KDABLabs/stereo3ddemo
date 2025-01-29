@@ -8,6 +8,7 @@
 #include <applications/qt/common/qml/Schneider/camera_controller.h>
 #include <applications/qt/common/qml/Schneider/cursor_controller.h>
 #include <applications/qt/common/qml/Schneider/scene_controller.h>
+#include <applications/qt/common/qml/Schneider/misc_controller.h>
 
 #include <applications/qt/common/qml/Schneider/style.h>
 
@@ -37,11 +38,13 @@ public:
         m_sceneController = m_engine->singletonInstance<SceneController*>("Schneider", "Scene");
         m_cameraController = m_engine->singletonInstance<CameraController*>("Schneider", "Camera");
         m_cursorController = m_engine->singletonInstance<CursorController*>("Schneider", "Cursor");
+        m_miscController = m_engine->singletonInstance<MiscController*>("Schneider", "Misc");
         m_appStyle = m_engine->singletonInstance<AppStyle*>("Schneider", "Style");
 
         assert(m_sceneController);
         assert(m_cameraController);
         assert(m_cursorController);
+        assert(m_miscController);
         assert(m_appStyle);
 
         setClearColor();
@@ -57,6 +60,7 @@ public:
     inline SceneController* sceneController() const { return m_sceneController; }
     inline CameraController* cameraController() const { return m_cameraController; }
     inline CursorController* cursorController() const { return m_cursorController; }
+    inline MiscController* miscController() const { return m_miscController; }
     inline AppStyle* appStyle() const { return m_appStyle; }
 
     inline QQmlEngine* qmlEngine() const { return m_engine; }
@@ -141,6 +145,7 @@ private:
     SceneController* m_sceneController{ nullptr };
     CameraController* m_cameraController{ nullptr };
     CursorController* m_cursorController{ nullptr };
+    MiscController* m_miscController{ nullptr };
     AppStyle* m_appStyle{ nullptr };
 };
 } // namespace all::qt

@@ -88,16 +88,6 @@ ColumnLayout {
             Layout.column: 1
             Layout.row: 1
         }
-
-        CheckBoxX {
-            title: "Show Frustum"
-            initial: Camera.frustumViewEnabled
-            onChecked: checkValue => Camera.frustumViewEnabled = checkValue
-            Layout.column: 0
-            Layout.columnSpan: 3
-            Layout.row: 2
-            ToolTip.text: "Display the Camera Frustum Overlay."
-        }
     }
 
     GroupBox {

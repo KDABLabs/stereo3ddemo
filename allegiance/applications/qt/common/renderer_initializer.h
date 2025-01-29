@@ -57,6 +57,7 @@ public:
             m_sceneController = sideMenu->sceneController();
             m_cameraController = sideMenu->cameraController();
             m_cursorController = sideMenu->cursorController();
+            m_miscController = sideMenu->miscController();
             m_appStyle = sideMenu->appStyle();
         }
 
@@ -269,9 +270,6 @@ public:
         QObject::connect(m_cameraController, &CameraController::stereoModeChanged, [this](CameraController::StereoMode v) {
             m_camera.mode = all::StereoCamera::Mode(v);
         });
-        QObject::connect(m_cameraController, &CameraController::frustumViewEnabledChanged, [this](bool enabled) {
-            m_renderer->propertyChanged("frustum_view_enabled", enabled);
-        });
         QObject::connect(m_cameraController, &CameraController::showAutoFocusAreaChanged, [this](bool enabled) {
             m_renderer->propertyChanged("show_focus_area", enabled && m_cameraController->autoFocus());
         });
@@ -282,6 +280,13 @@ public:
             m_renderer->propertyChanged("auto_focus", enabled);
             m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea() && m_cameraController->autoFocus());
         });
+        QObject::connect(m_miscController, &MiscController::frustumViewEnabledChanged, [this](bool enabled) {
+            m_renderer->propertyChanged("frustum_view_enabled", enabled);
+        });
+        QObject::connect(m_miscController, &MiscController::wireframeEnabledChanged, [this](bool enabled) {
+            m_renderer->propertyChanged("wireframe_enabled", enabled);
+        });
+
         QObject::connect(m_cursorController, &CursorController::displayModeChanged, [this](CursorDisplayMode displayMode) {
             m_renderer->setCursorEnabled(
                 displayMode == CursorDisplayMode::Both
@@ -337,7 +342,8 @@ public:
         m_camera.fov = m_cameraController->fov();
         m_camera.mode = all::StereoCamera::Mode(m_cameraController->stereoMode());
         m_camera.flipped = m_cameraController->flipped();
-        m_renderer->propertyChanged("frustum_view_enabled", m_cameraController->frustumViewEnabled());
+        m_renderer->propertyChanged("frustum_view_enabled", m_miscController->frustumViewEnabled());
+        m_renderer->propertyChanged("wireframe_enabled", m_miscController->wireframeEnabled());
         m_renderer->propertyChanged("show_focus_area", m_cameraController->showAutoFocusArea());
         m_renderer->propertyChanged("show_focus_plane", m_cameraController->showFocusPlane());
         m_renderer->propertyChanged("auto_focus", m_cameraController->autoFocus());
@@ -421,6 +427,7 @@ private:
     SceneController* m_sceneController{ nullptr };
     CameraController* m_cameraController{ nullptr };
     CursorController* m_cursorController{ nullptr };
+    MiscController* m_miscController{ nullptr };
     AppStyle* m_appStyle{ nullptr };
 
     MouseTracker m_mouseInputTracker;

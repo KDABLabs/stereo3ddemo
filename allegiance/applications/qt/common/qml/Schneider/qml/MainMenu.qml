@@ -24,6 +24,35 @@ ScrollView {
             }
         }
 
+        // Misc
+        Pane {
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+
+            background: Rectangle {
+                color: Style.background
+            }
+
+            RowLayout {
+                SectionTitle {
+                    Layout.maximumWidth: 40
+                    Layout.alignment: Qt.AlignRight
+                    id: misc_section_title
+                }
+                Label {
+                    text: "Misc"
+                    font: Style.fontButton
+                    leftPadding: 10
+                }
+            }
+            topPadding: 0
+            bottomPadding: 0
+        }
+        MiscMenu {
+            Layout.fillWidth: true
+            visible: misc_section_title.isVisible
+        }
+
         // Camera
         Pane {
             Layout.fillWidth: true
@@ -50,7 +79,6 @@ ScrollView {
         }
         CameraMenu {
             Layout.fillWidth: true
-            Layout.alignment: Qt.AlignTop
             visible: camera_section_title.isVisible
         }
 

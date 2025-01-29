@@ -11,6 +11,8 @@ qt_add_qml_module(
     camera_controller.cpp
     cursor_controller.h
     cursor_controller.cpp
+    misc_controller.h
+    misc_controller.cpp
     style.h
     QML_FILES
     "qml/ButtonX.qml"
@@ -24,6 +26,7 @@ qt_add_qml_module(
     "qml/SectionTitle.qml"
     "qml/Logos.qml"
     "qml/CustomSlider.qml"
+    "qml/MiscMenu.qml"
     RESOURCES
     "qml/checked.svg"
     "qml/unchecked.svg"

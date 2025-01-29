@@ -79,14 +79,6 @@ bool CameraController::flipped() const
     return m_flipped;
 }
 
-void CameraController::setFrustumViewEnabled(bool newFrustumViewEnabled)
-{
-    if (newFrustumViewEnabled == m_frustumViewEnabled)
-        return;
-    m_frustumViewEnabled = newFrustumViewEnabled;
-    Q_EMIT frustumViewEnabledChanged(newFrustumViewEnabled);
-}
-
 bool CameraController::autoFocus() const
 {
     return m_autoFocus;
@@ -151,11 +143,6 @@ void CameraController::setPopOut(float newPopOut)
         return;
     m_popOut = safePopOut;
     Q_EMIT popOutChanged(m_popOut);
-}
-
-bool CameraController::frustumViewEnabled() const
-{
-    return m_frustumViewEnabled;
 }
 
 void CameraController::setStereoMode(StereoMode newStereoMode)
