@@ -8,6 +8,7 @@ class QLayer;
 class QNoDraw;
 class QLayerFilter;
 class QCamera;
+class QRasterMode;
 } // namespace Qt3DRender
 
 namespace all::qt3d {
@@ -28,6 +29,8 @@ public:
 public:
     void setCamera(QStereoProxyCamera* newCamera);
     inline QStereoProxyCamera* camera() const { return m_camera; }
+
+    void setWireframeEnabled(bool enabled);
 
     inline Qt3DRender::QCamera* frustumCamera() const { return m_frustumCamera; }
     inline Qt3DRender::QLayer* leftLayer() const { return m_leftLayer; }
@@ -71,6 +74,9 @@ private:
     Qt3DRender::QNoDraw* m_stereoImageNoDraw;
     QStereoProxyCamera* m_camera;
     Qt3DRender::QCamera* m_frustumCamera;
+
+    Qt3DRender::QRasterMode* m_leftSceneRasterMode;
+    Qt3DRender::QRasterMode* m_rightSceneRasterMode;
 
     Qt3DRender::QLayerFilter* m_centerLayerFilter;
     Qt3DRender::QLayerFilter* m_leftLayerFilter;

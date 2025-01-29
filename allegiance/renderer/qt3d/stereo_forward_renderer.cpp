@@ -17,6 +17,7 @@
 #include <Qt3DRender/QDebugOverlay>
 #include <Qt3DRender/QCamera>
 #include <Qt3DRender/QNoPicking>
+#include <Qt3DRender/QRasterMode>
 
 all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* parent)
     : Qt3DRender::QRenderSurfaceSelector(parent)
@@ -95,7 +96,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         return renderTarget;
     };
 
-    auto makeCameraSelectorForSceneBranch = [&](Qt3DRender::QRenderTarget* rt) {
+    auto makeCameraSelectorForSceneBranch = [&](Qt3DRender::QRenderTarget* rt, Qt3DRender::QRasterMode* rasterState) {
         auto* cameraSelector = new Qt3DRender::QCameraSelector();
         auto* rts = new Qt3DRender::QRenderTargetSelector();
         rts->setTarget(rt);
@@ -112,6 +113,15 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         sceneLayerFilter->setObjectName("SceneLayerFilter");
         sceneLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
         sceneLayerFilter->addLayer(m_sceneLayer);
+
+        auto* sceneRenderState = new Qt3DRender::QRenderStateSet();
+        {
+            auto* depthState = new Qt3DRender::QDepthTest;
+            depthState->setDepthFunction(Qt3DRender::QDepthTest::Less);
+
+            sceneRenderState->addRenderState(depthState);
+            sceneRenderState->addRenderState(rasterState);
+        }
 
         auto* focusPlaneLayerFilter = new Qt3DRender::QLayerFilter();
         focusPlaneLayerFilter->setObjectName("FocusPlaneFilter");
@@ -137,6 +147,7 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
 
         clearBuffers->setParent(rts);
         sceneLayerFilter->setParent(rts);
+        sceneRenderState->setParent(sceneLayerFilter);
         cursorLayerFilter->setParent(rts);
         focusPlaneLayerFilter->setParent(rts);
         focusAreaLayerFilter->setParent(rts);
@@ -147,11 +158,14 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     Qt3DRender::QRenderTarget* leftRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Left);
     Qt3DRender::QRenderTarget* rightRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Right);
 
+    m_leftSceneRasterMode = new Qt3DRender::QRasterMode;
+    m_rightSceneRasterMode = new Qt3DRender::QRasterMode;
+
     m_centerCameraSelector = makeCenterCameraPickingBranch();
     m_centerCameraSelector->setObjectName("CenterCamera");
-    m_leftCameraSelector = makeCameraSelectorForSceneBranch(leftRt);
+    m_leftCameraSelector = makeCameraSelectorForSceneBranch(leftRt, m_leftSceneRasterMode);
     m_leftCameraSelector->setObjectName("LeftCamera");
-    m_rightCameraSelector = makeCameraSelectorForSceneBranch(rightRt);
+    m_rightCameraSelector = makeCameraSelectorForSceneBranch(rightRt, m_rightSceneRasterMode);
     m_rightCameraSelector->setObjectName("RightCamera");
 
     auto makeFrustumBranch = [&](Qt3DRender::QRenderTarget* rt) {
@@ -286,3 +300,10 @@ void all::qt3d::QStereoForwardRenderer::setCamera(QStereoProxyCamera* newCamera)
         setDisplayMode(m_displayMode);
     }
 }
+
+void all::qt3d::QStereoForwardRenderer::setWireframeEnabled(bool enabled)
+{
+    m_leftSceneRasterMode->setRasterMode(enabled ? Qt3DRender::QRasterMode::Lines : Qt3DRender::QRasterMode::Fill);
+    m_rightSceneRasterMode->setRasterMode(m_leftSceneRasterMode->rasterMode());
+}
+

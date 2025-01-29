@@ -336,6 +336,9 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
         const bool focusPlanePreviewEnabled = std::any_cast<bool>(value);
         qDebug() << focusPlanePreviewEnabled;
         m_focusPlanePreview->setEnabled(focusPlanePreviewEnabled);
+    } else if (name == "wireframe_enabled") {
+        const bool wireframeEnabled = std::any_cast<bool>(value);
+        m_renderer->setWireframeEnabled(wireframeEnabled);
     }
 }
 
