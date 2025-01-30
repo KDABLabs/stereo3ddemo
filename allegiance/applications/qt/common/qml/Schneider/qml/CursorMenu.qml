@@ -136,7 +136,7 @@ GroupBox {
                         defaultValue: 1
                         to: 2.0
                         value: Cursor.scaleFactor
-                        title: "Factor"
+                        title: "Size"
                         fineAdjustmentFactor: 0.001
 
                         onMoved: current => Cursor.scaleFactor = current
