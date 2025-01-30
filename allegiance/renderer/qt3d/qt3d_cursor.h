@@ -13,6 +13,7 @@ class StereoCamera;
 namespace Qt3DRender {
 class QMaterial;
 class QCameraLens;
+class QTextureLoader;
 } // namespace Qt3DRender
 namespace Qt3DExtras {
 class QPlaneMesh;
@@ -25,6 +26,9 @@ class QTransform;
 }
 
 namespace all::qt3d {
+
+class CursorBillboardMaterial;
+
 class CursorBillboard : public Qt3DCore::QEntity
 {
 public:
@@ -43,7 +47,8 @@ public:
 protected:
     Qt3DCore::QTransform* m_transform;
     Qt3DExtras::QPlaneMesh* m_plane;
-    Qt3DExtras::QDiffuseSpecularMaterial* m_material;
+    CursorBillboardMaterial* m_material;
+    Qt3DRender::QTextureLoader* m_tex;
     QMatrix4x4 m_matrix;
 };
 
@@ -74,7 +79,7 @@ private:
 class CursorEntity : public Qt3DCore::QEntity
 {
 public:
-    CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window);
+    explicit CursorEntity(QEntity* parent, QEntity* camera, Qt3DExtras::Qt3DWindow* window);
 
 public:
     void setPosition(const QVector3D& positionInScene);

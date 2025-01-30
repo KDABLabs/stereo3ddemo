@@ -1,4 +1,5 @@
 #include "qt3d_cursor.h"
+#include "qt3d_materials.h"
 #include "shared/stereo_camera.h"
 #include "util_qt.h"
 
@@ -27,12 +28,10 @@ CursorBillboard::CursorBillboard(QNode* parent)
     m_plane = new Qt3DExtras::QPlaneMesh;
     addComponent(m_plane);
 
-    auto m = new Qt3DExtras::QDiffuseSpecularMaterial;
-    auto tex = new Qt3DRender::QTextureLoader{};
-    tex->setSource(QUrl("qrc:/cursor_billboard.png"));
-    m->setAmbient(Qt::white);
-    m->setDiffuse(QVariant::fromValue(tex));
-    m->setAlphaBlendingEnabled(true);
+    auto m = new CursorBillboardMaterial;
+    m_tex = new Qt3DRender::QTextureLoader{};
+    m_tex->setSource(QUrl("qrc:/cursor_billboard.png"));
+    m->setTexture(m_tex);
     m_material = m;
     addComponent(m_material);
 
@@ -71,26 +70,22 @@ void CursorBillboard::setRotation(const QQuaternion& rotation)
 
 void CursorBillboard::setTexture(CursorTexture texture)
 {
-    auto tex = new Qt3DRender::QTextureLoader{};
-
     switch (texture) {
     case CursorTexture::Default:
-        tex->setSource(QUrl("qrc:/cursor_billboard.png"));
+        m_tex->setSource(QUrl("qrc:/cursor_billboard.png"));
         break;
     case CursorTexture::CrossHair:
-        tex->setSource(QUrl("qrc:/cursor_billboard_crosshair.png"));
+        m_tex->setSource(QUrl("qrc:/cursor_billboard_crosshair.png"));
         break;
     case CursorTexture::Dot:
-        tex->setSource(QUrl("qrc:/cursor_billboard_dot.png"));
+        m_tex->setSource(QUrl("qrc:/cursor_billboard_dot.png"));
         break;
     }
-
-    m_material->setDiffuse(QVariant::fromValue(tex));
 }
 
 void all::qt3d::CursorBillboard::setCursorTintColor(const QColor& color)
 {
-    m_material->setAmbient(color);
+    m_material->setColor(color);
 }
 
 CursorSphere::CursorSphere(QNode* parent)
@@ -103,6 +98,7 @@ CursorSphere::CursorSphere(QNode* parent)
     material->setShininess(100.0);
     material->setDiffuse(QColor("lightyellow"));
     material->setAmbient(QColor("lightyellow"));
+    material->setSpecular(QColor("white"));
     m_material = material;
     addComponent(material);
 }
@@ -142,6 +138,7 @@ CursorCross::CursorCross(QNode* parent)
     material->setShininess(100.0);
     material->setDiffuse(QColor("lightyellow"));
     material->setAmbient(QColor("lightyellow"));
+    material->setSpecular(QColor("white"));
     c1Entity->addComponent(material);
     c2Entity->addComponent(material);
     c3Entity->addComponent(material);
@@ -154,10 +151,9 @@ void CursorCross::setCursorTintColor(const QColor& color)
     m_material->setDiffuse(color);
 }
 
-CursorEntity::CursorEntity(QEntity* parent, QEntity* scene, QEntity* camera, Qt3DExtras::Qt3DWindow* window)
+CursorEntity::CursorEntity(QEntity* parent, QEntity* camera, Qt3DExtras::Qt3DWindow* window)
     : QEntity(parent)
 {
-
     m_transform = new Qt3DCore::QTransform();
 
     m_transform->setTranslation({ -1, -1, -1 });

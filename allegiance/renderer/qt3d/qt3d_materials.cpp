@@ -9,6 +9,8 @@
 #include <Qt3DRender/QGraphicsApiFilter>
 #include <Qt3DRender/QNoDepthMask>
 #include <Qt3DRender/QDepthTest>
+#include <Qt3DRender/QBlendEquationArguments>
+#include <Qt3DRender/QBlendEquation>
 
 using namespace all::qt3d;
 
@@ -200,4 +202,102 @@ SkyboxMaterial::SkyboxMaterial(const all::qt3d::shader_textures& textures, const
     };
 
     make_texture(QStringLiteral("diffuseMap"), texture2);
+}
+
+CursorBillboardMaterial::CursorBillboardMaterial(Qt3DCore::QNode* parent)
+    : Qt3DRender::QMaterial(parent)
+{
+    auto* effect = new Qt3DRender::QEffect();
+
+    // GL 3.2
+    {
+        auto* shader = new Qt3DRender::QShaderProgram();
+        shader->setVertexShaderCode(all::qt3d::cursor_billboard_vs.data());
+        shader->setFragmentShaderCode(all::qt3d::cursor_billboard_frag.data());
+
+        auto* rp = new Qt3DRender::QRenderPass();
+        rp->setShaderProgram(shader);
+
+        auto* noDepthWrite = new Qt3DRender::QNoDepthMask{};
+
+        auto* depthState = new Qt3DRender::QDepthTest{};
+        depthState->setDepthFunction(Qt3DRender::QDepthTest::LessOrEqual);
+
+        auto* blendState = new Qt3DRender::QBlendEquationArguments{};
+        blendState->setSourceRgb(Qt3DRender::QBlendEquationArguments::SourceAlpha);
+        blendState->setSourceAlpha(Qt3DRender::QBlendEquationArguments::SourceAlpha);
+        blendState->setDestinationRgb(Qt3DRender::QBlendEquationArguments::OneMinusSourceAlpha);
+        blendState->setDestinationAlpha(Qt3DRender::QBlendEquationArguments::OneMinusSourceAlpha);
+
+        auto* blendEquation = new Qt3DRender::QBlendEquation{};
+        blendEquation->setBlendFunction(Qt3DRender::QBlendEquation::Add);
+
+        rp->addRenderState(noDepthWrite);
+        rp->addRenderState(depthState);
+        rp->addRenderState(blendState);
+        rp->addRenderState(blendEquation);
+
+        auto* t = new Qt3DRender::QTechnique();
+        t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::OpenGL);
+        t->graphicsApiFilter()->setProfile(Qt3DRender::QGraphicsApiFilter::CoreProfile);
+        t->graphicsApiFilter()->setMajorVersion(3);
+        t->graphicsApiFilter()->setMinorVersion(2);
+        t->addRenderPass(rp);
+
+        effect->addTechnique(t);
+    }
+    // RHI
+    {
+        auto* shader = new Qt3DRender::QShaderProgram();
+        shader->setVertexShaderCode(all::qt3d::cursor_billboard_vs_rhi.data());
+        shader->setFragmentShaderCode(all::qt3d::cursor_billboard_frag_rhi.data());
+
+        auto* rp = new Qt3DRender::QRenderPass();
+        rp->setShaderProgram(shader);
+
+        auto* noDepthWrite = new Qt3DRender::QNoDepthMask{};
+
+        auto* depthState = new Qt3DRender::QDepthTest{};
+        depthState->setDepthFunction(Qt3DRender::QDepthTest::LessOrEqual);
+
+        auto* blendState = new Qt3DRender::QBlendEquationArguments{};
+        blendState->setSourceRgb(Qt3DRender::QBlendEquationArguments::SourceAlpha);
+        blendState->setSourceAlpha(Qt3DRender::QBlendEquationArguments::SourceAlpha);
+        blendState->setDestinationRgb(Qt3DRender::QBlendEquationArguments::OneMinusSourceAlpha);
+        blendState->setDestinationAlpha(Qt3DRender::QBlendEquationArguments::OneMinusSourceAlpha);
+
+        auto* blendEquation = new Qt3DRender::QBlendEquation{};
+        blendEquation->setBlendFunction(Qt3DRender::QBlendEquation::Add);
+
+        rp->addRenderState(noDepthWrite);
+        rp->addRenderState(depthState);
+        rp->addRenderState(blendState);
+        rp->addRenderState(blendEquation);
+
+        auto* t = new Qt3DRender::QTechnique();
+        t->graphicsApiFilter()->setApi(Qt3DRender::QGraphicsApiFilter::RHI);
+        t->graphicsApiFilter()->setMajorVersion(1);
+        t->graphicsApiFilter()->setMinorVersion(0);
+        t->addRenderPass(rp);
+
+        effect->addTechnique(t);
+    }
+
+    m_colorParameter = new Qt3DRender::QParameter(QStringLiteral("color"), QColor(Qt::white));
+    m_textureParameter = new Qt3DRender::QParameter(QStringLiteral("cursor_texture"), QVariant());
+
+    effect->addParameter(m_colorParameter);
+    effect->addParameter(m_textureParameter);
+
+    setEffect(effect);
+}
+
+void CursorBillboardMaterial::setColor(const QColor& color)
+{
+    m_colorParameter->setValue(color);
+}
+
+void CursorBillboardMaterial::setTexture(const Qt3DRender::QAbstractTexture* texture)
+{
+    m_textureParameter->setValue(QVariant::fromValue(texture));
 }

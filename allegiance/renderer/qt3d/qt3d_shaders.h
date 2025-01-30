@@ -567,6 +567,74 @@ void main()
 }
 )";
 
+constexpr std::string_view cursor_billboard_vs = R"(
+#version 150 core
+
+in vec3 vertexPosition;
+in vec2 vertexTexCoord;
+
+out vec2 texCoords;
+
+uniform mat4 mvp;
+
+void main(void)
+{
+    texCoords = vertexTexCoord;
+    gl_Position = mvp * vec4(vertexPosition, 1.0);
+}
+)";
+
+constexpr std::string_view cursor_billboard_frag = R"(
+#version 150 core
+
+out vec4 fragColor;
+in vec2 texCoords;
+
+uniform vec4 color;
+uniform sampler2D cursor_texture;
+
+void main()
+{
+    float alpha = texture(cursor_texture, texCoords).a;
+    fragColor = vec4(color.rgb, alpha * color.a);
+}
+)";
+
+constexpr std::string_view cursor_billboard_vs_rhi = R"(
+#version 450
+
+layout(location = 0) in vec2 vertexPosition;
+layout(location = 1) in vec2 vertexTexCoord;
+
+layout(location = 0) out vec2 texCoords;
+
+void main()
+{
+    texCoord = vertexTexCoord;
+    gl_Position = vec4(vertexPosition, 0.0, 1.0);
+}
+)";
+
+constexpr std::string_view cursor_billboard_frag_rhi = R"(
+#version 450
+
+layout(location = 0) in vec2 texCoords;
+layout(location = 0) out vec4 fragColor;
+
+
+layout(binding = 3) uniform sampler2D cursor_texture;
+
+layout(std140, binding = 2) uniform qt3d_extras_uniforms {
+  vec4 color;
+};
+
+void main()
+{
+    float alpha = texture(cursor_texture, texCoords).a;
+    fragColor = vec4(color.rgb, alpha * color.a);
+}
+)";
+
 struct shader_uniforms {
     QVector3D normalScaling{ 1, 1, 1 };
     QVector3D semInner{ 0, 0, 0 };
