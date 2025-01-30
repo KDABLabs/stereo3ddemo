@@ -13,11 +13,14 @@ add_definitions(
 
 include(FetchContent)
 include(CMakeDependentOption)
+include(FeatureSummary)
 
 find_program(FLUTTER_EXE flutter)
 
+
 option(BUILD_UNIT_TESTS "Build Unit Tests" ON)
-option(BUILD_QT_UI "Build Qt UI" ON)
+option(BUILD_QT_UI ON)
+
 cmake_dependent_option(
     BUILD_QT3D_RENDERER
     "Build Qt3D renderer"
@@ -79,3 +82,13 @@ endif()
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 set(CPACK_COMPONENTS_ALL applications)
 include(CPack)
+
+set(BUILD_SERENITY_QT_DEMO  ${BUILD_SERENITY_RENDERER} AND ${BUILD_QT_UI})
+set(BUILD_QT3D_DEMO  ${BUILD_QT3D_RENDERER} AND ${BUILD_QT_UI})
+add_feature_info(Serenity-Demo-Qt BUILD_SERENITY_QT_DEMO
+                 "Serenity (Vulkan) Demo with Qt based UI")
+add_feature_info(Qt3D-Demo BUILD_QT3D_DEMO
+                 "Qt3D (OpenGL) Demo with Qt based UI")
+
+feature_summary(WHAT PACKAGES_FOUND ENABLED_FEATURES PACKAGES_NOT_FOUND
+                     DISABLED_FEATURES INCLUDE_QUIET_PACKAGES)
