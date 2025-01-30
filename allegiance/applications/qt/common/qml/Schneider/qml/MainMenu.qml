@@ -12,6 +12,13 @@ ScrollView {
     ScrollBar.vertical.policy: ScrollBar.AlwaysOn
     ScrollBar.vertical.interactive: true
 
+    // Set custom Font for the ToolTips
+    readonly property font myFont: ({
+         family: "Open Sans",
+         pointSize: 12,
+     })
+    ToolTip.toolTip.font: myFont
+
     ColumnLayout {
         width: root.width - 10
 

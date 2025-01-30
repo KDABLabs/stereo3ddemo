@@ -13,7 +13,7 @@ ColumnLayout {
 
     component ToolTipLabel: Label {
         ToolTip.visible: hovered && ToolTip.text.length > 0
-        ToolTip.timeout: 5000
+        ToolTip.timeout: -1
         ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
 
         readonly property bool hovered: labelMa.containsMouse
@@ -115,7 +115,7 @@ ColumnLayout {
                 initial: Camera.showAutoFocusArea
                 onChecked: checkValue => Camera.showAutoFocusArea = checkValue
                 ToolTip.text: join(["Shows the auto focus area handle.",
-                                    "Shift + F2"]);
+                                    "Shift + F2"])
             }
 
             CheckBoxX {

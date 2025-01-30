@@ -12,7 +12,7 @@ RowLayout {
     readonly property bool hovered: checkbox.hovered || label.hovered
 
     ToolTip.visible: hovered && ToolTip.text.length > 0
-    ToolTip.timeout: 5000
+    ToolTip.timeout: -1
     ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
 
     spacing: 5

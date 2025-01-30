@@ -24,7 +24,7 @@ RowLayout {
     signal adjusted(real adjustedValue)
 
     ToolTip.visible: hovered && ToolTip.text.length > 0
-    ToolTip.timeout: 5000
+    ToolTip.timeout: -1
     ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
 
     Label {
