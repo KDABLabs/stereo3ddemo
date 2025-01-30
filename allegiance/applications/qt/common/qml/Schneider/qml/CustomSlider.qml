@@ -8,7 +8,6 @@ Item {
     id: root
 
     signal moved(real proposedValue)
-    signal adjusted(real adjustedValue)
 
     property real from: 0
     property real to: 1
@@ -16,7 +15,7 @@ Item {
     property real padding: 5
     property real stepSize: 1
     property real defaultValue
-    property real fineAdjustmentFactor: 0.01
+    property real fineAdjustmentFactor: 0.1
     property bool fillSliderBar: true
     property bool hueGradient: false
     property alias background: sliderBar
@@ -111,34 +110,27 @@ Item {
             anchors.fill: parent
             preventStealing: true
 
-            property bool active: false
-            readonly property bool shiftPressed: Scene.shiftPressed
-            property real valueOnShiftPressed: 0
+            property var normalizedValueOnShiftPressed: undefined
+            readonly property bool fineMoveModeActive: Scene.shiftPressed && ma.pressed
 
-            onShiftPressedChanged: { valueOnShiftPressed = (shiftPressed) ? priv.toNormalized(root.value) : 0 }
-            onPressed: (mouse) => {
-                if (shiftPressed)
-                    Scene.lockMouseInPlace = true
-                active = true
-            }
-            onReleased: (mouse) => {
-                if (shiftPressed)
-                    Scene.lockMouseInPlace = false
-                active = false
+            onFineMoveModeActiveChanged: {
+                if (fineMoveModeActive)
+                    normalizedValueOnShiftPressed = priv.toNormalized(root.value)
+                else
+                    normalizedValueOnShiftPressed = undefined
             }
 
             onPositionChanged: (mouse) => {
-                if (!active)
+                if (!ma.pressed)
                     return;
 
                 // fine, incremental adjustment
-                if (shiftPressed) {
+                if (Scene.shiftPressed && normalizedValueOnShiftPressed !== undefined) {
                     var globXY = mapToGlobal(mouse.x, mouse.y);
-                    var calculatedAdjustedValue = (globXY.x - Scene.mousePressedX) * root.fineAdjustmentFactor
-                    if (root.value + calculatedAdjustedValue < root.from) return;
-                    if (root.value + calculatedAdjustedValue > root.to) return;
-
-                    root.adjusted(calculatedAdjustedValue)
+                    var calculatedAdjustedValue = (globXY.x - Scene.mousePressedX)
+                    var normalizedCalculatedAdjustedValue = calculatedAdjustedValue / root.width * root.fineAdjustmentFactor
+                    var normalizedValue = Math.min(Math.max(0, normalizedValueOnShiftPressed + normalizedCalculatedAdjustedValue), 1)
+                    root.moved(priv.fromNormalized(normalizedValue))
                     return;
                 }
 

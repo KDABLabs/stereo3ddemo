@@ -31,7 +31,6 @@ RowLayout {
     }
 
     signal moved(real fvalue)
-    signal adjusted(real adjustedValue)
 
     ToolTip.visible: hovered && ToolTip.text.length > 0
     ToolTip.timeout: -1
@@ -59,7 +58,6 @@ RowLayout {
         Layout.fillWidth: true
         Layout.alignment: Qt.AlignRight
         onMoved: (proposedValue) => root.moved(fromSliderValue(proposedValue))
-        onAdjusted: (adjustedValue) => root.adjusted(adjustedValue)
         enabled: root.enabled
     }
     TextField {

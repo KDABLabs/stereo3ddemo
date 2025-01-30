@@ -134,7 +134,6 @@ ColumnLayout {
                 value: Camera.focusDistance
                 defaultValue: Camera.focusDistanceDefaultValue
                 onMoved: current => Camera.focusDistance = current
-                onAdjusted: adjustedValue => Camera.focusDistance += adjustedValue
                 enabled: !Camera.autoFocus
                 ToolTip.text: join(["Sets the focus plane distance as a % of the camera near and far planes.",
                                     "(Shift) F3 -",
@@ -151,7 +150,6 @@ ColumnLayout {
                 defaultValue: Camera.popOutDefaultValue
                 value: Camera.popOut
                 onMoved: current => Camera.popOut = current
-                onAdjusted: adjustedValue => Camera.popOut += adjustedValue
                 ToolTip.text: join(["Controls if the object appears inside the screen or pops out of the screen.",
                                     "(Shift) F5 -",
                                     "(Shift) F6 +"])
@@ -251,7 +249,6 @@ ColumnLayout {
                 value: Camera.screenHeight
                 defaultValue: Camera.screenHeightDefaultValue
                 onMoved: current => Camera.screenHeight = current
-                onAdjusted: adjustedValue => Camera.screenHeight += adjustedValue
                 ToolTip.text: "The physical HEIGHT of the screen or projection area respectively in meters."
             }
 
@@ -267,7 +264,6 @@ ColumnLayout {
                 value: Camera.viewerDistance
                 defaultValue: Camera.viewerDistanceDefaultValue
                 onMoved: current => Camera.viewerDistance = current
-                onAdjusted: adjustedValue => Camera.viewerDistance += adjustedValue
                 ToolTip.text: "The physical viewer distance to the screenin meters."
             }
 
@@ -281,7 +277,6 @@ ColumnLayout {
                 value: Camera.fov
                 defaultValue: Camera.fovDefaultValue
                 onMoved: current => Camera.fov = current
-                onAdjusted: adjustedValue => Camera.fov += adjustedValue
                 enabled: !fovByPhysicalDimCheckBox.isChecked
                 ToolTip.text: "Set field of view (vertical angle) directly."
             }

@@ -42,15 +42,13 @@ public:
                 Q_EMIT mouseEvent(dynamic_cast<::QMouseEvent*>(event));
             }
 
-            // when a slider requests the mouse to be locked in place for gradual adjustments,
-            // record the position where the mouse was clicked in case the widget wants to reset it
+            // record position when press occurs.
+            // This is used by Sliders to have a reference position to compare to for the fine tuning mode
             if (qobject_cast<QQuickWidget*>(obj)) {
                 auto e = dynamic_cast<::QMouseEvent*>(event);
                 auto globalPos = e->globalPosition();
                 m_window->setMousePressed(true);
-                if (m_window->isShiftPressed()) {
-                    m_window->setMouseGlobalPosition(static_cast<size_t>(globalPos.x()), static_cast<size_t>(globalPos.y()));
-                }
+                m_window->setMouseGlobalPosition(static_cast<size_t>(globalPos.x()), static_cast<size_t>(globalPos.y()));
             }
             break;
 

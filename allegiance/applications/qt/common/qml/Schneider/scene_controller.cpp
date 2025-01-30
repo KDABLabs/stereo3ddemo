@@ -33,8 +33,12 @@ float SceneController::mousePressedX() const
 
 void SceneController::setMousePressedX(float newMousePressedX)
 {
+    if (m_mousePressedX == newMousePressedX)
+        return;
     m_mousePressedX = newMousePressedX;
+    Q_EMIT mousePressedXChanged();
 }
+
 bool SceneController::lockMouseInPlace() const
 {
     return m_lockMouseInPlace;

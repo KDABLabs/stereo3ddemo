@@ -164,7 +164,6 @@ ScrollView {
                     title: "Mouse Sensitivity"
 
                     onMoved: current => Scene.mouseSensitivity = current
-                    onAdjusted: adjustedValue => Scene.mouseSensitivity += adjustedValue
                 }
                 /*      Still needs to be implemented on Application Side
                             Item {

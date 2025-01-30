@@ -125,7 +125,6 @@ GroupBox {
                         enabled: true
                         defaultValue: 167
                         onMoved: current => Cursor.hue = current
-                        onAdjusted: adjustedValue => Cursor.hue += adjustedValue
                         ToolTip.text: "Set cursor Hue."
                     }
 
@@ -141,7 +140,6 @@ GroupBox {
                         fineAdjustmentFactor: 0.001
 
                         onMoved: current => Cursor.scaleFactor = current
-                        onAdjusted: adjustedValue => Cursor.scaleFactor += adjustedValue
                     }
                 }
             }
