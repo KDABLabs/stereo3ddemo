@@ -139,11 +139,11 @@ void main()
 {
     // Extract world eye pos from viewMatrix
     vec3 eyePos = camera.data[gl_ViewIndex].inverseViewMatrix[3].xyz;
-    vec3 worldView = normalize(worldPosition - eyePos);
+    vec3 worldView = normalize(eyePos - worldPosition);
 
     // Calculate the lighting model, keeping the specular component separate
     vec3 ambientColor, diffuseColor, specularColor;
-    adsModel(worldPosition, worldNormal, worldView,
+    adsModel(worldPosition, normalize(worldNormal), worldView,
              material.shininess, ambientColor, diffuseColor, specularColor);
 
     vec4 diffuseTex = material.diffuse;

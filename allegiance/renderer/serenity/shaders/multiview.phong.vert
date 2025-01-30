@@ -34,7 +34,7 @@ void main()
 {
     vec4 wPos = (entity.model * vec4(vertexPosition, 1.0));
     worldPosition = wPos.xyz;
-    mat3 normalMatrix = transpose(inverse(mat3(entity.model)));
+    mat3 normalMatrix = mat3(transpose(inverse(entity.model)));
 
     worldNormal = normalize(normalMatrix * vertexNormal);
     gl_Position = camera.data[gl_ViewIndex].viewProjectionMatrix * wPos;
