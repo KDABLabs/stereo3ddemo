@@ -232,8 +232,8 @@ BallCursor::BallCursor(const Serenity::LayerManager* layers)
 void BallCursor::makeBall(Serenity::Entity* ec, const Serenity::LayerManager* layers)
 {
     auto shader_ball = ec->createChild<Serenity::SpirVShaderProgram>();
-    shader_ball->vertexShader = SHADER_DIR "color.vert.spv";
-    shader_ball->fragmentShader = SHADER_DIR "color.frag.spv";
+    shader_ball->vertexShader = SHADER_DIR "multiview.phong.vert.spv";
+    shader_ball->fragmentShader = SHADER_DIR "multiview.phong.frag.spv";
 
     m_mesh = std::make_unique<Serenity::Mesh>();
     m_mesh->setObjectName("Cursor Mesh");
@@ -247,6 +247,30 @@ void BallCursor::makeBall(Serenity::Entity* ec, const Serenity::LayerManager* la
     cmodel->mesh = m_mesh.get();
     cmodel->material = material;
     ec->layerMask = layers->layerMask({ "Opaque" });
+}
+
+void BallCursor::setColor(const ColorData& colorData)
+{
+    struct PhongData {
+        glm::vec4 ambient;
+        glm::vec4 diffuse;
+        glm::vec4 specular;
+        float shininess;
+        int useTexture = true;
+        float _pad[2];
+    };
+
+    const PhongData data{
+        { colorData.ambient[0], colorData.ambient[1], colorData.ambient[2], 1.0f },
+        { colorData.ambient[0], colorData.ambient[1], colorData.ambient[2], 1.0f },
+        { 1.0f, 1.0f, 1.0f, 1.0f },
+        100.0f,
+        0,
+        { 0.0f, 0.0f }
+    };
+
+    m_cbuf->size = sizeof(PhongData);
+    m_cbuf->data = std::vector<uint8_t>{ (uint8_t*)&data, (uint8_t*)&data + sizeof(PhongData) };
 }
 
 BillboardCursor::BillboardCursor(const Serenity::LayerManager* layers)

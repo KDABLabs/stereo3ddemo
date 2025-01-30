@@ -24,7 +24,7 @@ class CursorBase : public Serenity::Entity
 public:
     KDBindings::Property<bool> enabled{ true };
 
-    void setColor(const ColorData& colorData);
+    virtual void setColor(const ColorData& colorData);
 
 protected:
     explicit CursorBase();
@@ -38,8 +38,12 @@ class BallCursor : public CursorBase
 public:
     explicit BallCursor(const Serenity::LayerManager* layers);
 
+    virtual void setColor(const ColorData& colorData) override;
+
 private:
     void makeBall(Serenity::Entity* ec, const Serenity::LayerManager* layers);
+
+    Serenity::StaticUniformBuffer* m_ubo{ nullptr };
 };
 
 class BillboardCursor : public CursorBase
