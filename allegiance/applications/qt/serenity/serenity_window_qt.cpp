@@ -42,7 +42,12 @@ uint32_t SerenityWindowQt::height() const
 
 glm::vec4 SerenityWindowQt::viewportRect() const
 {
+#ifdef Q_OS_WINDOWS
+    const QRect frame = m_window->frameGeometry();
+    return glm::vec4{ frame.x(), frame.y(), frame.width(), frame.height() };
+#else
     return glm::vec4{ 0.0f, 0.0f, m_window->width(), m_window->height() };
+#endif
 }
 
 glm::vec2 SerenityWindowQt::cursorPos() const
