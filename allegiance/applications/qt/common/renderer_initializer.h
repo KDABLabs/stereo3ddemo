@@ -152,30 +152,21 @@ public:
                              }
 
                              switch (e->type()) {
-                             case QEvent::MouseButtonPress:
+                             case QEvent::MouseButtonPress: {
                                  // Left + Right mouse buttons simultaneously
-                                 if (
-                                         (e->buttons() & Qt::MouseButton::LeftButton) &&
-                                         (e->buttons() & Qt::MouseButton::RightButton)) {
+                                 const bool rotatesAroundCursor = ((e->buttons() & Qt::MouseButton::LeftButton) && (e->buttons() & Qt::MouseButton::RightButton)) ||
+                                         (e->buttons() == Qt::MouseButton::LeftButton && e->modifiers() & Qt::ControlModifier);
+                                 const bool rotatesAroundSceneCenter = !rotatesAroundCursor && (e->buttons() == Qt::MouseButton::LeftButton);
+
+                                 if (rotatesAroundCursor || rotatesAroundSceneCenter) {
                                      m_mouseInputTracker.is_pressed = true;
                                      m_mouseInputTracker.skip_first = true;
 
-                                     m_renderer->propertyChanged("cursor_locked", true);
-
-                                     // Set Camera Orbit Pivot to 3D Cursor Position
-                                     m_camera.target = m_renderer->cursorWorldPosition();
-
-                                     pnav_params->pivot_point = m_camera.target();
-                                     break;
-                                 }
-
-                                 // Only Left mouse button
-                                 if (e->buttons() == Qt::MouseButton::LeftButton) {
-                                     m_mouseInputTracker.is_pressed = true;
-                                     m_mouseInputTracker.skip_first = true;
-
-                                     if (e->modifiers() & Qt::ControlModifier) {
-                                         m_renderer->propertyChanged("cursor_locked", true);
+                                     if (rotatesAroundCursor) {
+                                         m_cursorLocked = true;
+                                         QGuiApplication::setOverrideCursor(QCursor(Qt::BlankCursor));
+                                         m_cursorPosWhenLocked = QCursor::pos();
+                                         m_renderer->propertyChanged("cursor_locked", m_cursorLocked);
 
                                          // Set Camera Orbit Pivot to 3D Cursor Position
                                          m_camera.target = m_renderer->cursorWorldPosition();
@@ -183,8 +174,9 @@ public:
                                          // Set Camera Orbit Pivot to scene center
                                          m_camera.target = m_renderer->sceneCenter();
                                      }
+
                                      pnav_params->pivot_point = m_camera.target();
-                                    break;
+                                     break;
                                  }
 
                                  // Only Right mouse button
@@ -198,15 +190,24 @@ public:
                                  }
 
                                  break;
+                             }
 
-                             case QEvent::MouseButtonRelease:
+                             case QEvent::MouseButtonRelease: {
                                  if (e->button() == Qt::MouseButton::LeftButton) {
                                      m_mouseInputTracker.is_pressed = false;
 
                                      // release eventual cursor locking
-                                     m_renderer->propertyChanged("cursor_locked", false);
+                                     if (m_cursorLocked) {
+                                         m_cursorLocked = false;
+                                         m_renderer->propertyChanged("cursor_locked", m_cursorLocked);
+
+                                         // Reset Cursor Pos to avoid a jump
+                                         QGuiApplication::restoreOverrideCursor();
+                                         QCursor::setPos(m_cursorPosWhenLocked);
+                                     }
                                  }
                                  break;
+                             }
                              case QEvent::MouseMove: {
                                  auto pos = e->pos();
 
@@ -220,13 +221,13 @@ public:
                                  float dy = (0.f + pos.y() - m_mouseInputTracker.last_pos.y()) / m_sceneController->mouseSensitivity();
 
                                  // left button is pressed
-                                 if (e->buttons() & Qt::LeftButton ) {
+                                 if (e->buttons() & Qt::LeftButton) {
                                      if (flipped)
                                          dy = -dy;
                                      flipped = flipped ^ m_camera.rotate(dx, dy);
                                  }
 
-                                 if (e->buttons() == Qt::MiddleButton )
+                                 if (e->buttons() == Qt::MiddleButton)
                                      m_camera.translate(-dx * 0.2, -dy * 0.2);
 
                                  m_mouseInputTracker.last_pos = pos;
@@ -235,7 +236,7 @@ public:
                                  break;
                              }
 
-// Event Forwarding for Serenity
+            // Event Forwarding for Serenity
 #ifdef ALLEGIANCE_SERENITY
                              m_renderer->onMouseEvent(e);
 #endif
@@ -289,10 +290,8 @@ public:
 
         QObject::connect(m_cursorController, &CursorController::displayModeChanged, [this](CursorDisplayMode displayMode) {
             m_renderer->setCursorEnabled(
-                displayMode == CursorDisplayMode::Both
-                ||
-                displayMode == CursorDisplayMode::ThreeDimensionalOnly
-            );
+                    displayMode == CursorDisplayMode::Both ||
+                    displayMode == CursorDisplayMode::ThreeDimensionalOnly);
         });
         QObject::connect(m_cursorController, &CursorController::cursorChanged, [this](CursorType type) {
             m_renderer->propertyChanged("cursor_type", type);
@@ -429,6 +428,8 @@ private:
     CursorController* m_cursorController{ nullptr };
     MiscController* m_miscController{ nullptr };
     AppStyle* m_appStyle{ nullptr };
+    bool m_cursorLocked{ false };
+    QPoint m_cursorPosWhenLocked;
 
     MouseTracker m_mouseInputTracker;
 };

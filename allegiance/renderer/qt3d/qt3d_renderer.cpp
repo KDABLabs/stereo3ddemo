@@ -299,8 +299,10 @@ void Qt3DRenderer::onMouseEvent(::QMouseEvent* event)
     case QEvent::MouseMove: {
         m_focusArea->onMouseMoved(event);
         // Note: ScreenRayCaster takes care of Qt -> OpenGL Y coordinate conversion
-        const QPoint cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
-        m_cursorRaycaster->trigger(cursorPos);
+        if (!m_cursor->locked()) {
+            const QPoint cursorPos = m_view->mapFromGlobal(m_view->cursor().pos());
+            m_cursorRaycaster->trigger(cursorPos);
+        }
         break;
     }
     default:
@@ -340,6 +342,9 @@ void Qt3DRenderer::propertyChanged(std::string_view name, std::any value)
     } else if (name == "wireframe_enabled") {
         const bool wireframeEnabled = std::any_cast<bool>(value);
         m_renderer->setWireframeEnabled(wireframeEnabled);
+    } else if (name == "cursor_locked") {
+        m_cursor->setLocked(std::any_cast<bool>(value));
+        return;
     }
 }
 

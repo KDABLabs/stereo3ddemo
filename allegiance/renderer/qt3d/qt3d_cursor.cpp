@@ -209,8 +209,20 @@ void CursorEntity::setCursorTintColor(const QColor& color)
     m_cross->setCursorTintColor(color);
 }
 
+void CursorEntity::setLocked(bool locked)
+{
+    m_locked = locked;
+}
+
+bool CursorEntity::locked() const
+{
+    return m_locked;
+}
+
 void CursorEntity::setPosition(const QVector3D& positionInScene)
 {
+    if (m_locked)
+        return;
     m_transform->setTranslation(positionInScene);
     updateSize();
 }

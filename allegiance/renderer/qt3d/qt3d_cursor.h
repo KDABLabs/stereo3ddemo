@@ -91,6 +91,9 @@ public:
 
     void setCursorTintColor(const QColor& color);
 
+    void setLocked(bool locked);
+    bool locked() const;
+
 public:
     void onProjectionMatrixChanged(const QMatrix4x4& matrix)
     {
@@ -133,6 +136,7 @@ protected:
 
     float m_scale_factor = 1.0f;
     bool m_scaling_enabled = true;
+    bool m_locked = false;
 
 private:
     QMatrix4x4 m_worldMatrix;

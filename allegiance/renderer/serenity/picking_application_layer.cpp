@@ -40,6 +40,9 @@ void PickingApplicationLayer::setEnabled(bool en)
 
 void PickingApplicationLayer::updateCursorWorldPosition()
 {
+    if (cursor()->locked())
+        return;
+
     // Perform ray cast
     const glm::vec4 viewportRect = window()->viewportRect();
     const glm::vec2 cursorPos = window()->cursorPos();

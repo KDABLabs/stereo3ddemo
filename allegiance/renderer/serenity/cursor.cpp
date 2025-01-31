@@ -139,7 +139,7 @@ Cursor::Cursor(const Serenity::LayerManager* layers, SerenityWindow* window)
 
 void Cursor::setPosition(const glm::vec3& worldPosition)
 {
-    if (locked.get())
+    if (locked())
         return;
 
     m_transform->translation = worldPosition;
