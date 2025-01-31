@@ -325,11 +325,11 @@ public:
         // #endif
 
         // #ifdef WITH_NAVLIB
-        //         try {
-        //             spacemouse->({ a, b }, "Application", "AppModi");
-        //         } catch (const std::system_error& e) {
-        //             qDebug() << "Could not add actions to spacemouse" << e.what();
-        //         }
+        //     try {
+        //        m_spacemouse->({ a, b }, "Application", "AppModi");
+        //     } catch (const std::system_error& e) {
+        //         qDebug() << "Could not add actions to spacemouse" << e.what();
+        //     }
         // #endif
 
         m_renderer->createAspects(nav_params);

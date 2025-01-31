@@ -2,6 +2,7 @@
 #include <shared/stereo_camera.h>
 #include <shared/cursor.h>
 #include <numbers>
+#include <glm/ext/matrix_transform.hpp>
 
 using namespace all;
 
@@ -41,20 +42,26 @@ inline T DegreesToRadians(T degrees)
 
 long CNavigationModel::SetCameraMatrix(const navlib::matrix_t& matrix)
 {
-    auto m = toGlmMat(matrix);
-    // qCDebug(spcmsView) << "setting app camera matrix to " << m;
-    // TODO: Decompose matrix to pos, forward, up
-    // m_camera->setPosition();
-    // m_camera->setForwardVector();
-    // m_camera->setUpVector();
+    const auto m = toGlmMat(matrix);
+    glm::vec4 pos { 0., 0., 0., 1. };
+    pos = m * pos;
+    glm::vec4 dir { 0., 0., -1., 0. };
+    dir = m * dir;
+    glm::vec4 up { 0., 1., 0., 0. };
+    up = m * up;
+
+    m_camera->position = pos;
+    m_camera->setForwardVector(dir);
+    m_camera->setUpVector(up);
+
     return 0;
 }
 
 long CNavigationModel::GetCameraMatrix(navlib::matrix_t& matrix) const
 {
-    // auto m = m_camera->cameraMatrix();
-    // // qCDebug(spcmsView) << "setting SpcMouse Camera Matrix to " << m;
-    // matrix = toNavlibMatrix(m);
+    matrix = toNavlibMatrix( glm::lookAt(m_camera->position(),
+                                        m_camera->position() + m_camera->forwardVector(),
+                                        m_camera->upVector()) );
     return 0;
 }
 
