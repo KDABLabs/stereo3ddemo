@@ -191,7 +191,7 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     m_userEntity = new Qt3DCore::QEntity{ m_sceneEntity };
     m_userEntity->setObjectName("UserEntity");
 
-    m_cursor = new CursorEntity(m_sceneEntity, m_camera->centerCamera(), m_view);
+    m_cursor = new CursorEntity(m_rootEntity.get(), m_camera->centerCamera(), m_view);
     m_cursor->setObjectName("CursorEntity");
     m_cursor->addComponent(m_renderer->cursorLayer());
     m_cursor->setType(CursorType::Ball);
@@ -269,6 +269,7 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
         l->setWorldDirection(dir.normalized());
         le->addComponent(l);
         le->addComponent(m_renderer->sceneLayer());
+        le->addComponent(m_renderer->cursorLayer());
         le->setParent(m_rootEntity.get());
     }
 

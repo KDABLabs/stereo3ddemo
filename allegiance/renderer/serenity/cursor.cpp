@@ -246,7 +246,7 @@ void BallCursor::makeBall(Serenity::Entity* ec, const Serenity::LayerManager* la
     auto cmodel = ec->createComponent<Serenity::MeshRenderer>();
     cmodel->mesh = m_mesh.get();
     cmodel->material = material;
-    ec->layerMask = layers->layerMask({ "Opaque" });
+    ec->layerMask = layers->layerMask({ "FocusPlaneAndCursor" });
 }
 
 void BallCursor::setColor(const ColorData& colorData)
@@ -322,7 +322,7 @@ void BillboardCursor::makeBillboard(Serenity::Entity* ec, const Serenity::LayerM
     cmodel->mesh = m_mesh.get();
     cmodel->material = material;
 
-    ec->layerMask = layers->layerMask({ "Alpha" });
+    ec->layerMask = layers->layerMask({ "FocusPlaneAndCursor" });
 }
 
 CrossCursor::CrossCursor(const Serenity::LayerManager* layers)
@@ -372,7 +372,7 @@ void CrossCursor::makeCross(Serenity::Entity* ec, const Serenity::LayerManager* 
     auto cmodel = ec->createComponent<Serenity::MeshRenderer>();
     cmodel->mesh = m_mesh.get();
     cmodel->material = material;
-    ec->layerMask = layers->layerMask({ "Opaque" });
+    ec->layerMask = layers->layerMask({ "FocusPlaneAndCursor" });
 }
 
 } // namespace all::serenity

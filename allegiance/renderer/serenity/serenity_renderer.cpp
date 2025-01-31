@@ -330,7 +330,7 @@ void SerenityRenderer::createAspects(std::shared_ptr<all::ModelNavParameters> na
     KDGpu::Device device = m_window->createDevice();
 
     m_layerManager = m_engine.createChild<Serenity::LayerManager>();
-    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea", "Frustums", "Skybox", "FocusPlane" })
+    for (auto&& layerName : { "Alpha", "Opaque", "StereoImage", "FocusArea", "Frustums", "Skybox", "FocusPlaneAndCursor" })
         m_layerManager->addLayer(layerName);
 
     auto rootEntityPtr = std::make_unique<Entity>();
@@ -609,7 +609,7 @@ void SerenityRenderer::createScene()
     // FocusPlanePreview
     {
         m_focusPlanePreview = m_sceneRoot->createChildEntity<FocusPlanePreview>();
-        m_focusPlanePreview->layerMask = m_layerManager->layerMask({ "FocusPlane" });
+        m_focusPlanePreview->layerMask = m_layerManager->layerMask({ "FocusPlaneAndCursor" });
         m_focusPlanePreview->camera = m_camera;
     }
 }
@@ -619,7 +619,7 @@ void SerenityRenderer::updateRenderPhases()
     auto* algo = static_cast<StereoForwardAlgorithm*>(m_renderAspect->renderAlgorithm());
     switch (m_mode) {
     case Mode::Scene:
-        algo->renderPhases = { createSkyboxPhase(), createOpaquePhase(), createTransparentPhase(), createFocusPlanePreviewPhase(), createFocusAreaPhase(), createFrustumPhase() };
+        algo->renderPhases = { createSkyboxPhase(), createOpaquePhase(), createTransparentPhase(), createFocusPlanePreviewAndCursorPhase(), createFocusAreaPhase(), createFrustumPhase() };
         break;
     case Mode::StereoImage:
         algo->renderPhases = { createStereoImagePhase() };
@@ -766,10 +766,10 @@ Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createTransparen
     return phase;
 }
 
-Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createFocusPlanePreviewPhase() const
+Serenity::StereoForwardAlgorithm::RenderPhase SerenityRenderer::createFocusPlanePreviewAndCursorPhase() const
 {
     StereoForwardAlgorithm::RenderPhase phase{
-        m_layerManager->layerMask({ "FocusPlane" }), StereoForwardAlgorithm::RenderPhase::Type::Alpha,
+        m_layerManager->layerMask({ "FocusPlaneAndCursor" }), StereoForwardAlgorithm::RenderPhase::Type::Alpha,
         LayerFilterType::AcceptAll
     };
 

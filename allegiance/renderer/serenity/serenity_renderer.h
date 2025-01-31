@@ -106,7 +106,7 @@ protected:
     Serenity::StereoForwardAlgorithm::RenderPhase createTransparentPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createFocusAreaPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createFrustumPhase() const;
-    Serenity::StereoForwardAlgorithm::RenderPhase createFocusPlanePreviewPhase() const;
+    Serenity::StereoForwardAlgorithm::RenderPhase createFocusPlanePreviewAndCursorPhase() const;
     Serenity::StereoForwardAlgorithm::RenderPhase createStereoImagePhase() const;
 
     SerenityWindow* m_window{ nullptr };
