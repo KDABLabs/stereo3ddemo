@@ -165,6 +165,17 @@ ScrollView {
 
                     onMoved: current => Scene.mouseSensitivity = current
                 }
+
+                SliderValue {
+                    title: "Zoom Amount"
+                    from: 1
+                    to: 25
+                    Layout.fillWidth: true
+                    value: Scene.zoomAmount
+                    defaultValue: Scene.defaultZoomAmount
+                    onMoved: current => Scene.zoomAmount = Math.round(current)
+                }
+
                 /*      Still needs to be implemented on Application Side
                             Item {
                                 Layout.fillWidth: true

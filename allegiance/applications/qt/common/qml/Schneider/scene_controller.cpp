@@ -48,3 +48,21 @@ void SceneController::setLockMouseInPlace(bool newLockMouseInPlace)
 {
     m_lockMouseInPlace = newLockMouseInPlace;
 }
+
+float SceneController::zoomAmount() const
+{
+    return m_zoomAmount;
+}
+
+void SceneController::setZoomAmount(float newZoomAmount)
+{
+    if (qFuzzyCompare(m_zoomAmount, newZoomAmount))
+        return;
+    m_zoomAmount = newZoomAmount;
+    Q_EMIT zoomAmountChanged();
+}
+
+float SceneController::defaultZoomAmount() const
+{
+    return ms_defaultZoomAmount;
+}

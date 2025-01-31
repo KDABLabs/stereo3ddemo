@@ -97,7 +97,7 @@ public:
                              const float correctionFactor = exp(std::clamp(distanceToCenter / maxExtent, 0.0f, 1.0f) - 1.0f);
 
                              const float zoomDir = (e->angleDelta().y() > 0) ? 1.0f : -1.0f; // Zoom In or Out?
-                             constexpr float zoomStepPercentage = 1.0f / 100.0f; // % of of much we zoom toward the focus plane
+                             const float zoomStepPercentage = m_sceneController->zoomAmount() / 100.0f; // % of of much we zoom toward the focus plane
                              const float zoomAmount = distanceToCenter * zoomStepPercentage * zoomDir;
                              const float zoomFactor = zoomAmount / correctionFactor;
 
