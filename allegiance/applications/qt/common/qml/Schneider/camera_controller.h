@@ -155,8 +155,8 @@ private:
 
     float m_eyeDistance = ms_eyeDistanceDefaultValue;
     bool m_flipped = false;
-    bool m_autoFocus = false;
-    bool m_showAutoFocusArea = false;
+    bool m_autoFocus = true;
+    bool m_showAutoFocusArea = true;
     float m_focusDistance = ms_focusDistanceDefaultValue;
     float m_popOut = ms_popOutDefaultValue;
 
