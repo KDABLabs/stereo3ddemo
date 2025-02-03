@@ -167,7 +167,7 @@ ScrollView {
                 }
 
                 SliderValue {
-                    title: "Zoom Amount"
+                    title: "Zoom Speed"
                     from: 1
                     to: 25
                     Layout.fillWidth: true

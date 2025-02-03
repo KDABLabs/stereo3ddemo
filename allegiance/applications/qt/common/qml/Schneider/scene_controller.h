@@ -49,7 +49,7 @@ protected:
 
 private:
     bool m_shiftPressed{ false };
-    static constexpr float ms_defaultZoomAmount{ 1.0f };
+    static constexpr float ms_defaultZoomAmount{ 5.0f };
     float m_zoomAmount{ ms_defaultZoomAmount };
 };
 
