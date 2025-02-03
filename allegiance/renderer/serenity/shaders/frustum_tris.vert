@@ -3,6 +3,7 @@
 #extension GL_EXT_multiview : enable
 
 layout(location = 0) in vec3 vertexPosition;
+layout(location = 0) out vec2 clipPos;
 
 layout(set = 0, binding = 0) uniform SerenityEntity
 {
@@ -36,5 +37,7 @@ void main()
 {
     vec4 ndc = topViewCamera.viewProjectionMatrix * vec4(vertexPosition, 1.0);
     // Move to smaller viewport (0.4, 0.4) that is in the bottom left corner
-    gl_Position = ndc * vec4(0.4, 0.4, 1.0, 1.0) + vec4(-0.6, 0.6, 0.0, 0.0);
+    vec4 scaledNDCPos = ndc * vec4(0.4, 0.4, 1.0, 1.0) + vec4(-0.6, 0.6, 0.0, 0.0);
+    clipPos = scaledNDCPos.xy;
+    gl_Position = scaledNDCPos;
 }
