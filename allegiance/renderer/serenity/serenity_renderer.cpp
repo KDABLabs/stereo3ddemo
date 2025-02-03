@@ -565,7 +565,7 @@ void SerenityRenderer::createScene()
                                                                                                     m_frustumAmplifiedCamera->lens()->farPlane,
                                                                                                     m_frustumAmplifiedCamera->lens()->verticalFieldOfView,
                                                                                                     m_frustumAmplifiedCamera->lens()->aspectRatio,
-                                                                                                    m_frustumAmplifiedCamera->interocularDistance,
+                                                                                                    m_camera->interocularDistance,
                                                                                                     m_frustumAmplifiedCamera->toeIn));
 
         m_topViewCameraLookAtInfo.valueChanged().connect([this](const TopViewCameraLookAtInfo& info) {
