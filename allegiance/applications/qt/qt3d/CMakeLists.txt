@@ -2,6 +2,7 @@ project(KDAB_Qt_Qt3D_OpenGL)
 
 find_package(
     Qt6
+    6.8.2
     COMPONENTS Gui
                Widgets
                3DExtras
@@ -13,6 +14,7 @@ find_package(
                QuickWidgets
                QuickControls2
     REQUIRED
+    CONFIG
 )
 
 qt_standard_project_setup()

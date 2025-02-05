@@ -3,6 +3,7 @@ project(KDAB_Qt3D_Renderer)
 #We need to add Qml here even we dont need it, due to a cpack Qt bug
 find_package(
     Qt6
+    6.8.2
     COMPONENTS Core
                3DExtras
                3DCore
@@ -10,6 +11,7 @@ find_package(
                3DInput
                Qml
     REQUIRED
+    CONFIG
 )
 
 add_library(

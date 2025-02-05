@@ -1,7 +1,7 @@
 project(KDAB_Qt_Common)
 
 find_package(
-    Qt6
+    Qt6 6.8.2
     COMPONENTS Core
                Widgets
                Quick
