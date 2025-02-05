@@ -83,6 +83,7 @@ protected:
     void _calculateSceneDimensions(Qt3DCore::QEntity* entity, QVector3D& minBounds, QVector3D& maxBounds) const;
     void modelExtentChanged(const QVector3D& min, const QVector3D& max);
     void setupCameraBasedOnSceneExtent();
+    void requestFocusForFocusArea();
     void handleFocusForFocusArea();
 
 private:
@@ -123,5 +124,6 @@ private:
     std::array<float, AFSamples> m_lastAfHitDistances{};
     bool m_afResultUpdateRequested{ false };
     std::function<void(std::string_view, std::any)> m_propertyUpdateNofitier;
+    bool m_focusUpdateRequested{ false };
 };
 } // namespace all::qt3d

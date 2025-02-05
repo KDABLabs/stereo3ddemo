@@ -87,6 +87,12 @@ void Qt3DRenderer::viewChanged()
         frustumCamera->tiltAboutViewCenter(90.0f);
     }
 
+    // FocusArea
+    {
+        m_focusArea->update();
+        requestFocusForFocusArea();
+    }
+
     // FocusPlanePreview
     {
         m_focusPlanePreview->setViewMatrix(m_camera->centerCamera()->viewMatrix());
@@ -147,10 +153,7 @@ void Qt3DRenderer::projectionChanged()
     // FocusArea
     {
         m_focusArea->update();
-
-        if (m_autoFocus) {
-            handleFocusForFocusArea();
-        }
+        requestFocusForFocusArea();
     }
 
     // FocusPlanePreview
@@ -578,10 +581,21 @@ void Qt3DRenderer::setupCameraBasedOnSceneExtent()
     m_propertyUpdateNofitier("scene_loaded", {});
 }
 
+void Qt3DRenderer::requestFocusForFocusArea()
+{
+    if (m_focusUpdateRequested)
+        return;
+    if (!m_autoFocus)
+        return;
+    m_focusUpdateRequested = true;
+    QMetaObject::invokeMethod(this, &Qt3DRenderer::handleFocusForFocusArea, Qt::QueuedConnection);
+}
+
 void Qt3DRenderer::handleFocusForFocusArea()
 {
     if (m_focusArea == nullptr)
         return;
+    m_focusUpdateRequested = false;
 
     const QVector3D center = m_focusArea->center();
     const QVector3D extent = m_focusArea->extent();
