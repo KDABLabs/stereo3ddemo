@@ -130,6 +130,7 @@ ColumnLayout {
                 from: 0.1
                 to: 100
                 title: "Distance:"
+                precision: 0
                 unit: "%"
                 value: Camera.focusDistance
                 defaultValue: Camera.focusDistanceDefaultValue
@@ -147,6 +148,7 @@ ColumnLayout {
                 to: 100
                 title: "Pop Out:"
                 unit: "%"
+                precision: 0
                 defaultValue: Camera.popOutDefaultValue
                 value: Camera.popOut
                 onMoved: current => Camera.popOut = current
@@ -211,6 +213,7 @@ ColumnLayout {
                 visible: Camera.separationBasedOnFocusDistance
                 defaultValue: Camera.separationBasedOnFocusDistanceDividerDefaultValue
                 to: 50
+                precision: 0
                 title: "Divider:"
                 value: Camera.separationBasedOnFocusDistanceDivider
                 onMoved: current => Camera.separationBasedOnFocusDistanceDivider = Math.round(current / 1)
