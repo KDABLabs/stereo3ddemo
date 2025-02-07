@@ -107,7 +107,14 @@ public:
             m_sceneController->setShiftPressed(true);
             return true;
         }
-
+        case Qt::Key_W: {
+            m_miscController->setWireframeEnabled(!m_miscController->wireframeEnabled());
+            return true;
+        }
+        case Qt::Key_F: {
+            m_miscController->setFrustumViewEnabled(!m_miscController->frustumViewEnabled());
+            return true;
+        }
         default:
             break;
         }

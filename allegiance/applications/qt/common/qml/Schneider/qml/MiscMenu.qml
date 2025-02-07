@@ -17,7 +17,7 @@ ColumnLayout {
             Layout.column: 0
             Layout.columnSpan: 3
             Layout.row: 0
-            ToolTip.text: "Enable WireFrame Rendering."
+            ToolTip.text: "Enable WireFrame Rendering. \nW"
         }
 
         CheckBoxX {
@@ -27,7 +27,7 @@ ColumnLayout {
             Layout.column: 0
             Layout.columnSpan: 3
             Layout.row: 1
-            ToolTip.text: "Display the Camera Frustum Overlay."
+            ToolTip.text: "Display the Camera Frustum Overlay. \nF"
         }
     }
 }
