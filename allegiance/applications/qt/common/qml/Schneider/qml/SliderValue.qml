@@ -51,15 +51,19 @@ RowLayout {
         Layout.alignment: Qt.AlignRight
         Layout.preferredWidth: 80
         padding: 0
-        validator: DoubleValidator {
-            bottom: slider.from
-            top: slider.to
-            decimals: root.precision
-        }
         text: slider.value.toFixed(root.precision) + unit
-        onTextChanged: {
+
+        Timer {
+            id: acceptEntryTimer
+            running: false
+            repeat: false
+            interval: 700
+            onTriggered: root.moved(Math.max(root.from, Math.min(parseFloat(textBox.text), root.to)));
+        }
+
+        onTextEdited: {
             if (textBox.focus) {
-                moved(parseFloat(textBox.text));
+                acceptEntryTimer.restart()
             }
         }
         font: Style.fontDefault

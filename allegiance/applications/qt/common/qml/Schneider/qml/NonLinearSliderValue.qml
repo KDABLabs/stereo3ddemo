@@ -64,15 +64,19 @@ RowLayout {
         id: textBox
         Layout.alignment: Qt.AlignRight
         Layout.preferredWidth: 80
-        validator: DoubleValidator {
-            bottom: from
-            top: to
-            decimals: root.precision
+
+        Timer {
+            id: acceptEntryTimer
+            running: false
+            repeat: false
+            interval: 700
+            onTriggered: moved(Math.max(root.from, Math.min(parseFloat(textBox.text), root.to)));
         }
+
         text: fromSliderValue(slider.value).toFixed(root.precision) + unit
-        onTextChanged: {
+        onTextEdited: {
             if (textBox.focus) {
-                moved(parseFloat(textBox.text));
+                acceptEntryTimer.restart()
             }
         }
         font: Style.fontDefault
