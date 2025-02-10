@@ -184,7 +184,6 @@ void StereoRenderAlgorithm::compositeAndOverlayNonStereo(KDGpu::CommandRecorder&
     RenderPassCommandRecorder renderPass = commandRecorder.beginRenderPass(renderPassOptions);
 
     const KDGpu::Extent2D extent = presentRt->identityExtent();
-    const float halfWidth = float(extent.width) / 2;
     const KDGpu::Handle<GraphicsPipeline_t> compositorPipeline = (renderMode() == StereoRenderMode::Anaglyph) ? m_compositor.fsqPipelineAnaglyph : m_compositor.fsqPipeline;
 
     // Bind Pipeline and texture bind group
@@ -196,22 +195,38 @@ void StereoRenderAlgorithm::compositeAndOverlayNonStereo(KDGpu::CommandRecorder&
     switch (renderMode()) {
 
     case StereoRenderMode::SideBySide: {
+
+        const float w = float(extent.width);
+        const float h = float(extent.height);
+        const float aspectRatio = w / h;
+
+        // Note: the offscreen render target and the window swapchain have the same
+        // exact extent
+        // So if we want to render side by side, this means we need to maintain aspect ratio
+        // but with a viewport of width: w/2, h with never go beyond h/2
+
+        const float halfWidth = w * 0.5f;
+        const float halfHeight = halfWidth / aspectRatio;
+        const float yOffset = (h - halfHeight) * 0.5f;
+
         renderPass.setViewport(Viewport{
                 .x = 0.0f,
-                .y = 0.0f,
+                .y = yOffset,
                 .width = halfWidth,
-                .height = float(extent.height),
+                .height = halfHeight,
         });
+
         const int leftEyeLayer = 0;
         renderPass.pushConstant(m_compositor.fsqLayerIdxPushConstantRange, &leftEyeLayer);
         renderPass.draw(DrawCommand{ .vertexCount = 6 });
 
         renderPass.setViewport(Viewport{
                 .x = halfWidth,
-                .y = 0.0f,
+                .y = yOffset,
                 .width = halfWidth,
-                .height = float(extent.height),
+                .height = halfHeight,
         });
+
         const int rightEyeLayer = 1;
         renderPass.pushConstant(m_compositor.fsqLayerIdxPushConstantRange, &rightEyeLayer);
         renderPass.draw(DrawCommand{ .vertexCount = 6 });
