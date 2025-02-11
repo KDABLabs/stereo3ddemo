@@ -19,7 +19,7 @@ find_program(FLUTTER_EXE flutter)
 
 
 option(BUILD_UNIT_TESTS "Build Unit Tests" ON)
-option(BUILD_QT_UI ON)
+option(BUILD_QT_UI "Build Qt UI" ON)
 
 cmake_dependent_option(
     BUILD_QT3D_RENDERER
