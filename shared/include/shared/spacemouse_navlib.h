@@ -11,7 +11,17 @@ public:
 public:
     void setUseUserPivot(bool user) override
     {
-        m_model.Write("pivot.user", user);
+        m_model.Write(navlib::pivot_user_k, user);
+    }
+
+    void onModelLoaded()
+    {
+        m_model.onModelLoaded();
+    }
+
+    void onViewChanged()
+    {
+        m_model.onViewChanged();
     }
 
 protected:

@@ -67,13 +67,18 @@ public:
         qApp->setPalette(m_appStyle->palette());
 
         // Setup the camera
-        m_camera.viewChanged.connect([this] { m_renderer->viewChanged(); }).release();
+        m_camera.viewChanged.connect([this] {
+                                m_renderer->viewChanged();
+                                if (m_spacemouse)
+                                    m_spacemouse->onViewChanged();
+                            })
+                .release();
         m_camera.projectionChanged.connect([this] { m_renderer->projectionChanged(); }).release();
 
-        auto nav_params = std::make_shared<all::ModelNavParameters>();
-        m_spacemouse.emplace(&m_camera, nav_params);
+        m_navParams = std::make_shared<all::ModelNavParameters>();
+        m_spacemouse.emplace(&m_camera, m_navParams);
         m_spacemouse->setUseUserPivot(true);
-        auto* pnav_params = nav_params.get();
+        auto* pnav_params = m_navParams.get();
 
         QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::close,
                          [this]() {
@@ -175,7 +180,6 @@ public:
                                          m_camera.target = m_renderer->sceneCenter();
                                      }
 
-                                     pnav_params->pivot_point = m_camera.target();
                                      break;
                                  }
 
@@ -332,7 +336,7 @@ public:
         //     }
         // #endif
 
-        m_renderer->createAspects(nav_params);
+        m_renderer->createAspects(m_navParams);
 
         // Set Initial Values
         m_camera.aspectRatio = (float(qWindow->width()) / qWindow->height());
@@ -384,7 +388,14 @@ public:
             m_camera.farPlane = (6.f * radius);
             m_camera.upVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
+            m_navParams->min_extent = sceneCenter - sceneExtent;
+            m_navParams->max_extent = sceneCenter + sceneExtent;
+            m_navParams->pivot_point = m_renderer->sceneCenter();
+
             setAbsolutePlaneDistance(glm::length(viewVector));
+
+            if (m_spacemouse)
+                m_spacemouse->onModelLoaded();
         }
     }
 
@@ -421,6 +432,7 @@ private:
     std::unique_ptr<WindowEventWatcher> m_windowEventWatcher;
     std::unique_ptr<Renderer> m_renderer;
     std::optional<all::SpacemouseImpl> m_spacemouse;
+    std::shared_ptr<all::ModelNavParameters> m_navParams;
     ScreenshotGrabber m_screenshotGrabber;
 
     SceneController* m_sceneController{ nullptr };

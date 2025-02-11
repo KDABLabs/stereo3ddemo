@@ -21,6 +21,10 @@ protected:
 public:
     explicit CNavigationModel(std::shared_ptr<all::ModelNavParameters> nav_params, all::StereoCamera* camera, bool multiThreaded = false, bool rowMajor = false);
 
+    void onModelLoaded();
+    void onViewChanged();
+
+protected:
     // Inherited via CNavigation3D
     long GetCameraMatrix(navlib::matrix_t& matrix) const override;
     long SetCameraMatrix(const navlib::matrix_t& matrix) override;
