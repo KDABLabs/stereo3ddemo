@@ -79,6 +79,7 @@ if(BUILD_UNIT_TESTS)
     add_subdirectory(tests)
 endif()
 
+set(CPACK_GENERATOR "NSIS;ZIP")
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
 set(CPACK_COMPONENTS_ALL applications)
 include(CPack)
