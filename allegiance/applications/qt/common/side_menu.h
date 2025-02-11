@@ -115,6 +115,10 @@ public:
             m_miscController->setFrustumViewEnabled(!m_miscController->frustumViewEnabled());
             return true;
         }
+        case Qt::Key_C: {
+            m_cameraController->viewAll();
+            return true;
+        }
         default:
             break;
         }
