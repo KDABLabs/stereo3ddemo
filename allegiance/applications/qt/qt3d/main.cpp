@@ -3,6 +3,7 @@
 
 #include <applications/qt/common/renderer_initializer.h>
 #include <renderer/qt3d/qt3d_renderer.h>
+#include <QOpenGLContext>
 
 int main(int argc, char** argv)
 {
@@ -18,18 +19,28 @@ int main(int argc, char** argv)
         qputenv("QT3D_RENDERER", "opengl");
     }
 
-    // Setup surface format for stereo
-    {
-        QSurfaceFormat format = QSurfaceFormat::defaultFormat();
-        if (!qEnvironmentVariableIsSet("DISABLE_STEREO"))
-            format.setStereo(true);
-        format.setSamples(8);
-        QSurfaceFormat::setDefaultFormat(format);
-    }
-
     QApplication app(argc, argv);
     QApplication::setApplicationName(QStringLiteral("Schneider Demo Qt3D OpenGL - " ALLEGIANCE_BUILD_STR));
     QApplication::setApplicationVersion(QStringLiteral(ALLEGIANCE_PROJECT_VERSION));
+
+    // Setup surface format for stereo
+    {
+        QSurfaceFormat format = QSurfaceFormat::defaultFormat();
+        format.setSamples(8);
+        if (!qEnvironmentVariableIsSet("DISABLE_STEREO")) {
+            format.setStereo(true);
+            if constexpr (!useRHI) {
+                // Try to create GL Context with Stereo format
+                QOpenGLContext ctx;
+                ctx.setFormat(format);
+                ctx.create();
+
+                // Use GLContext format to see if we really support stereo
+                format.setStereo(ctx.format().stereo());
+            }
+        }
+        QSurfaceFormat::setDefaultFormat(format);
+    }
 
     all::qt::MainWindow mainWindow({ 1920, 1080 }); // Main Application Window
     auto* renderingSurface = new Qt3DExtras::Qt3DWindow(); // Rendering Surface for 3D Renderer

@@ -18,6 +18,7 @@
 #include <Qt3DRender/QCamera>
 #include <Qt3DRender/QNoPicking>
 #include <Qt3DRender/QRasterMode>
+#include <QSurfaceFormat>
 
 all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* parent)
     : Qt3DRender::QRenderSurfaceSelector(parent)
@@ -38,6 +39,9 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     m_frustumLayer->setObjectName(QStringLiteral("FrustumLayer"));
     m_frustumLayer->setRecursive(true);
     m_focusAreaLayer->setObjectName(QStringLiteral("FocusAreaLayer"));
+
+    const QSurfaceFormat f = QSurfaceFormat::defaultFormat();
+    const bool supportsStereo = f.stereo();
 
     auto vp = new Qt3DRender::QViewport();
     auto noPicking = new Qt3DRender::QNoPicking();
@@ -96,18 +100,22 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         return renderTarget;
     };
 
-    auto makeCameraSelectorForSceneBranch = [&](Qt3DRender::QRenderTarget* rt, Qt3DRender::QRasterMode* rasterState) {
+    auto makeCameraSelectorForSceneBranch = [&](Qt3DRender::QRenderTarget* rt, Qt3DRender::QRasterMode* rasterState, bool shouldClear) {
         auto* cameraSelector = new Qt3DRender::QCameraSelector();
         auto* rts = new Qt3DRender::QRenderTargetSelector();
         rts->setTarget(rt);
         rts->setParent(cameraSelector);
 
-        auto* clearBuffers = new Qt3DRender::QClearBuffers();
-        clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
-        clearBuffers->setClearColor(QColor{ "#48536A" });
+        if (shouldClear) {
+            auto* clearBuffers = new Qt3DRender::QClearBuffers();
+            clearBuffers->setBuffers(Qt3DRender::QClearBuffers::ColorDepthBuffer);
+            clearBuffers->setClearColor(QColor{ "#48536A" });
 
-        auto* noDraw = new Qt3DRender::QNoDraw();
-        noDraw->setParent(clearBuffers);
+            auto* noDraw = new Qt3DRender::QNoDraw();
+            noDraw->setParent(clearBuffers);
+
+            clearBuffers->setParent(rts);
+        }
 
         auto* sceneLayerFilter = new Qt3DRender::QLayerFilter();
         sceneLayerFilter->setObjectName("SceneLayerFilter");
@@ -145,7 +153,6 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
         focusAreaLayerFilter->setFilterMode(Qt3DRender::QLayerFilter::AcceptAnyMatchingLayers);
         focusAreaLayerFilter->addLayer(m_focusAreaLayer);
 
-        clearBuffers->setParent(rts);
         sceneLayerFilter->setParent(rts);
         sceneRenderState->setParent(sceneLayerFilter);
         cursorLayerFilter->setParent(rts);
@@ -156,16 +163,24 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     };
 
     Qt3DRender::QRenderTarget* leftRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Left);
-    Qt3DRender::QRenderTarget* rightRt = makeRenderTarget(Qt3DRender::QRenderTargetOutput::Right);
+    Qt3DRender::QRenderTarget* rightRt = makeRenderTarget(supportsStereo ? Qt3DRender::QRenderTargetOutput::Right : Qt3DRender::QRenderTargetOutput::Left);
 
     m_leftSceneRasterMode = new Qt3DRender::QRasterMode;
     m_rightSceneRasterMode = new Qt3DRender::QRasterMode;
 
+    auto* leftViewport = new Qt3DRender::QViewport();
+    auto* rightViewport = new Qt3DRender::QViewport();
+
+    if (!supportsStereo) {
+        leftViewport->setNormalizedRect(QRectF(0.0f, 0.25f, 0.5f, 0.5f));
+        rightViewport->setNormalizedRect(QRectF(0.5f, 0.25f, 0.5f, 0.5f));
+    }
+
     m_centerCameraSelector = makeCenterCameraPickingBranch();
     m_centerCameraSelector->setObjectName("CenterCamera");
-    m_leftCameraSelector = makeCameraSelectorForSceneBranch(leftRt, m_leftSceneRasterMode);
+    m_leftCameraSelector = makeCameraSelectorForSceneBranch(leftRt, m_leftSceneRasterMode, true);
     m_leftCameraSelector->setObjectName("LeftCamera");
-    m_rightCameraSelector = makeCameraSelectorForSceneBranch(rightRt, m_rightSceneRasterMode);
+    m_rightCameraSelector = makeCameraSelectorForSceneBranch(rightRt, m_rightSceneRasterMode, supportsStereo);
     m_rightCameraSelector->setObjectName("RightCamera");
 
     auto makeFrustumBranch = [&](Qt3DRender::QRenderTarget* rt) {
@@ -221,10 +236,12 @@ all::qt3d::QStereoForwardRenderer::QStereoForwardRenderer(Qt3DCore::QNode* paren
     renderStateSet->setParent(sortPolicy);
     // Left Eye
     m_leftLayerFilter->setParent(renderStateSet);
-    m_leftCameraSelector->setParent(m_leftLayerFilter);
+    m_leftCameraSelector->setParent(leftViewport);
+    leftViewport->setParent(m_leftLayerFilter);
     // Right Eye
     m_rightLayerFilter->setParent(renderStateSet);
-    m_rightCameraSelector->setParent(m_rightLayerFilter);
+    m_rightCameraSelector->setParent(rightViewport);
+    rightViewport->setParent(m_rightLayerFilter);
 
     // Frustum Overlay
     m_leftFrustumCameraSelector->setParent(noPicking);
