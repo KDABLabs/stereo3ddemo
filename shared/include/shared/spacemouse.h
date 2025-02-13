@@ -19,6 +19,14 @@ public:
     {
     }
 
+    virtual void onViewChanged()
+    {
+    }
+
+    virtual void onModelLoaded()
+    {
+    }
+
 protected:
     all::StereoCamera* Camera() const noexcept
     {
