@@ -163,31 +163,30 @@ void FocusArea::updateContainsMouse(const KDGui::MouseMoveEvent& mouse)
     const ContainedArea oldContainedArea = m_containedArea;
     m_containedArea = ContainedArea::None;
 
-    if (glm::length2(glm::vec3(mouse.xPos(), mouse.yPos(), 0.0f) - center()) < (20.0f * 20.0f)) {
+    // Within the Resize Handle
+    const glm::vec3 a = center() + glm::vec3(0.5f, 0.3f, 0.0f) * extent();
+    const glm::vec3 b = center() + glm::vec3(0.3f, 0.5f, 0.0f) * extent();
+    const glm::vec3 c = center() + glm::vec3(0.5f, 0.5f, 0.0f) * extent();
+
+    const glm::vec3 p = glm::vec3(mouse.xPos(), mouse.yPos(), 0.0f);
+
+    const glm::vec3 ap = p - a;
+    const glm::vec3 ab = b - a;
+    const bool abXapPositive = (ab.x * ap.y - ab.y * ap.x) > 0.0f;
+
+    const glm::vec3 bc = c - b;
+    const glm::vec3 bp = p - b;
+    const bool bcXbpPositive = (bc.x * bp.y - bc.y * bp.x) > 0.0f;
+
+    const glm::vec3 ca = a - c;
+    const glm::vec3 cp = p - c;
+    const bool caXcpPositive = (ca.x * cp.y - ca.y * cp.x) > 0.0f;
+
+    if (abXapPositive == bcXbpPositive && bcXbpPositive == caXcpPositive)
+        m_containedArea = ContainedArea::Resize;
+    else if (glm::length2(glm::vec3(mouse.xPos(), mouse.yPos(), 0.0f) - center()) < (20.0f * 20.0f)) {
         // Within the Center Cross
         m_containedArea = ContainedArea::Center;
-    } else {
-        // Within the Resize Handle
-        const glm::vec3 a = center() + glm::vec3(0.5f, 0.3f, 0.0f) * extent();
-        const glm::vec3 b = center() + glm::vec3(0.3f, 0.5f, 0.0f) * extent();
-        const glm::vec3 c = center() + glm::vec3(0.5f, 0.5f, 0.0f) * extent();
-
-        const glm::vec3 p = glm::vec3(mouse.xPos(), mouse.yPos(), 0.0f);
-
-        const glm::vec3 ap = p - a;
-        const glm::vec3 ab = b - a;
-        const bool abXapPositive = (ab.x * ap.y - ab.y * ap.x) > 0.0f;
-
-        const glm::vec3 bc = c - b;
-        const glm::vec3 bp = p - b;
-        const bool bcXbpPositive = (bc.x * bp.y - bc.y * bp.x) > 0.0f;
-
-        const glm::vec3 ca = a - c;
-        const glm::vec3 cp = p - c;
-        const bool caXcpPositive = (ca.x * cp.y - ca.y * cp.x) > 0.0f;
-
-        if (abXapPositive == bcXbpPositive && bcXbpPositive == caXcpPositive)
-            m_containedArea = ContainedArea::Resize;
     }
 
     if (oldContainedArea != m_containedArea) {
@@ -214,7 +213,8 @@ void FocusArea::onMouseMoved(const KDGui::MouseMoveEvent& mouse)
         center = m_distToCenterOnPress + glm::vec3(mouse.xPos(), mouse.yPos(), 0.0f);
     } else if (m_operation == Operation::Scaling) {
         const glm::vec3 distToCenter = center() - glm::vec3(mouse.xPos(), mouse.yPos(), 0.0f);
-        extent = m_extentOnPress * (glm::length(distToCenter) / glm::length(m_distToCenterOnPress));
+        const glm::vec3 newExtent = m_extentOnPress * (glm::length(distToCenter) / glm::length(m_distToCenterOnPress));
+        extent = glm::vec3(std::max(newExtent.x, 50.0f), std::max(newExtent.y, 50.0f), 0.0f);
     }
 }
 

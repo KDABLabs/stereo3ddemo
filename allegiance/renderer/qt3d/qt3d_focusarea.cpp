@@ -220,31 +220,30 @@ void FocusArea::updateContainsMouse(::QMouseEvent* mouse)
     const ContainedArea oldContainedArea = m_containedArea;
     m_containedArea = ContainedArea::None;
 
-    if ((QVector3D(mouse->x(), mouse->y(), 0.0f) - m_center).lengthSquared() < (20.0f * 20.0f)) {
+    // Within the Resize Handle
+    const QVector3D a = m_center + QVector3D(0.5f, 0.3f, 0.0f) * m_extent;
+    const QVector3D b = m_center + QVector3D(0.3f, 0.5f, 0.0f) * m_extent;
+    const QVector3D c = m_center + QVector3D(0.5f, 0.5f, 0.0f) * m_extent;
+
+    const QVector3D p = QVector3D(mouse->x(), mouse->y(), 0.0f);
+
+    const QVector3D ap = p - a;
+    const QVector3D ab = b - a;
+    const bool abXapPositive = (ab.x() * ap.y() - ab.y() * ap.x()) > 0.0f;
+
+    const QVector3D bc = c - b;
+    const QVector3D bp = p - b;
+    const bool bcXbpPositive = (bc.x() * bp.y() - bc.y() * bp.x()) > 0.0f;
+
+    const QVector3D ca = a - c;
+    const QVector3D cp = p - c;
+    const bool caXcpPositive = (ca.x() * cp.y() - ca.y() * cp.x()) > 0.0f;
+
+    if (abXapPositive == bcXbpPositive && bcXbpPositive == caXcpPositive)
+        m_containedArea = ContainedArea::Resize;
+    else if ((QVector3D(mouse->x(), mouse->y(), 0.0f) - m_center).lengthSquared() < (20.0f * 20.0f)) {
         // Within the Center Cross
         m_containedArea = ContainedArea::Center;
-    } else {
-        // Within the Resize Handle
-        const QVector3D a = m_center + QVector3D(0.5f, 0.3f, 0.0f) * m_extent;
-        const QVector3D b = m_center + QVector3D(0.3f, 0.5f, 0.0f) * m_extent;
-        const QVector3D c = m_center + QVector3D(0.5f, 0.5f, 0.0f) * m_extent;
-
-        const QVector3D p = QVector3D(mouse->x(), mouse->y(), 0.0f);
-
-        const QVector3D ap = p - a;
-        const QVector3D ab = b - a;
-        const bool abXapPositive = (ab.x() * ap.y() - ab.y() * ap.x()) > 0.0f;
-
-        const QVector3D bc = c - b;
-        const QVector3D bp = p - b;
-        const bool bcXbpPositive = (bc.x() * bp.y() - bc.y() * bp.x()) > 0.0f;
-
-        const QVector3D ca = a - c;
-        const QVector3D cp = p - c;
-        const bool caXcpPositive = (ca.x() * cp.y() - ca.y() * cp.x()) > 0.0f;
-
-        if (abXapPositive == bcXbpPositive && bcXbpPositive == caXcpPositive)
-            m_containedArea = ContainedArea::Resize;
     }
 
     if (oldContainedArea != m_containedArea) {
@@ -274,7 +273,7 @@ void FocusArea::setExtent(const QVector3D& extent)
 {
     if (extent == m_extent)
         return;
-    m_extent = extent;
+    m_extent = QVector3D(std::max(extent.x(), 50.0f), std::max(extent.y(), 50.0f), 0.0f);
     Q_EMIT extentChanged();
 }
 
