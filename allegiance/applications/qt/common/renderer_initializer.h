@@ -415,9 +415,9 @@ public:
         const float focusDistanceFromNearPlane = m_camera.nearPlane() + (focusDistancePercentage * 0.01) * (m_camera.farPlane() - m_camera.nearPlane());
 
         // popOut == 0 -> focusDistanceFromNearPlane
-        // popOut == 100 -> 1.5f * focusDistanceFromNearPlane
-        // popOut == -100 -> 0.5f focusDistanceFromNearPlane
-        const float popOutCorrectionFactor = (popOut * 0.01) * 0.5f + 1.0f; // [0.5, 1.5]
+        // popOut == 100 -> 2.0f * focusDistanceFromNearPlane
+        // popOut == -100 -> 0.0f * focusDistanceFromNearPlane
+        const float popOutCorrectionFactor = (popOut * 0.01) + 1.001f; // [0.001, 2.001]
         m_camera.convergencePlaneDistance = popOutCorrectionFactor * focusDistanceFromNearPlane;
 
         if (m_cameraController->separationBasedOnFocusDistance()) {
