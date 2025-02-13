@@ -53,6 +53,7 @@ private:
 
     KDBindings::ConnectionHandle m_projectionChangedConnection;
     KDBindings::ConnectionHandle m_viewChangedConnection;
+    KDBindings::ConnectionHandle m_convergenceDistanceChangedConnection;
     Serenity::StaticVertexBuffer* m_vertexBuffer{ nullptr };
     std::unique_ptr<Serenity::Mesh> m_mesh;
 };

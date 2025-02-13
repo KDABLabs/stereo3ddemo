@@ -22,9 +22,11 @@ FocusArea::FocusArea()
     camera.valueChanged().connect([this](Serenity::StereoCamera* c) {
                              m_projectionChangedConnection.disconnect();
                              m_viewChangedConnection.disconnect();
+                             m_convergenceDistanceChangedConnection.disconnect();
                              if (c != nullptr) {
                                  m_viewChangedConnection = c->viewMatrix.valueChanged().connect([this] { updateGeometry(); });
                                  m_projectionChangedConnection = c->lens()->projectionMatrix.valueChanged().connect([this] { updateGeometry(); });
+                                 m_convergenceDistanceChangedConnection = c->convergencePlaneDistance.valueChanged().connect([this] { updateGeometry(); });
                              }
                          })
             .release();
