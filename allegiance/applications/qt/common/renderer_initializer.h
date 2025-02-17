@@ -417,7 +417,7 @@ public:
         // popOut == 0 -> focusDistanceFromNearPlane
         // popOut == 100 -> 2.0f * focusDistanceFromNearPlane
         // popOut == -100 -> 0.0f * focusDistanceFromNearPlane
-        const float popOutCorrectionFactor = (popOut * 0.01) + 1.001f; // [0.001, 2.001]
+        const float popOutCorrectionFactor = std::clamp(popOut, -99.0f, 100.0f) * 0.01 + 1.0f; // [0.001, 2.001]
         m_camera.convergencePlaneDistance = popOutCorrectionFactor * focusDistanceFromNearPlane;
 
         if (m_cameraController->separationBasedOnFocusDistance()) {

@@ -600,11 +600,17 @@ void Qt3DRenderer::handleFocusForFocusArea()
     const QVector3D center = m_focusArea->center();
     const QVector3D extent = m_focusArea->extent();
 
+    const float xStep = extent.x() / (AFSamplesX - 1);
+    const float yStep = extent.y() / (AFSamplesY - 1);
+
+    const float xStart = center.x() - extent.x() * 0.5;
+    const float yStart = center.y() - extent.y() * 0.5;
+
     for (size_t y = 0; y < AFSamplesY; ++y) {
         QVector3D p;
-        const float yPos = center.y() + ((float(y) / AFSamplesY) - 1.0f) * (extent.y() * 0.5f);
+        const float yPos = yStart + y * yStep;
         for (size_t x = 0; x < AFSamplesX; ++x) {
-            const float xPos = center.x() + ((float(x) / AFSamplesX) - 1.0f) * (extent.x() * 0.5f);
+            const float xPos = xStart + x * xStep;
 
             const size_t rayCasterIdx = y * AFSamplesX + x;
             assert(rayCasterIdx < m_afRayCasters.size());
