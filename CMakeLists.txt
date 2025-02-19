@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(Allegiance VERSION 0.3.1)
+project("Stereo Demonstrator" VERSION 0.3.1)
 
 execute_process(
     COMMAND git log -1 --format=%cd --date=format:%Y-%m-%d
