@@ -13,6 +13,7 @@
 #include <QMouseEvent>
 #include <QApplication>
 #include <QClipboard>
+#include <QFileInfo>
 
 #include <any>
 
@@ -314,8 +315,9 @@ public:
             m_renderer->viewAll();
         });
         QObject::connect(m_sceneController, &SceneController::OpenLoadModelDialog, [this]() {
-            auto fn = QFileDialog::getOpenFileName(m_mainWindow, "Open Model", "scene", "Model Files (*.obj *.fbx *.gltf *.glb)");
+            auto fn = QFileDialog::getOpenFileName(m_mainWindow, "Open Model", m_lastDirName, "Model Files (*.obj *.fbx *.gltf *.glb)");
             if (!fn.isEmpty()) {
+                m_lastDirName = QFileInfo(fn).dir().absolutePath();
                 m_renderer->loadModel(fn.toStdString());
             }
         });
@@ -445,5 +447,7 @@ private:
     QPoint m_cursorPosWhenLocked;
 
     MouseTracker m_mouseInputTracker;
+
+    QString m_lastDirName;
 };
 } // namespace all::qt
