@@ -386,6 +386,7 @@ public:
             m_camera.position = cameraPosition;
             m_camera.forwardVector = glm::normalize(viewVector);
             m_camera.farPlane = (6.f * radius);
+            m_camera.nearPlane = (m_camera.farPlane() < 100.0f) ? 0.01f : 0.1f;
             m_camera.upVector = glm::vec3(0.0f, 1.0f, 0.0f);
 
             m_navParams->min_extent = sceneCenter - sceneExtent;
