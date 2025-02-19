@@ -623,15 +623,18 @@ void Qt3DRenderer::handleFocusForFocusArea()
 
 void Qt3DRenderer::afRaycasterHitResult(size_t idx, const Qt3DRender::QAbstractRayCaster::Hits& hits)
 {
-    float nearestHitDistanceFromCamera = std::numeric_limits<float>::max();
+    if (!hits.empty()) {
+        float nearestHitDistanceFromCamera = std::numeric_limits<float>::max();
 
-    // Average result of hits distance (or we could keep smallest one)
-    for (const auto& hit : hits) {
-        nearestHitDistanceFromCamera = std::min(hit.distance(), nearestHitDistanceFromCamera);
+        // Average result of hits distance (or we could keep smallest one)
+        const auto closest = std::ranges::min_element(hits, [](const Qt3DRender::QRayCasterHit& a, const Qt3DRender::QRayCasterHit& b) {
+            return a.distance() < b.distance();
+        });
+        nearestHitDistanceFromCamera = (closest->worldIntersection() - m_camera->centerCamera()->position()).length();
+
+        if (nearestHitDistanceFromCamera < std::numeric_limits<float>::max())
+            m_lastAfHitDistances[idx] = nearestHitDistanceFromCamera;
     }
-
-    if (nearestHitDistanceFromCamera < std::numeric_limits<float>::max())
-        m_lastAfHitDistances[idx] = nearestHitDistanceFromCamera;
 
     // Trigger delay evaluation once we know all raycasters have received their results
     if (!m_afResultUpdateRequested) {
