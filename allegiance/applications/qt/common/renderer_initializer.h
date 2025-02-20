@@ -226,7 +226,7 @@ public:
                                  float dy = (0.f + pos.y() - m_mouseInputTracker.last_pos.y()) / m_sceneController->mouseSensitivity();
 
                                  // left button is pressed
-                                 if (e->buttons() & Qt::LeftButton) {
+                                 if (m_mouseInputTracker.is_pressed) {
                                      if (flipped)
                                          dy = -dy;
                                      flipped = flipped ^ m_camera.rotate(dx, dy);
