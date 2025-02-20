@@ -521,15 +521,19 @@ void SerenityRenderer::createScene()
 {
     // Lights
     const std::vector<glm::vec3> lightDirs{
-        { 1, -2, 1 },
-        { -1, -2, -1 },
+        { 1, -1, 1 },
+        { -1, -1, -1 },
+
+        { 1, 1, -1 },
+        { -1, 1, 1 },
     };
-    for (const glm::vec3& dir : lightDirs) {
+    for (size_t i = 0; i < lightDirs.size(); ++i) {
+        const glm::vec3& dir = lightDirs[i];
         auto* directionalLight = m_sceneRoot->createComponent<Light>();
         directionalLight->type = Light::Type::Directional;
         directionalLight->color = glm::vec4(1.0f);
         directionalLight->worldDirection = glm::normalize(dir);
-        directionalLight->intensity = 0.5f;
+        directionalLight->intensity = (i % 2 == 0) ? 0.5f : 0.35f;
     }
 
     // Create scene graph for the 3D scene

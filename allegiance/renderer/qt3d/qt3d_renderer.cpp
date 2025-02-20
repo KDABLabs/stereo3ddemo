@@ -262,13 +262,17 @@ void Qt3DRenderer::createScene(Qt3DCore::QEntity* root)
     m_view->setRootEntity(m_rootEntity.get());
 
     const std::vector<QVector3D> lightDirs{
-        { 1, -2, 1 },
-        { -1, -2, -1 },
+        { 1, -1, 1 },
+        { -1, -1, -1 },
+
+        { 1, 1, -1 },
+        { -1, 1, 1 },
     };
-    for (const auto& dir : lightDirs) {
+    for (size_t i = 0; i < lightDirs.size(); ++i) {
+        const auto& dir = lightDirs[i];
         auto le = new Qt3DCore::QEntity;
         auto l = new Qt3DRender::QDirectionalLight;
-        l->setIntensity(0.5f);
+        l->setIntensity((i % 2 == 0) ? 0.5f : 0.35f);
         l->setWorldDirection(dir.normalized());
         le->addComponent(l);
         le->addComponent(m_renderer->sceneLayer());
