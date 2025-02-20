@@ -161,7 +161,7 @@ ColumnLayout {
 
     GroupBox {
         Layout.fillWidth: true
-        title: "Eye Separation"
+        title: "Camera Separation"
         label: GroupBoxTitleLabel{}
 
         ColumnLayout {
@@ -194,7 +194,7 @@ ColumnLayout {
                 initial: Camera.flipped
                 onChecked: bchecked => Camera.flipped = bchecked
 
-                ToolTip.text: "Flip the Right and Left eyes."
+                ToolTip.text: "Flip the Right and Left cameras."
             }
 
             CheckBoxX {
