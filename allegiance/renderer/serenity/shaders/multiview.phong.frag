@@ -146,5 +146,6 @@ void main()
             diffuseColor * material.diffuse.rgb +
             specularColor * material.specular.rgb;
 
+    // Note: we output to sRGB swapchains so linear -> sRGB conversion is done in hardware
     fragColor = vec4(color, material.diffuse.a);
 }

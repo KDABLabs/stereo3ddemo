@@ -148,8 +148,12 @@ void main()
 
     vec4 diffuseTex = material.diffuse;
 
+    const float gamma = 2.2;
     if (material.hasDiffuseTexture > 0) {
         diffuseTex = texture(texSampler, texCoords);
+
+        // sRGB -> Linear RGB
+        diffuseTex = vec4(pow(diffuseTex.rgb, vec3(gamma)), diffuseTex.a);
     }
 
     // Combine spec with ambient+diffuse for final fragment color
@@ -157,5 +161,6 @@ void main()
             diffuseColor * diffuseTex.rgb +
             specularColor * material.specular.rgb;
 
+    // Note: we output to sRGB swapchains so linear -> sRGB conversion is done in hardware
     fragColor = vec4(color, diffuseTex.a);
 }
