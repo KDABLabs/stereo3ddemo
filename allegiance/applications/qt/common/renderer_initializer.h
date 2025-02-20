@@ -315,9 +315,12 @@ public:
             m_renderer->viewAll();
         });
         QObject::connect(m_sceneController, &SceneController::OpenLoadModelDialog, [this]() {
-            auto fn = QFileDialog::getOpenFileName(m_mainWindow, "Open Model", m_lastDirName, "Model Files (*.obj *.fbx *.gltf *.glb)");
+            QSettings settings;
+            const QString lastDir = settings.value(QStringLiteral("lastDirName")).toString();
+
+            auto fn = QFileDialog::getOpenFileName(m_mainWindow, "Open Model", lastDir, "Model Files (*.obj *.fbx *.gltf *.glb)");
             if (!fn.isEmpty()) {
-                m_lastDirName = QFileInfo(fn).dir().absolutePath();
+                settings.setValue(QStringLiteral("lastDirName"), QFileInfo(fn).dir().absolutePath());
                 m_renderer->loadModel(fn.toStdString());
             }
         });
@@ -447,7 +450,5 @@ private:
     QPoint m_cursorPosWhenLocked;
 
     MouseTracker m_mouseInputTracker;
-
-    QString m_lastDirName;
 };
 } // namespace all::qt
