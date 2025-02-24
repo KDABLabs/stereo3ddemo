@@ -6,7 +6,7 @@
             "hidden": true,
             "generator": "Ninja",
             "environment": {
-                "QT_PATH": "C:/Qt/6.7.3/msvc2019_64",
+                "QT_PATH": "C:/Qt/6.8.2/msvc2022_64",
                 "VCPKG_ROOT": "C:/work/vcpkg"
             },
             "cacheVariables": {
@@ -17,8 +17,9 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "BUILD_QT_UI": "ON",
                 "BUILD_QT3D_RENDERER": "ON",
-                "BUILD_SERENITY_RENDERER_QT": "ON",
-                "BUILD_SERENITY_RENDERER_KDGUI": "ON"
+                "BUILD_KDGUI_UI": "OFF",
+                "BUILD_SERENITY_RENDERER_QT": "OFF",
+                "BUILD_SERENITY_RENDERER_KDGUI": "OFF"
             }
         },
         {
@@ -36,7 +37,7 @@
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl"
             },
-			"toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+            "toolchainFile": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
             "environment": {
                     "PATH": "$env{QT_PATH}/bin;$penv{PATH}"
             }
