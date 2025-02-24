@@ -73,7 +73,7 @@ Stay up-to-date with KDAB product announcements:
 ## Licensing
 
 The Stereo Demonstrator is available under the terms of
-the [GPL](https://github.com/KDABLabs/stereo3ddemo/blob/master/LICENSES/GPL.txt) license.
+the [GPL](https://github.com/KDABLabs/stereo3ddemo/blob/master/LICENSES/gpl-3.0.txt) license.
 
 Contact KDAB at <info@kdab.com> if you need different licensing options.
 
