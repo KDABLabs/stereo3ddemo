@@ -101,7 +101,13 @@ OrbitalStereoCamera::OrbitalStereoCamera() = default;
 
 void OrbitalStereoCamera::zoom(float d)
 {
-    position = position() + forwardVector() * d;
+    constexpr bool zoomToViewCenter = false;
+    if constexpr (zoomToViewCenter) {
+        position = position() + forwardVector() * d;
+    } else { // Zoom to Target
+        const glm::vec3 zoomInVector = glm::normalize(worldCursor() - position());
+        position = position() + zoomInVector * d;
+    }
 }
 
 // return true, if Up Vector got flipped

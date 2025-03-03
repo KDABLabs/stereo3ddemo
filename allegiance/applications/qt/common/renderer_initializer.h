@@ -88,6 +88,8 @@ public:
                          });
         QObject::connect(m_windowEventWatcher.get(), &WindowEventWatcher::scrollEvent,
                          [this](::QWheelEvent* e) {
+                             m_camera.worldCursor = m_renderer->cursorWorldPosition();
+
                              const float focusDistancePercentage = m_cameraController->focusDistance();
                              const float focusDistanceFromNearPlane = m_camera.nearPlane() + (focusDistancePercentage * 0.01) * (m_camera.farPlane() - m_camera.nearPlane());
                              // Without taking pop out into account

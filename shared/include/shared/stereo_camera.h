@@ -24,6 +24,7 @@ public:
     KDBindings::Property<glm::vec3> forwardVector{ { 0.0f, 0.0f, 1.0f } };
     KDBindings::Property<glm::vec3> upVector{ { 0.0f, 1.0f, 0.0f } };
     KDBindings::Property<glm::vec3> position{ { 0.0f, 0.0f, 0.0f } };
+    KDBindings::Property<glm::vec3> worldCursor{ { 0.0f, 0.0f, 0.0f } };
     KDBindings::Property<glm::vec3> viewCenter;
 
     KDBindings::Property<float> fov{ 45.0f };
